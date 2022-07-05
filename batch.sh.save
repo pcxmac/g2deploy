@@ -41,9 +41,6 @@ function prep_fs() {
 
 function get_stage3() {
 
-	echo "getting stage 3"
-	sleep 5
-
 	case $1 in
 		"gnome")
 			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
@@ -61,16 +58,6 @@ function get_stage3() {
 			file="${file%.xz*}.xz"
 		;;
 		"systemd")
-			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-systemd/"
-			file="$(curl -s $mirror | grep 'stage3-amd64-systemd' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
-			file="${file%.xz*}.xz"
-		;;
-		"gnome/systemd")
-			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-systemd/"
-			file="$(curl -s $mirror | grep 'stage3-amd64-systemd' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
-			file="${file%.xz*}.xz"
-		;;
-		"plasma/systemd")
 			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-systemd/"
 			file="$(curl -s $mirror | grep 'stage3-amd64-systemd' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
 			file="${file%.xz*}.xz"
@@ -139,21 +126,14 @@ function config_env() {
 }
 
 function config_mngmt() {
-	#key=$1
-	#key=${key##*/}
+	key=$1
+	key=${key##*/}
 	offset=$2
 
 	#cp ./$key.pkgs $offset/$key.pkgs
 	# add profile specific packages to the package list. $key + common.pkgs
 	cp ./common.pkgs $offset/package.list
-
-	echo "######################################################################################"
-
-	ls -ail ./packages/$1.pkgs
-	echo "what do you see ?"
-	sleep 5
-
-	cat ./packages/$1.pkgs >> $offset/package.list
+	cat ./$key.pkgs >> $offset/package.list
 
 	tar cfv config.tar -T ./etc.cfg
 	cp ./config.tar $offset
@@ -169,9 +149,13 @@ function profile_settings() {
 	# desktop gnome-sysd
 	# desktop plasma-sysd
 
-	# openrc
+	# cases: selinux, hardened/selinux, hardened, systemd,
+	#        desktop/plasma/systemd, desktop/gnome/systemd
+	#		 desktop/plasma, desktop/gnome
+
+
 	case ${key##*/} in
-		'hardened'|'plasma'|'gnome'|'selinux')
+		hardened|plasma|gnome)
 			echo "configuring common for hardened, plasma and gnome..."
 			sleep 5
 			cp /root/bastion.start /etc/local.d/bastion.start
@@ -186,9 +170,8 @@ function profile_settings() {
 		;;
 	esac
 
-	# systemd
 	case ${key##*/} in
-		'plasma/systemd'|'gnome/systemd'|'systemd')
+		systemd)
 			echo "configuring systemd..."
 			sleep 5
 			systemctl enable zfs.target
@@ -198,64 +181,48 @@ function profile_settings() {
 			systemctl enable cronie
 			systemctl enable autofs
 		;;
-	esac
-
-	# generic openrc desktop
-	case ${key##*/} in
-		'plasma'|'gnome')
-			echo "configuring openrc common graphical environments: plasma and gnome..."
+		plasma|gnome)
+			echo "configuring common for graphical environments: plasma and gnome..."
 			sleep 5
 			rc-update add display-manager default
 			rc-update add dbus
 		;;
-	esac
 
-	# generic systemd desktop
+
 	case ${key##*/} in
-		'plasma/systemd'|'gnome/systemd')
-			echo "configuring systemd common graphical environments: plasma and gnome..."
+		systemd)
+			echo "configuring systemd..."
 			sleep 5
-
+			systemctl enable zfs.target
+			systemctl enable zfs-import-cache
+			systemctl enable zfs-mount
+			systemctl enable zfs-import.target
+			systemctl enable cronie
+			systemctl enable autofs
 		;;
-	esac
-
-	# specific cases for any specific variant
-	case ${key##*/} in
-		'plasma')
+		plasma|gnome)
+			echo "configuring common for graphical environments: plasma and gnome..."
+			sleep 5
+			rc-update add display-manager default
+			rc-update add dbus
+		;;
+		plasma)
 			echo "configuring plasma..."
 			sed -i "/DISPLAYMANAGER/c DISPLAYMANAGER='sddm'" /etc/conf.d/display-manager
 		;;
-		'gnome')
+		gnome)
 			echo "configuring gnome..."
 			rc-update add elogind boot
-			emerge --ask --noreplace gui-libs/display-manager-init --ask=n
+			emerge --ask --noreplace gui-libs/display-manager-init
 			sed -i "/DISPLAYMANAGER/c DISPLAYMANAGER='gdm'" /etc/conf.d/display-manager
 		;;
-		'systemd')
-			echo "nothing special for systemd"
-		;;
-		'hardened')
-			echo "nothing special for hardened"
-		;;
-		'hardened/selinux')
-			echo "hardened/selinux not supported"
-		;;
-		'selinux')
-			echo "selinux not supported"
-		;;
-		'plasma/systemd')
-			echo "plasma/systemd, waiting on tests"
+		selinux)
 
-		;;
-		'gnome/systemd')
-			echo "gnome/systemd, waiting on tests"
-			systemctl enable gdm.service
 		;;
 		*)
 			echo "default settings ?"
 		;;
 	esac
-
 }
 
 function common() {
@@ -306,6 +273,8 @@ function common() {
 	sync
 	cd /
 
+	eix-update
+	updatedb
 
 	qlist -I | sort | uniq > base.pkgs
 
@@ -334,12 +303,6 @@ function common() {
 	rm /etc/hostid
 	zgenhostid
 
-
-
-	eix-update
-	updatedb
-
-
 }
 
 export PYTHONPATH=""
@@ -360,10 +323,8 @@ do
 		;;
 	esac
 done
-
 echo "offset = $offset"
 #sleep 10
-
 # clear out working directory if set
 for x in $@
 do
@@ -384,10 +345,9 @@ do
 		profile=*)
 			# if profile is specified any of...
 			case "${x#*=}" in
-				hardened*|'systemd'|plasma*|gnome*|'selinux')
+				hardened|systemd|plasma|gnome|selinux)
 					#cd $offset
-					echo "profile = $x"
-					echo "exuberant = ${x#*=}"
+					#echo "profile = $x"
 					get_stage3 ${x#*=} $offset
 					config_env $offset
 					echo "executing $1"
@@ -406,38 +366,22 @@ do
 	case "${x}" in
 		profile=*)
 			case "${x#*=}" in
-
-
-				# special cases for strings ending in selinux, and systemd as they can be part of a combination
-
-				'hardened')
+				hardened)
 					# space at end limits selinux
 					string="17.1/hardened "
 				;;
-				'systemd')
+				systemd)
 					string="17.1/systemd "
 				;;
-				'plasma')
+				plasma)
 					string="17.1/desktop/plasma "
 				;;
-				'gnome')
+				gnome)
 					string="17.1/desktop/gnome "
 				;;
-				'selinux')
-					string="17.1/selinux "
+				selinux)
 					echo "selinux is not a $string"
-				;;
-				'plasma/systemd')
-					string="17.1/desktop/plasma/systemd "
-					echo "selinux is not a $string"
-				;;
-				'gnome/systemd')
-					string="17.1/desktop/gnome/systemd "
-					echo "selinux is not a $string"
-				;;
-				'hardened/selinux')
-					string="17.1/hardened/selinux "
-					echo "selinux is not a $string"
+					exit
 				;;
 				*)
 					echo "$string, exiting ..."
