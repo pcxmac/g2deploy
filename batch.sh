@@ -12,8 +12,14 @@
 #sleep 10
 
 check_mounts() {
+
+	
+
 	#echo "check mounts ~ $1"
-	directory="$1"
+	directory=$1
+#	directory=$(cat /proc/mounts | grep $1)
+#	dir_src=$(echo $directory | awk '{print $1}')
+#	dir_dst=$(echo $directory | awk '{print $2}')
 	output="$(cat /proc/mounts | grep $directory | wc -l)"
 	#echo "initial output = $output"
 	while [[ "$output" != 0 ]]
@@ -22,15 +28,31 @@ check_mounts() {
 		while read -r mountpoint; do
 		#	((cycle++))
 			umount $mountpoint > /dev/null 2>&1
-		done < <(awk '{print $2}' < /proc/mounts | grep "^$directory")
+		done < <(awk '{print $2}' < /proc/mounts | grep "^$directory" )
 		#echo "cycles = $cycle"
 		output="$(cat /proc/mounts | grep $directory | wc -l)"
 		#echo "mounts left, $output"
 		sleep 1
 	done
+
+	if [[ "$(cat /proc/mounts | grep $directory | wc -l)" == 0 ]]
+	then
+		echo "mounting $dir_src ~~~~~~~!!!!!!!!!!!!!!!!"
+		sleep 10
+
+		# cases for various file system types... probably just zfs and everything else
+		zfs mount $dir_src
+		#mount $dir_src $dir_src
+	fi
 }
 
 function prep_fs() {
+
+
+
+	# VERIFY ZFS MOUNT IS in DF
+
+
 	echo "prepfs ~ $1"
 	#offset=$(pwd)
 	#cd $1
