@@ -16,11 +16,11 @@ check_mounts() {
 	
 
 	#echo "check mounts ~ $1"
-	directory=$1
-#	directory=$(cat /proc/mounts | grep $1)
-#	dir_src=$(echo $directory | awk '{print $1}')
-#	dir_dst=$(echo $directory | awk '{print $2}')
-	output="$(cat /proc/mounts | grep $directory | wc -l)"
+#	directory=$1
+	directory="$(cat /proc/mounts | grep $1)"
+	dir_src="$(echo $directory | awk '{print $1}')"
+	dir_dst="$(echo $directory | awk '{print $2}')"
+	output="$(cat /proc/mounts | grep '$directory' | wc -l)"
 	#echo "initial output = $output"
 	while [[ "$output" != 0 ]]
 	do
@@ -130,7 +130,15 @@ function config_env() {
 	#sleep 20
 	#echo "rsync -r -l -H -p --delete-before --progress $src $dst"
 
+	echo "copying over kernel source..."
 	rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
+
+	dst="$1/lib/modules"
+	src="/lib/modules/$(uname --kernel-release)"
+
+	echo "copying over kernel modules..."
+	rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
+
 
 	# OFFSET TO CURRENT WORKING DIRECTORY ,ADD SUPPORT FOR $1 ARG;/....
 	#offset="$(pwd)"
@@ -324,7 +332,7 @@ function common() {
 	zcat /proc/config.gz > /usr/src/linux/.config
 
 	cd /usr/src/linux
-	emerge =zfs-9999 --exclude=sys-kernel/gentoo-sources
+	emerge $emergeOpts =zfs-9999 --exclude=sys-kernel/gentoo-sources
 	sync
 	cd /
 
@@ -466,14 +474,17 @@ do
 					exit
 				;;
 			esac
+	
 			# deploy
-				#cd $offset
-				config_mngmt $string $offset
-				chroot $offset /bin/bash -c "common $string"
-				chroot $offset /bin/bash -c "profile_settings $string"
+			#cd $offset
+			config_mngmt $string $offset
+			chroot $offset /bin/bash -c "common $string"
+			chroot $offset /bin/bash -c "profile_settings $string"
 
 		;;
 	esac
+
+
 done
 
 

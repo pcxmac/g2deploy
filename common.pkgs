@@ -1,3 +1,4 @@
+sys-apps/lm-sensors
 sys-apps/pv
 sys-block/parted
 sys-process/lsof

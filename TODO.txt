@@ -1,0 +1,6 @@
+
+need to correct :
+
+	~/systemd is not mapping right to the config directories when looking for the correct config file
+	offset to plasma or plasmad is being confused during zfs mount / mount check
+
