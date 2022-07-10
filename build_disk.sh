@@ -76,4 +76,7 @@ sed -i "s/root=ZFS=$curr_pool/root=ZFS=$next_pool/" $mnt/EFI/boot/refind.conf
 
 # ZFS SEND RECV + PV
 
-# UPDATE autofs
+#zfs snapshot curr_pool@
+
+# UPDATE autofs for /boot
+# UPDATE fstab for swap

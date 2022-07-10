@@ -38,9 +38,6 @@ check_mounts() {
 }
 
 function prep_fs() {
-
-
-
 	# VERIFY ZFS MOUNT IS in DF
 
 
@@ -177,8 +174,8 @@ function config_mngmt() {
 
 	cat ./packages/$1.pkgs >> $offset/package.list
 
-	tar cfv config.tar -T ./etc.cfg
-	cp ./config.tar $offset
+	tar cfv $offset/config.tar -T ./etc.cfg
+	#cp ./config.tar $offset
 	cp /root $offset -Rp
 }
 
@@ -285,7 +282,8 @@ function common() {
 	tar xfv config.tar
 	rm config.tar
 
-	emergeOpts="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99 --exclude=sys-kernel/zfs-kmod --exclude=sys-kernel/gentoo-sources"
+	emergeOpts="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99 --exclude=sys-fs/zfs-kmod --exclude=sys-kernel/gentoo-sources"
+	emergeOpts2="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99"
 
 	mkdir -p /var/db/repos/gentoo
 	emerge-webrsync
@@ -311,7 +309,21 @@ function common() {
 	emerge $emergeOpts gentoolkit eix mlocate genkernel sudo zsh tmux app-arch/lz4 elfutils --ask=n
 
 	echo "ZFS EMERGE BUILD DEPS ONLY !!!!!"
-	emerge $emergeOpts --onlydeps =zfs-9999
+	emerge $emergeOpts --onlydeps =zfs-9999 =zfs-kmod-9999
+
+
+	echo "BUILDING KERNEL ..."
+
+	kver="$(uname --kernel-release)"
+
+	eselect kernel set linux-$kver
+	zcat /proc/config.gz > /usr/src/linux/.config
+
+	echo "EMERGE ZFS !!!"
+	#cd /usr/src/linux
+	emerge $emergeOpts2 =zfs-9999 =zfs-kmod-9999
+	sync
+	#cd /
 
 	echo "UPDATE EMERGE !!!!!"
 	emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
@@ -321,20 +333,6 @@ function common() {
 
 	useradd sysop
 	sudo sh -c 'echo sysop:@PCXmacSy$ | chpasswd'
-
-	echo "BUILDING KERNEL ..."
-
-	kver="$(uname --kernel-release)"
-
-	eselect kernel set linux-$kver
-	zcat /proc/config.gz > /usr/src/linux/.config
-
-
-	echo "EMERGE ZFS !!!"
-	cd /usr/src/linux
-	emerge $emergeOpts =zfs-9999
-	sync
-	cd /
 
 
 	qlist -I | sort | uniq > base.pkgs
@@ -362,7 +360,7 @@ function common() {
 
 	echo "SETTING SERVICES"
 
-	rm /etc/hostid
+	#rm /etc/hostid
 
 	zgenhostid
 	eix-update
