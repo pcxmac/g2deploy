@@ -189,8 +189,8 @@ function profile_settings() {
 	# desktop plasma-sysd
 
 	# openrc
-	case ${key##*/} in
-		'hardened'|'plasma'|'gnome'|'selinux')
+	case ${key#17.1/*} in
+		'hardened'|'desktop/plasma'|'desktop/gnome'|'selinux'|'hardened/selinux')
 			echo "configuring common for hardened, plasma and gnome..."
 			sleep 5
 			cp /root/bastion.start /etc/local.d/bastion.start
@@ -206,8 +206,8 @@ function profile_settings() {
 	esac
 
 	# systemd
-	case ${key##*/} in
-		'plasma/systemd'|'gnome/systemd'|'systemd')
+	case ${key#17.1/*} in
+		'desktop/plasma/systemd'|'desktop/gnome/systemd'|'systemd')
 			echo "configuring systemd..."
 			sleep 5
 			systemctl enable zfs.target
@@ -219,9 +219,22 @@ function profile_settings() {
 		;;
 	esac
 
+	# generic desktop
+	case ${key#17.1/*} in
+		'systemd'|'hardened')
+		;;
+	esac
+
+	# generic console
+	case ${key#17.1/*} in
+		'desktop/plasma'|'desktop/gnome')
+			emerge --ask --noreplace gui-libs/display-manager-init --ask=n
+		;;
+	esac
+
 	# generic openrc desktop
-	case ${key##*/} in
-		'plasma'|'gnome')
+	case ${key#17.1/*} in
+		'desktop/plasma'|'desktop/gnome')
 			echo "configuring openrc common graphical environments: plasma and gnome..."
 			sleep 5
 			rc-update add display-manager default
@@ -230,25 +243,48 @@ function profile_settings() {
 	esac
 
 	# generic systemd desktop
-	case ${key##*/} in
-		'plasma/systemd'|'gnome/systemd')
+	case ${key#17.1/*} in
+		'desktop/plasma/systemd'|'desktop/gnome/systemd')
 			echo "configuring systemd common graphical environments: plasma and gnome..."
 			sleep 5
-
 		;;
 	esac
 
 	# specific cases for any specific variant
-	case ${key##*/} in
-		'plasma')
+
+	echo "sampling @ ${key#17.1/}"
+
+	# generic plasma
+	case ${key#17.1/} in
+		'desktop/plasma'|'desktop/plasma/systemd')
 			echo "configuring plasma..."
+		;;
+	esac
+
+	# generic gnome
+	case ${key#17.1/} in
+		'desktop/gnome'|'desktop/gnome/systemd')
+			echo "configuring gnome..."
+			sed -i "/DISPLAYMANAGER/c DISPLAYMANAGER='gdm'" /etc/conf.d/display-manager
+		;;
+	esac
+
+
+	# specific use cases for individual profiles
+	case ${key#17.1/} in
+		'desktop/plasma')
+			echo "configuring plasma"
 			sed -i "/DISPLAYMANAGER/c DISPLAYMANAGER='sddm'" /etc/conf.d/display-manager
 		;;
-		'gnome')
+		'desktop/plasma/systemd')
+			systemctl enable sddm
+		;;
+		'desktop/gnome')
 			echo "configuring gnome..."
 			rc-update add elogind boot
-			emerge --ask --noreplace gui-libs/display-manager-init --ask=n
-			sed -i "/DISPLAYMANAGER/c DISPLAYMANAGER='gdm'" /etc/conf.d/display-manager
+		;;
+		'desktop/gnome/systemd')
+			systemctl enable gdm.service
 		;;
 		'systemd')
 			echo "nothing special for systemd"
@@ -256,19 +292,11 @@ function profile_settings() {
 		'hardened')
 			echo "nothing special for hardened"
 		;;
-		'hardened/selinux')
-			echo "hardened/selinux not supported"
-		;;
 		'selinux')
 			echo "selinux not supported"
 		;;
-		'plasma/systemd')
-			echo "plasma/systemd, waiting on tests"
-
-		;;
-		'gnome/systemd')
-			echo "gnome/systemd, waiting on tests"
-			systemctl enable gdm.service
+		'hardened/selinux')
+			echo "hardened/selinux not supported"
 		;;
 		*)
 			echo "default settings ?"
@@ -433,10 +461,7 @@ do
 	case "${x}" in
 		profile=*)
 			case "${x#*=}" in
-
-
 				# special cases for strings ending in selinux, and systemd as they can be part of a combination
-
 				'hardened')
 					# space at end limits selinux
 					string="17.1/hardened "
@@ -471,20 +496,14 @@ do
 					exit
 				;;
 			esac
-	
-			# deploy
-			#cd $offset
+
 			config_mngmt $string $offset
 			chroot $offset /bin/bash -c "common $string"
 			chroot $offset /bin/bash -c "profile_settings $string"
 
 		;;
 	esac
-
-
 done
-
-
 
 echo "cleaning up mounts"
 check_mounts $offset
