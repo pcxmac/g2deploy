@@ -1,6 +1,5 @@
 
 need to correct :
 
-	~/systemd is not mapping right to the config directories when looking for the correct config file
-	offset to plasma or plasmad is being confused during zfs mount / mount check
-
+CHECKING	~/systemd is not mapping right to the config directories when looking for the correct config file
+			some locking up after prepfs entry when running multiple instances

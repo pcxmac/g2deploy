@@ -1,6 +1,8 @@
 #!/bin/bash
 
 #$1 = disk
+#$2 = pool name
+
 
 # generates a standard disk,  EFI partition, zfs encrypted partition using the current system's key
 
@@ -12,12 +14,12 @@ sgdisk --zap-all $1
 
 partprobe
 
-sgdisk --new 1:0:+32M -t 1:EF02 /dev/vda
-sgdisk --new 2:0:+8G -t 2:EF00 /dev/vda
-sgdisk --new 3:0:+16G -t 3:8200 /dev/vda
-sgdisk --new 4:0 -t 4:8300 /dev/vda
+echo "ignore sr0..."
 
-#!/bin/bash
+sgdisk --new 1:0:+32M -t 1:EF02 $1
+sgdisk --new 2:0:+8G -t 2:EF00 $1
+sgdisk --new 3:0:+16G -t 3:8200 $1
+sgdisk --new 4:0 -t 4:8300 $1
 
 #disk="/dev/vda4"
 #pool="virtual"

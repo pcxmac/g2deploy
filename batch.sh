@@ -13,37 +13,28 @@
 
 check_mounts() {
 
-	
+#	attempts to unmount any file systems associated with the install location, this is required, before mounting
+#	all strings should follow the composition : '$1\/\|$1 ' .. this is to say, all succeeding directories and original path
+#	fix, do not admit the initial directory, as it is to remain mounted if was or was not, is or to be... '$1\/'
 
-	#echo "check mounts ~ $1"
-#	directory=$1
-	directory="$(cat /proc/mounts | grep $1)"
-	dir_src="$(echo $directory | awk '{print $1}')"
-	dir_dst="$(echo $directory | awk '{print $2}')"
-	output="$(cat /proc/mounts | grep '$directory' | wc -l)"
+	#directory="$(cat /proc/mounts | grep "$dir\/\|$dir " | awk '{print $2}')"
+	#directory="$(cat /proc/mounts | grep "$dir\/" | awk '{print $2}')"
+	dir="$(echo "$1" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
+	output="$(cat /proc/mounts | grep "$dir\/" | wc -l)"
 	#echo "initial output = $output"
 	while [[ "$output" != 0 ]]
 	do
 		#cycle=0
-		while read -r mountpoint; do
-		#	((cycle++))
+		while read -r mountpoint
+		do
+			#((cycle++))
+			#echo "proc-mounts : $mountpoint"
+			#echo "unmounting $mountpoint"
 			umount $mountpoint > /dev/null 2>&1
-		done < <(awk '{print $2}' < /proc/mounts | grep "^$directory" )
+		done < <(cat /proc/mounts | grep "$dir\/" | awk '{print $2}')
 		#echo "cycles = $cycle"
-		output="$(cat /proc/mounts | grep $directory | wc -l)"
-		#echo "mounts left, $output"
-		sleep 1
+		output="$(cat /proc/mounts | grep "$dir\/" | wc -l)"
 	done
-
-	if [[ "$(cat /proc/mounts | grep $directory | wc -l)" == 0 ]]
-	then
-		echo "mounting $dir_src ~~~~~~~!!!!!!!!!!!!!!!!"
-		sleep 10
-
-		# cases for various file system types... probably just zfs and everything else
-		zfs mount $dir_src
-		#mount $dir_src $dir_src
-	fi
 }
 
 function prep_fs() {
@@ -175,13 +166,14 @@ function config_mngmt() {
 
 	#cp ./$key.pkgs $offset/$key.pkgs
 	# add profile specific packages to the package list. $key + common.pkgs
+
 	cp ./common.pkgs $offset/package.list
 
 	echo "######################################################################################"
 
 	ls -ail ./packages/$1.pkgs
 	echo "what do you see ?"
-	sleep 5
+	sleep 10
 
 	cat ./packages/$1.pkgs >> $offset/package.list
 
@@ -293,7 +285,7 @@ function common() {
 	tar xfv config.tar
 	rm config.tar
 
-	emergeOpts="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99"
+	emergeOpts="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99 --exclude=sys-kernel/zfs-kmod --exclude=sys-kernel/gentoo-sources"
 
 	mkdir -p /var/db/repos/gentoo
 	emerge-webrsync
@@ -305,6 +297,7 @@ function common() {
 	echo "which device /??"
 	sleep 5
 
+	echo "SYNC EMERGE !!!!!"
 	emerge $emergeOpts --sync --ask=n
 
 	eselect news read all
@@ -314,9 +307,14 @@ function common() {
 
 	eselect profile set default/linux/amd64/$1
 
+	echo "BASIC TOOLS EMERGE !!!!!"
 	emerge $emergeOpts gentoolkit eix mlocate genkernel sudo zsh tmux app-arch/lz4 elfutils --ask=n
-	emerge $emergeOpts --onlydeps =zfs-9999 --exclude=sys-kernel/gentoo-sources
-	emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n --exclude=sys-kernel/gentoo-sources
+
+	echo "ZFS EMERGE BUILD DEPS ONLY !!!!!"
+	emerge $emergeOpts --onlydeps =zfs-9999
+
+	echo "UPDATE EMERGE !!!!!"
+	emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
 
 	usermod -s /bin/zsh root
 	sudo sh -c 'echo root:@PCXmacR00t | chpasswd'
@@ -331,8 +329,10 @@ function common() {
 	eselect kernel set linux-$kver
 	zcat /proc/config.gz > /usr/src/linux/.config
 
+
+	echo "EMERGE ZFS !!!"
 	cd /usr/src/linux
-	emerge $emergeOpts =zfs-9999 --exclude=sys-kernel/gentoo-sources
+	emerge $emergeOpts =zfs-9999
 	sync
 	cd /
 
@@ -356,16 +356,15 @@ function common() {
 	rm base.pkgs
 	#rm package.list
 
+	echo "EMERGE PROFILE PACKAGES !!!!"
 	emerge $emergeOpts $(cat ./tobe.pkgs)
 	rm tobe.pkgs
 
 	echo "SETTING SERVICES"
 
 	rm /etc/hostid
+
 	zgenhostid
-
-
-
 	eix-update
 	updatedb
 
