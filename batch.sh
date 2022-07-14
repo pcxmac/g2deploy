@@ -19,30 +19,24 @@ function zfs_keys() {
 	offset=$1
 
 	# ALL POOLS ON SYSTEM, FOR GENKERNEL
-	pools="$(echo "$(zpool list | awk '{print $1}')" | sed '1 d')"
+	# pools="$(zpool list | awk '{print $1}') | sed '1 d')"
 
 	# THE POOL BEING DEPLOYED TO ... -- DEPLOYMENT SCRIPT
 	#limit pools to just the deployed pool / not valid for genkernel which would attach all pools & datasets
 	pools="$(cat /proc/mounts | grep "$offset " | awk '{print $1}')"
 	pools="${pools%/*}"
-	########################################################################################################
-
-#	echo "pool(s) = $pools"
 
 	for i in $pools
 	do
 		# query datasets
 		listing="$(zfs list | grep "$i/" | awk '{print $1}')"
-#		echo "listing = $listing"
-
 
 		for j in $listing
 		do
-
 			#dSet="$(zpool get bootfs $i | awk '{print $3}' | sed -n '2 p')"
 			dSet="$j"
 
-			if [ "$dSet" == '-' ] 
+			if [ "$dSet" == '-' ]
 			then
 				format="N/A"
 				location="N/A"
@@ -51,21 +45,15 @@ function zfs_keys() {
 				location="$(zfs get keylocation $dSet | awk '{print $3}' | sed -n '2 p')"
 			fi
 
-			# DEBUG statements ...
-#			echo "data set = $dSet"
-#			echo "format = $format"
-#			echo "location = $location"
-
-
 			# if format == raw or hex & location is a valid file ... if not a valid file , complain
 			# ie, not none or passphrase, indicating no key or passphrase, thus implying partition or keyfile type
+
 			if [ $format == 'raw' ] || [ $format == 'hex' ]
 			then
 				# possible locations are : http/s, file:///, prompt, pkcs11:
 				# only concerned with file:///
 
 	  			location_type="${location%:///*}"
-#				echo "location type = $location_type"
 				if [ $location_type == 'file' ]
 				then
 					# if not, then probably https:/// ....
@@ -86,14 +74,13 @@ function zfs_keys() {
 					echo "nothing to do for $j ..."
 				fi
 			fi
-	#	echo "NEXT !!!"
 
 
 		done
+
 	done
-
-
 }
+
 
 check_mounts() {
 
@@ -119,12 +106,11 @@ check_mounts() {
 		#echo "cycles = $cycle"
 		output="$(cat /proc/mounts | grep "$dir\/" | wc -l)"
 	done
+
 }
 
-function prep_fs() {
+function clear_fs() {
 	# VERIFY ZFS MOUNT IS in DF
-
-
 	echo "prepfs ~ $1"
 	#offset=$(pwd)
 	#cd $1
@@ -505,7 +491,7 @@ do
 	#echo $x
 	case "${x}" in
 		clear)
-			prep_fs $offset
+			clear_fs $offset
 		;;
 	esac
 done
@@ -518,18 +504,13 @@ do
 		profile=*)
 			# if profile is specified any of...
 			case "${x#*=}" in
-				hardened*|'systemd'|plasma*|gnome*|'selinux')
+				hardened*|systemd|plasma*|gnome*|selinux)
 					#cd $offset
 					echo "profile = $x"
 					echo "exuberant = ${x#*=}"
-#					get_stage3 ${x#*=} $offset
+					get_stage3 ${x#*=} $offset
 					echo "running zfs_keys"
-					zfs_keys $offset
-
-
-					exit
-
-
+					#zfs_keys $offset
 					config_env $offset
 					echo "executing $1"
 				;;
@@ -602,4 +583,3 @@ check_mounts $offset
 #			aufs=1
 #			echo "${x#*=}"
 #		;;
-
