@@ -3,13 +3,97 @@
 #
 #
 
+## need to add support for integrating the build_disk ...
+#  need to support building new kernels on the host env and integrating those in to the new clients
+# option = { install=/dev/vdX } ... performs disk geometry and installation on to NEW POOL
+# try to mask a lot of the output (like news read all) that clutters output :: option = { verbose=no }
+
 #!/bin/bash
 
 # setup resolv.conf and file system...
 
 # ARGS $2 = destination $1= profile (default openrc,current directory)
 
-#sleep 10
+function zfs_keys() {
+
+	offset=$1
+
+	# ALL POOLS ON SYSTEM, FOR GENKERNEL
+	pools="$(echo "$(zpool list | awk '{print $1}')" | sed '1 d')"
+
+	# THE POOL BEING DEPLOYED TO ... -- DEPLOYMENT SCRIPT
+	#limit pools to just the deployed pool / not valid for genkernel which would attach all pools & datasets
+	pools="$(cat /proc/mounts | grep "$offset " | awk '{print $1}')"
+	pools="${pools%/*}"
+	########################################################################################################
+
+#	echo "pool(s) = $pools"
+
+	for i in $pools
+	do
+		# query datasets
+		listing="$(zfs list | grep "$i/" | awk '{print $1}')"
+#		echo "listing = $listing"
+
+
+		for j in $listing
+		do
+
+			#dSet="$(zpool get bootfs $i | awk '{print $3}' | sed -n '2 p')"
+			dSet="$j"
+
+			if [ "$dSet" == '-' ] 
+			then
+				format="N/A"
+				location="N/A"
+				else
+				format="$(zfs get keyformat $dSet | awk '{print $3}' | sed -n '2 p')"
+				location="$(zfs get keylocation $dSet | awk '{print $3}' | sed -n '2 p')"
+			fi
+
+			# DEBUG statements ...
+#			echo "data set = $dSet"
+#			echo "format = $format"
+#			echo "location = $location"
+
+
+			# if format == raw or hex & location is a valid file ... if not a valid file , complain
+			# ie, not none or passphrase, indicating no key or passphrase, thus implying partition or keyfile type
+			if [ $format == 'raw' ] || [ $format == 'hex' ]
+			then
+				# possible locations are : http/s, file:///, prompt, pkcs11:
+				# only concerned with file:///
+
+	  			location_type="${location%:///*}"
+#				echo "location type = $location_type"
+				if [ $location_type == 'file' ]
+				then
+					# if not, then probably https:/// ....
+					# put key file in to initramfs
+					source="${location#*//}"
+					destination="${source%/*}"
+					destination="$offset$destination"
+					mkdir -p $destination
+
+					if test -f "$source"; then
+						cp $source $destination
+					else
+						echo "key not found for $j"
+					fi
+
+					echo "coppied $source to $destination for $j"
+				else
+					echo "nothing to do for $j ..."
+				fi
+			fi
+	#	echo "NEXT !!!"
+
+
+		done
+	done
+
+
+}
 
 check_mounts() {
 
@@ -52,7 +136,6 @@ function prep_fs() {
 function get_stage3() {
 
 	echo "getting stage 3"
-	sleep 5
 
 	case $1 in
 		"gnome")
@@ -95,11 +178,11 @@ function get_stage3() {
 	wget $mirror$file --directory-prefix=$2
 	echo "decompressing $file..."
 	tar xf $2/$file -C $2
-	rm $2/$file 
+	rm $2/$file
 }
 
-function config_env() {
-
+function config_env()
+{
 	mkdir -p $1/var/lib/portage/binpkgs
 	mkdir -p $1/var/lib/portage/distfiles
 	mkdir -p $1/srv/crypto/
@@ -115,7 +198,6 @@ function config_env() {
 	#ls -ail $dst
 	#pwd $dst
 	#echo "#######################################################################################"
-	#sleep 20
 	#echo "rsync -r -l -H -p --delete-before --progress $src $dst"
 
 	echo "copying over kernel source..."
@@ -126,7 +208,6 @@ function config_env() {
 
 	echo "copying over kernel modules..."
 	rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
-
 
 	# OFFSET TO CURRENT WORKING DIRECTORY ,ADD SUPPORT FOR $1 ARG;/....
 	#offset="$(pwd)"
@@ -170,13 +251,15 @@ function config_mngmt() {
 
 	ls -ail ./packages/$1.pkgs
 	echo "what do you see ?"
-	sleep 10
 
 	cat ./packages/$1.pkgs >> $offset/package.list
 
 	tar cfv $offset/config.tar -T ./etc.cfg
 	#cp ./config.tar $offset
 	cp /root $offset -Rp
+	#  attempt to get past having to login twice
+	cp /home $offset -Rp
+
 }
 
 function profile_settings() {
@@ -192,7 +275,6 @@ function profile_settings() {
 	case ${key#17.1/*} in
 		'hardened'|'desktop/plasma'|'desktop/gnome'|'selinux'|'hardened/selinux')
 			echo "configuring common for hardened, plasma and gnome..."
-			sleep 5
 			cp /root/bastion.start /etc/local.d/bastion.start
 			rc-update add local
 			rc-update add zfs-mount
@@ -209,7 +291,7 @@ function profile_settings() {
 	case ${key#17.1/*} in
 		'desktop/plasma/systemd'|'desktop/gnome/systemd'|'systemd')
 			echo "configuring systemd..."
-			sleep 5
+			systemctl enable NetworkManager
 			systemctl enable zfs.target
 			systemctl enable zfs-import-cache
 			systemctl enable zfs-mount
@@ -219,16 +301,18 @@ function profile_settings() {
 		;;
 	esac
 
-	# generic desktop
+	# generic console
 	case ${key#17.1/*} in
 		'systemd'|'hardened')
+			echo "generic console setup..."
 		;;
 	esac
 
-	# generic console
+	# generic desktop
 	case ${key#17.1/*} in
 		'desktop/plasma'|'desktop/gnome')
-			emerge --ask --noreplace gui-libs/display-manager-init --ask=n
+			echo "generic desktop setup"
+			sed -i "/DISPLAYMANAGER/c DISPLAYMANAGER='gdm'" /etc/conf.d/display-manager
 		;;
 	esac
 
@@ -236,9 +320,10 @@ function profile_settings() {
 	case ${key#17.1/*} in
 		'desktop/plasma'|'desktop/gnome')
 			echo "configuring openrc common graphical environments: plasma and gnome..."
-			sleep 5
-			rc-update add display-manager default
+			emerge --ask --noreplace gui-libs/display-manager-init --ask=n
+			rc-update add elogind boot
 			rc-update add dbus
+			rc-update add display-manager default
 		;;
 	esac
 
@@ -246,7 +331,7 @@ function profile_settings() {
 	case ${key#17.1/*} in
 		'desktop/plasma/systemd'|'desktop/gnome/systemd')
 			echo "configuring systemd common graphical environments: plasma and gnome..."
-			sleep 5
+			systemctl enable gdm.service
 		;;
 	esac
 
@@ -265,7 +350,6 @@ function profile_settings() {
 	case ${key#17.1/} in
 		'desktop/gnome'|'desktop/gnome/systemd')
 			echo "configuring gnome..."
-			sed -i "/DISPLAYMANAGER/c DISPLAYMANAGER='gdm'" /etc/conf.d/display-manager
 		;;
 	esac
 
@@ -273,18 +357,16 @@ function profile_settings() {
 	# specific use cases for individual profiles
 	case ${key#17.1/} in
 		'desktop/plasma')
-			echo "configuring plasma"
-			sed -i "/DISPLAYMANAGER/c DISPLAYMANAGER='sddm'" /etc/conf.d/display-manager
+			echo "configuring plasma/openrc"
 		;;
 		'desktop/plasma/systemd')
-			systemctl enable sddm
+			echo "configuring plasma/systemd"
 		;;
 		'desktop/gnome')
-			echo "configuring gnome..."
-			rc-update add elogind boot
+			echo "configuring gnome/openrc..."
 		;;
 		'desktop/gnome/systemd')
-			systemctl enable gdm.service
+			echo "configuring gnome-systemd"
 		;;
 		'systemd')
 			echo "nothing special for systemd"
@@ -321,7 +403,6 @@ function common() {
 	df /
 
 	echo "which device /??"
-	sleep 5
 
 	echo "SYNC EMERGE !!!!!"
 	emerge $emergeOpts --sync --ask=n
@@ -361,7 +442,7 @@ function common() {
 
 	useradd sysop
 	sudo sh -c 'echo sysop:@PCXmacSy$ | chpasswd'
-
+	usermod -a -G wheel sysop
 
 	qlist -I | sort | uniq > base.pkgs
 
@@ -374,7 +455,6 @@ function common() {
 	ls
 	echo ls | grep $file_name
 	echo "##############################################################"
-	sleep 30
 
 	cat ./package.list | sort | uniq > profile.pkgs
 	comm -1 -3 base.pkgs profile.pkgs > tobe.pkgs
@@ -412,12 +492,12 @@ do
 	case "${x}" in
 		deploy=*)
 			offset="${x#*=}"
+			check_mounts $offset
 		;;
 	esac
 done
 
 echo "offset = $offset"
-#sleep 10
 
 # clear out working directory if set
 for x in $@
@@ -425,7 +505,6 @@ do
 	#echo $x
 	case "${x}" in
 		clear)
-			check_mounts $offset
 			prep_fs $offset
 		;;
 	esac
@@ -443,7 +522,14 @@ do
 					#cd $offset
 					echo "profile = $x"
 					echo "exuberant = ${x#*=}"
-					get_stage3 ${x#*=} $offset
+#					get_stage3 ${x#*=} $offset
+					echo "running zfs_keys"
+					zfs_keys $offset
+
+
+					exit
+
+
 					config_env $offset
 					echo "executing $1"
 				;;
