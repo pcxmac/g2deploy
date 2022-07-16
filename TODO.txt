@@ -2,3 +2,5 @@
 need to correct :
 
 	need to validate all installs
+	not writing zfs key to plasma variant
+	need to verify config.tar is not stale or being copied from source wrong

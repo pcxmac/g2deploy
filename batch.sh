@@ -9,7 +9,7 @@
 # try to mask a lot of the output (like news read all) that clutters output :: option = { verbose=no }
 
 #!/bin/bash
-
+#set -x
 # setup resolv.conf and file system...
 
 # ARGS $2 = destination $1= profile (default openrc,current directory)
@@ -26,10 +26,18 @@ function zfs_keys() {
 	pools="$(cat /proc/mounts | grep "$offset " | awk '{print $1}')"
 	pools="${pools%/*}"
 
+	echo "############################################################################# ZFS"
+
+	echo "$pools"
+	sleep 2
+
 	for i in $pools
 	do
 		# query datasets
 		listing="$(zfs list | grep "$i/" | awk '{print $1}')"
+
+		echo "$listing"
+		sleep 5
 
 		for j in $listing
 		do
@@ -64,6 +72,7 @@ function zfs_keys() {
 					mkdir -p $destination
 
 					if test -f "$source"; then
+						echo "copying $source to $destination"
 						cp $source $destination
 					else
 						echo "key not found for $j"
@@ -146,12 +155,12 @@ function get_stage3() {
 		;;
 		"gnome/systemd")
 			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-systemd/"
-			file="$(curl -s $mirror | grep 'stage3-amd64-systemd' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
+			file="$(curl -s $mirror | grep 'stage3-amd64-desktop-systemd' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
 			file="${file%.xz*}.xz"
 		;;
 		"plasma/systemd")
 			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-systemd/"
-			file="$(curl -s $mirror | grep 'stage3-amd64-systemd' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
+			file="$(curl -s $mirror | grep 'stage3-amd64-desktop-systemd' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
 			file="${file%.xz*}.xz"
 		;;
 		*)
@@ -227,7 +236,7 @@ function config_mngmt() {
 	#key=$1
 	#key=${key##*/}
 	offset=$2
-
+	path=$1
 	#cp ./$key.pkgs $offset/$key.pkgs
 	# add profile specific packages to the package list. $key + common.pkgs
 
@@ -235,16 +244,29 @@ function config_mngmt() {
 
 	echo "######################################################################################"
 
-	ls -ail ./packages/$1.pkgs
+	ls -ail ./packages/$path.pkgs
 	echo "what do you see ?"
 
-	cat ./packages/$1.pkgs >> $offset/package.list
+	cat ./packages/$path.pkgs >> $offset/package.list
 
 	tar cfv $offset/config.tar -T ./etc.cfg
+	tar xfv $offset/config.tar -C $offset
+	rm $offset/config.tar
+
 	#cp ./config.tar $offset
 	cp /root $offset -Rp
 	#  attempt to get past having to login twice
 	cp /home $offset -Rp
+
+	###########################################
+
+	uses="$(cat ./packages/$path.conf)"
+	sed -i "/USE/c $uses" $offset/etc/portage/make.conf
+#	echo "############################################"
+#	ls -ail  $offset/etc/portage/make.conf	
+#	cat $offset/etc/portage/make.conf | grep "USE="
+#	echo "what do you see in make.conf"
+#	sleep 20
 
 }
 
@@ -261,7 +283,9 @@ function profile_settings() {
 	case ${key#17.1/*} in
 		'hardened'|'desktop/plasma'|'desktop/gnome'|'selinux'|'hardened/selinux')
 			echo "configuring common for hardened, plasma and gnome..."
-			cp /root/bastion.start /etc/local.d/bastion.start
+
+			#cp /root/bastion.start /etc/local.d/bastion.start
+
 			rc-update add local
 			rc-update add zfs-mount
 			rc-update add zfs-load-key boot
@@ -317,7 +341,6 @@ function profile_settings() {
 	case ${key#17.1/*} in
 		'desktop/plasma/systemd'|'desktop/gnome/systemd')
 			echo "configuring systemd common graphical environments: plasma and gnome..."
-			systemctl enable gdm.service
 		;;
 	esac
 
@@ -347,12 +370,14 @@ function profile_settings() {
 		;;
 		'desktop/plasma/systemd')
 			echo "configuring plasma/systemd"
+			systemctl enable sddm.service
 		;;
 		'desktop/gnome')
 			echo "configuring gnome/openrc..."
 		;;
 		'desktop/gnome/systemd')
 			echo "configuring gnome-systemd"
+			systemctl enable gdm.service
 		;;
 		'systemd')
 			echo "nothing special for systemd"
@@ -366,17 +391,14 @@ function profile_settings() {
 		'hardened/selinux')
 			echo "hardened/selinux not supported"
 		;;
-		*)
-			echo "default settings ?"
-		;;
 	esac
-
 }
+
 
 function common() {
 
-	tar xfv config.tar
-	rm config.tar
+#	tar xfv config.tar
+#	rm config.tar
 
 	emergeOpts="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99 --exclude=sys-fs/zfs-kmod --exclude=sys-kernel/gentoo-sources"
 	emergeOpts2="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99"
@@ -387,7 +409,6 @@ function common() {
 	eselect locale set en_US.utf8
 
 	df /
-
 	echo "which device /??"
 
 	echo "SYNC EMERGE !!!!!"
@@ -405,7 +426,7 @@ function common() {
 
 	echo "ZFS EMERGE BUILD DEPS ONLY !!!!!"
 	emerge $emergeOpts --onlydeps =zfs-9999 =zfs-kmod-9999
-
+	# seems outmoded ... perhahs redundant ... maybenot ...
 
 	echo "BUILDING KERNEL ..."
 
@@ -505,12 +526,11 @@ do
 			# if profile is specified any of...
 			case "${x#*=}" in
 				hardened*|systemd|plasma*|gnome*|selinux)
-					#cd $offset
 					echo "profile = $x"
 					echo "exuberant = ${x#*=}"
 					get_stage3 ${x#*=} $offset
 					echo "running zfs_keys"
-					#zfs_keys $offset
+					zfs_keys $offset
 					config_env $offset
 					echo "executing $1"
 				;;
@@ -560,17 +580,19 @@ do
 				;;
 				*)
 					echo "$string, exiting ..."
-					exit
 				;;
 			esac
 
 			config_mngmt $string $offset
 			chroot $offset /bin/bash -c "common $string"
 			chroot $offset /bin/bash -c "profile_settings $string"
-
+			echo "after profile settings..."
 		;;
 	esac
+	echo "after cases"
 done
+
+# ERROR
 
 echo "cleaning up mounts"
 check_mounts $offset
@@ -583,3 +605,4 @@ check_mounts $offset
 #			aufs=1
 #			echo "${x#*=}"
 #		;;
+

@@ -2,3 +2,4 @@ kde-plasma/plasma-desktop
 x11-misc/sddm
 kde-plasma/plasma-meta
 gnome-base/gdm
+kde-apps/konsole

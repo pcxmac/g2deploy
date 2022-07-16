@@ -1,4 +1,6 @@
 
 
 pkgs = recommended packges
-uses = useflag files (single text file per profile)
+use = useflag files (single text file per profile)
+conf = make.conf replacement lines
+etc = etc file listing per profile
