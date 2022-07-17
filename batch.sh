@@ -150,7 +150,8 @@ function get_stage3() {
 	echo "mirror = $mirror, file = $file"
 	wget $mirror$file --directory-prefix=$2
 	wget $mirror$file.asc --directory-prefix=$2
-	gpg --verify $2/$mirror$file.asc
+	gpg --verify $2/$file.asc
+	rm $2/$file.asc
 
 	echo "decompressing $file..."
 	tar xf $2/$file -C $2
@@ -246,11 +247,19 @@ function profile_settings() {
 			echo "configuring systemd..."
 			systemctl enable NetworkManager
 			systemctl enable zfs.target
+			systemctl enable zfs-import
 			systemctl enable zfs-import-cache
 			systemctl enable zfs-mount
 			systemctl enable zfs-import.target
 			systemctl enable cronie
 			systemctl enable autofs
+
+			# mask resolved and rpcbind (can unmask in the future)
+			rm /etc/systemd/system/systemd-resolved.service
+			rm /etc/systemd/system/rpcbind.service
+			ln -s /dev/null /etc/systemd/system/systemd-resolved.service
+			ln -s /dev/null /etc/systemd/system/rpcbind.service
+
 		;;
 	esac
 
@@ -405,7 +414,8 @@ function common() {
 	# install dev keys for gentoo
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
-	zgenhostid
+####USE ZGENHOSTID ON NEW ZPOOLS
+	#zgenhostid
 	eix-update
 	updatedb
 }
