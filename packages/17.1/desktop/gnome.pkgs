@@ -1,5 +1,5 @@
 sys-auth/elogind
-gnome-base/gnome
+gnome-base/gnome-light
 gnome-base/gnome-desktop
 gnome-base/gnome-control-center
 gnome-extra/gnome-shell-extensions

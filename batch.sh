@@ -26,11 +26,6 @@ function zfs_keys() {
 	pools="$(cat /proc/mounts | grep "$offset " | awk '{print $1}')"
 	pools="${pools%/*}"
 
-	echo "############################################################################# ZFS"
-
-	echo "$pools"
-	sleep 2
-
 	for i in $pools
 	do
 		# query datasets
@@ -77,39 +72,25 @@ function zfs_keys() {
 					else
 						echo "key not found for $j"
 					fi
-
 					echo "coppied $source to $destination for $j"
 				else
 					echo "nothing to do for $j ..."
 				fi
 			fi
-
-
 		done
-
 	done
 }
 
 
 check_mounts() {
 
-#	attempts to unmount any file systems associated with the install location, this is required, before mounting
-#	all strings should follow the composition : '$1\/\|$1 ' .. this is to say, all succeeding directories and original path
-#	fix, do not admit the initial directory, as it is to remain mounted if was or was not, is or to be... '$1\/'
-
-	#directory="$(cat /proc/mounts | grep "$dir\/\|$dir " | awk '{print $2}')"
-	#directory="$(cat /proc/mounts | grep "$dir\/" | awk '{print $2}')"
 	dir="$(echo "$1" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
 	output="$(cat /proc/mounts | grep "$dir\/" | wc -l)"
-	#echo "initial output = $output"
 	while [[ "$output" != 0 ]]
 	do
 		#cycle=0
 		while read -r mountpoint
 		do
-			#((cycle++))
-			#echo "proc-mounts : $mountpoint"
-			#echo "unmounting $mountpoint"
 			umount $mountpoint > /dev/null 2>&1
 		done < <(cat /proc/mounts | grep "$dir\/" | awk '{print $2}')
 		#echo "cycles = $cycle"
@@ -121,11 +102,8 @@ check_mounts() {
 function clear_fs() {
 	# VERIFY ZFS MOUNT IS in DF
 	echo "prepfs ~ $1"
-	#offset=$(pwd)
-	#cd $1
 	find $1 -maxdepth 1 ! -wholename $1 ! -wholename './batch.sh' ! -wholename './*.pkgs' ! -wholename './*.txt' ! -name . -exec rm -r "{}" \;
 	echo "finished prepfs ... $1"
-	#find $1 -maxdepth 1 ! -wholename $1 ! -wholename './batch.sh' ! -wholename './*.pkgs' ! -wholename './*.txt' ! -name .
 }
 
 function get_stage3() {
@@ -171,6 +149,9 @@ function get_stage3() {
 
 	echo "mirror = $mirror, file = $file"
 	wget $mirror$file --directory-prefix=$2
+	wget $mirror$file.asc --directory-prefix=$2
+	gpg --verify $2/$mirror$file.asc
+
 	echo "decompressing $file..."
 	tar xf $2/$file -C $2
 	rm $2/$file
@@ -183,17 +164,11 @@ function config_env()
 	mkdir -p $1/srv/crypto/
 	mkdir -p $1/var/db/repos/gentoo
 
-	#src=/usr/src/$(eselect kernel list | grep '*' | awk '{print $3}')
 	src=/usr/src/linux-$(uname --kernel-release)
 
 	# REQUIRES BEING INVOKED IN CORRECT ROOTFS
 
 	dst=$1/usr/src
-
-	#ls -ail $dst
-	#pwd $dst
-	#echo "#######################################################################################"
-	#echo "rsync -r -l -H -p --delete-before --progress $src $dst"
 
 	echo "copying over kernel source..."
 	rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
@@ -204,13 +179,7 @@ function config_env()
 	echo "copying over kernel modules..."
 	rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
 
-	# OFFSET TO CURRENT WORKING DIRECTORY ,ADD SUPPORT FOR $1 ARG;/....
-	#offset="$(pwd)"
-	#offset="$(pwd $1)"
-	#mSize="$(awk '$3=="kB"{$2=$2/1024^2;$3="GB";} 1' /proc/meminfo | column -t | grep 'MemFree' | awk '{print $2}')"
 	mSize="$(cat /proc/meminfo | column -t | grep 'MemFree' | awk '{print $2}')"
-	#mSize="${mSize%%.*}"
-	#mSize=$(expr $mSize / 2)
 	mSize="${mSize}K"
 	# MOUNTS
 	echo "msize = $mSize"
@@ -223,22 +192,14 @@ function config_env()
 	mount -t tmpfs -o size=$mSize tmpfs $1/tmp
 	mount -t tmpfs tmpfs $1/var/tmp
 	mount -t tmpfs tmpfs $1/run
-	#mount -t nfs earth.hypokrites.me:/gentoo-distfiles $(pwd)/var/lib/portage/distfiles || echo "unable to mount distfiles !"
-	#mount -t nfs earth.hypokrites.me:/gentoo-pkgs $(pwd)/var/lib/portage/binpkgs || echo "unable to mount binpkgs !"
-	## RUN
-	#mount -t nfs 192.168.2.200:/gentoo-distfiles $(pwd)/var/lib/portage/distfiles || echo "unable to mount distfiles !"
-	#mount -t nfs 192.168.2.200:/gentoo-pkgs $(pwd)/var/lib/portage/binpkgs || echo "unable to mount binpkgs !"
 	mount --bind /var/lib/portage/binpkgs $1/var/lib/portage/binpkgs
 	mount --bind /var/lib/portage/distfiles $1/var/lib/portage/distfiles
 }
 
 function config_mngmt() {
-	#key=$1
-	#key=${key##*/}
+
 	offset=$2
 	path=$1
-	#cp ./$key.pkgs $offset/$key.pkgs
-	# add profile specific packages to the package list. $key + common.pkgs
 
 	cp ./common.pkgs $offset/package.list
 
@@ -253,39 +214,21 @@ function config_mngmt() {
 	tar xfv $offset/config.tar -C $offset
 	rm $offset/config.tar
 
-	#cp ./config.tar $offset
 	cp /root $offset -Rp
 	#  attempt to get past having to login twice
 	cp /home $offset -Rp
 
-	###########################################
-
 	uses="$(cat ./packages/$path.conf)"
 	sed -i "/USE/c $uses" $offset/etc/portage/make.conf
-#	echo "############################################"
-#	ls -ail  $offset/etc/portage/make.conf	
-#	cat $offset/etc/portage/make.conf | grep "USE="
-#	echo "what do you see in make.conf"
-#	sleep 20
-
 }
 
 function profile_settings() {
 	key=$1
 
-	# openrc vs systemd generic
-	# desktop gnome-openrc
-	# desktop plasma-openrc
-	# desktop gnome-sysd
-	# desktop plasma-sysd
-
 	# openrc
 	case ${key#17.1/*} in
 		'hardened'|'desktop/plasma'|'desktop/gnome'|'selinux'|'hardened/selinux')
 			echo "configuring common for hardened, plasma and gnome..."
-
-			#cp /root/bastion.start /etc/local.d/bastion.start
-
 			rc-update add local
 			rc-update add zfs-mount
 			rc-update add zfs-load-key boot
@@ -341,6 +284,7 @@ function profile_settings() {
 	case ${key#17.1/*} in
 		'desktop/plasma/systemd'|'desktop/gnome/systemd')
 			echo "configuring systemd common graphical environments: plasma and gnome..."
+			systemctl enable gdm.service
 		;;
 	esac
 
@@ -362,7 +306,6 @@ function profile_settings() {
 		;;
 	esac
 
-
 	# specific use cases for individual profiles
 	case ${key#17.1/} in
 		'desktop/plasma')
@@ -370,14 +313,12 @@ function profile_settings() {
 		;;
 		'desktop/plasma/systemd')
 			echo "configuring plasma/systemd"
-			systemctl enable sddm.service
 		;;
 		'desktop/gnome')
 			echo "configuring gnome/openrc..."
 		;;
 		'desktop/gnome/systemd')
 			echo "configuring gnome-systemd"
-			systemctl enable gdm.service
 		;;
 		'systemd')
 			echo "nothing special for systemd"
@@ -397,9 +338,6 @@ function profile_settings() {
 
 function common() {
 
-#	tar xfv config.tar
-#	rm config.tar
-
 	emergeOpts="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99 --exclude=sys-fs/zfs-kmod --exclude=sys-kernel/gentoo-sources"
 	emergeOpts2="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99"
 
@@ -407,9 +345,6 @@ function common() {
 	emerge-webrsync
 	locale-gen -A
 	eselect locale set en_US.utf8
-
-	df /
-	echo "which device /??"
 
 	echo "SYNC EMERGE !!!!!"
 	emerge $emergeOpts --sync --ask=n
@@ -436,10 +371,8 @@ function common() {
 	zcat /proc/config.gz > /usr/src/linux/.config
 
 	echo "EMERGE ZFS !!!"
-	#cd /usr/src/linux
 	emerge $emergeOpts2 =zfs-9999 =zfs-kmod-9999
 	sync
-	#cd /
 
 	echo "UPDATE EMERGE !!!!!"
 	emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
@@ -454,14 +387,8 @@ function common() {
 	qlist -I | sort | uniq > base.pkgs
 
 	key=$1
-	#emerge $emergeOpts $(cat ./${key##*/}.list)
 
 	file_name="${key##*/}"
-
-	echo "$(pwd)"
-	ls
-	echo ls | grep $file_name
-	echo "##############################################################"
 
 	cat ./package.list | sort | uniq > profile.pkgs
 	comm -1 -3 base.pkgs profile.pkgs > tobe.pkgs
@@ -475,20 +402,15 @@ function common() {
 
 	echo "SETTING SERVICES"
 
-	#rm /etc/hostid
+	# install dev keys for gentoo
+	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
 	zgenhostid
 	eix-update
 	updatedb
-
-
 }
 
 export PYTHONPATH=""
-#offset=$(pwd)
-#echo "ENTERING CHROOT ..."
-#chroot $offset /bin/bash <<"EOT"
-
 export -f common
 export -f profile_settings
 
@@ -592,17 +514,6 @@ do
 	echo "after cases"
 done
 
-# ERROR
-
 echo "cleaning up mounts"
 check_mounts $offset
-
-
-#		aufs)
-#			echo "aufs =1"
-#		;;
-#		aufs\=*)
-#			aufs=1
-#			echo "${x#*=}"
-#		;;
 
