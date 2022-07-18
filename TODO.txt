@@ -1,12 +1,47 @@
 
 need to correct :
 
-	need to validate all installs
+*	need to validate all installs
+		per major version
+
 	need to incorporate firewall
+
 	need to get rid of 'double login - gdm'
-	need to integrate ntp
+		~research issue, could be a normal thing
+
 	
 
 * eventually incorporate this function in to a dom-0 (spawn)
 
-	pair w/ vpn 
+	.crypt
+	[CRYPT] function
+		pair w/ vpn 
+		key management (gpg)
+		domain key management (letsencrypt)
+
+	.pkg
+	[PKG] function
+		sync service		- rsync
+		distfile repo		- rsync
+		binpkg	service		- mapped file system
+
+	.proxy
+	PROXY (web queries, wget, curl) 50-100GB	
+
+
+	.dns
+	.dhcp
+	DNS	[ iface . container . subdomain . domain . tld ]
+	DHCP 
+		all subdomains ie VMs or physical machines are controlled by the dom-0
+		all containers+ will be managed by the subdomain, all IPs are arbitrary, and change dynamically
+		all names are remapped regularly, all names are linked to MAC rules (not literal MACs) 
+		DNS queries have to be secure inside a domain (encrypted, before tunnel)
+		DHCP has to be encrypted as well, certificates help authenticate the issuer
+
+
+	.email
+	EMAIL (POP3S/IMAPS), FORWARD (SMTP)
+
+		dom0.email connects to smtp service some where. smtp servers are employed arbitrarily, dom0 holds email in a 
+		secure repo
