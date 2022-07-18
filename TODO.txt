@@ -2,3 +2,11 @@
 need to correct :
 
 	need to validate all installs
+	need to incorporate firewall
+	need to get rid of 'double login - gdm'
+	need to integrate ntp
+	
+
+* eventually incorporate this function in to a dom-0 (spawn)
+
+	pair w/ vpn 

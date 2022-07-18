@@ -1,3 +1,4 @@
+net-misc/openntpd
 net-analyzer/nmap
 net-dns/bind-tools
 sys-apps/lm-sensors

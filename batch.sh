@@ -102,8 +102,20 @@ check_mounts() {
 function clear_fs() {
 	# VERIFY ZFS MOUNT IS in DF
 	echo "prepfs ~ $1"
-	find $1 -maxdepth 1 ! -wholename $1 ! -wholename './batch.sh' ! -wholename './*.pkgs' ! -wholename './*.txt' ! -name . -exec rm -r "{}" \;
-	echo "finished prepfs ... $1"
+
+	# older inplace delete
+	#find $1 -maxdepth 1 ! -wholename $1 ! -wholename './batch.sh' ! -wholename './*.pkgs' ! -wholename './*.txt' ! -name . -exec rm -r "{}" \;
+
+	echo "deleting old files ..."
+	count="$(find $1/ | wc -l)"
+	if [[ $count > 1 ]]
+	then
+		rm -rv $1/* | pv -l -s $count 2>&1 > /dev/null
+	else
+		echo -e "done "
+	fi
+
+	echo "finished clear_fs ... $1"
 }
 
 function get_stage3() {
@@ -122,7 +134,7 @@ function get_stage3() {
 			file="${file%.xz*}.xz"
 		;;
 		"hardened")
-			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-openrc/"
+			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/"
 			file="$(curl -s $mirror | grep 'stage3-amd64-openrc' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
 			file="${file%.xz*}.xz"
 		;;
@@ -132,12 +144,12 @@ function get_stage3() {
 			file="${file%.xz*}.xz"
 		;;
 		"gnome/systemd")
-			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-systemd/"
+			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/"
 			file="$(curl -s $mirror | grep 'stage3-amd64-desktop-systemd' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
 			file="${file%.xz*}.xz"
 		;;
 		"plasma/systemd")
-			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-systemd/"
+			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/"
 			file="$(curl -s $mirror | grep 'stage3-amd64-desktop-systemd' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
 			file="${file%.xz*}.xz"
 		;;
@@ -221,6 +233,9 @@ function config_mngmt() {
 
 	uses="$(cat ./packages/$path.conf)"
 	sed -i "/USE/c $uses" $offset/etc/portage/make.conf
+
+	# need test for this
+	cp /etc/zfs/zpool.cache $offset/etc/zfs
 }
 
 function profile_settings() {
@@ -238,6 +253,7 @@ function profile_settings() {
 			rc-update add autofs
 			rc-update add cronie
 			rc-update add syslog-ng
+			rc-update add ntpd
 		;;
 	esac
 
@@ -253,12 +269,10 @@ function profile_settings() {
 			systemctl enable zfs-import.target
 			systemctl enable cronie
 			systemctl enable autofs
-
+			systemctl enable ntpd
 			# mask resolved and rpcbind (can unmask in the future)
-			rm /etc/systemd/system/systemd-resolved.service
-			rm /etc/systemd/system/rpcbind.service
-			ln -s /dev/null /etc/systemd/system/systemd-resolved.service
-			ln -s /dev/null /etc/systemd/system/rpcbind.service
+			ln -sf /dev/null /etc/systemd/system/systemd-resolved.service
+			ln -sf /dev/null /etc/systemd/system/rpcbind.service
 
 		;;
 	esac
@@ -301,17 +315,26 @@ function profile_settings() {
 
 	echo "sampling @ ${key#17.1/}"
 
+
 	# generic plasma
-	case ${key#17.1/} in
+	case ${key#17.1/*} in
 		'desktop/plasma'|'desktop/plasma/systemd')
 			echo "configuring plasma..."
+			dir="/var/lib/AccountsService/users"
+			mkdir -p $dir
+			printf "[User]\nSession=plasmawayland\nIcon=/home/sysop/.face\nSystemAccount=false\n " >  $dir/sysop
+			printf "[User]\nSession=plasmawayland\nIcon=/home/root/.face\nSystemAccount=false\n " > $dir/root
 		;;
 	esac
 
 	# generic gnome
-	case ${key#17.1/} in
+	case ${key#17.1/*} in
 		'desktop/gnome'|'desktop/gnome/systemd')
 			echo "configuring gnome..."
+			dir="/var/lib/AccountsService/users"
+			mkdir -p $dir
+			printf "[User]\nSession=gnome-wayland\nIcon=/home/sysop/.face\nSystemAccount=false\n " > $dir/sysop
+			printf "[User]\nSession=gnome-wayland\nIcon=/home/root/.face\nSystemAccount=false\n " > $dir/root
 		;;
 	esac
 
@@ -510,9 +533,9 @@ do
 					string="17.1/hardened/selinux "
 					echo "selinux is not a $string"
 				;;
-				*)
-					echo "$string, exiting ..."
-				;;
+				##*)
+				##	echo "$string, exiting ..."
+				##;;
 			esac
 
 			config_mngmt $string $offset
@@ -521,7 +544,7 @@ do
 			echo "after profile settings..."
 		;;
 	esac
-	echo "after cases"
+	echo "after cases ${x}"
 done
 
 echo "cleaning up mounts"
