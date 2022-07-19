@@ -8,7 +8,7 @@ need to correct :
 
 	need to get rid of 'double login - gdm'
 		~research issue, could be a normal thing
-
+		video driver issue ? qxl /?
 	
 
 * eventually incorporate this function in to a dom-0 (spawn)
@@ -27,8 +27,8 @@ need to correct :
 
 	.proxy
 	PROXY (web queries, wget, curl) 50-100GB	
-
-
+	/etc/wgetrc (https/ftp/https_proxy)
+	
 	.dns
 	.dhcp
 	DNS	[ iface . container . subdomain . domain . tld ]
