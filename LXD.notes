@@ -1,3 +1,23 @@
+HOW TO GET LXD TO WORK GOOD ON NETWORKING !!!!!
+
+set the default profile's nic ::
+
+network moves to parent: system-adatper, like enp1s0
+add nictype: macvlan
+
+change will only work by disabling network: lxdbr0 and replacing it with parent.
+
+"lxc profile edit default"
+
+
+
+
+add wan adapter to LXD bridge.
+/etc/conf.d/net
+
+DO NOT USE NETIFRC, leave blank, period. dhcpcd is not used.
+its not known whether this works only for qemu-vms
+
 
 lxd init
 

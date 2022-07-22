@@ -1,3 +1,11 @@
+sys-apps/usermode-utilities
+net-vpn/wireguard-tools
+dev-util/bpftrace
+dev-util/strace
+net-misc/bridge-utils
+net-dns/bind-tools
+net-analyzer/traceroute
+net-analyzer/tcpdump
 net-misc/openntpd
 net-analyzer/nmap
 net-dns/bind-tools
