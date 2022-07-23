@@ -1,3 +1,4 @@
+app-misc/screen
 sys-apps/usermode-utilities
 net-vpn/wireguard-tools
 dev-util/bpftrace

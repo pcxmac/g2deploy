@@ -38,7 +38,7 @@ zpool create \
 	-O keyformat=passphrase \
 	-O keylocation=prompt \
 	-O mountpoint=/srv/zfs/$2 $2 \
-	$14
+	$14 -f
 
 zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key $2
 
@@ -52,15 +52,15 @@ mount $12 $mnt
 cp /boot/* $mnt -R
 
 new_uuid=$(blkid | grep $14 | awk '{print $3}' | tr -d '"')
-old_uuid=$(cat /boot/EFI/boot/refind.conf | grep 'options' | awk '{print $2}' | uniq | tr -d '"')
+#old_uuid=$(cat /boot/EFI/boot/refind.conf | grep 'options' | awk '{print $2}' | uniq | tr -d '"')
 
 new_uuid=${new_uuid#*=}
-old_uuid=${old_uuid#*=}
+#old_uuid=${old_uuid#*=}
 
 echo "new uuid = $new_uuid"
-echo "old uuid = $old_uuid"
+#echo "old uuid = $old_uuid"
 
-sed -i "s/UUID=$old_uuid/UUID=$new_uuid/" $mnt/EFI/boot/refind.conf
+sed -iE "s/UUID=[0-9]+ /$new_uuid/g" $mnt/EFI/boot/refind.conf
 
 # need to replace pool as well
 
@@ -76,7 +76,26 @@ sed -i "s/root=ZFS=$curr_pool/root=ZFS=$next_pool/" $mnt/EFI/boot/refind.conf
 
 # ZFS SEND RECV + PV
 
-#zfs snapshot curr_pool@
+partitions=(hardened systemd plasma plasmad gnome gnomed)
 
+echo "preparing for send"
+sleep 10
+zfs send $curr_pool/g2@snap | pv | zfs recv $2/g2
+
+echo "preparing for partitions"
+sleep 10
+
+s
+
+for x in $partitions
+do
+	zfs create $2/$x
+	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key $2/$x
+
+	screen ./batch.sh deploy=/srv/zfs/zroot/$x clear profile=$x&
+
+done
+
+# zfs snapshot curr_pool@
 # UPDATE autofs for /boot
 # UPDATE fstab for swap
