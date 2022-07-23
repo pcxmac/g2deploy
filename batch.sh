@@ -223,7 +223,9 @@ function config_mngmt() {
 
 	cat ./packages/$path.pkgs >> $offset/package.list
 
+	echo "pwd = $pwd"
 	tar cfv $offset/config.tar -T ./etc.cfg
+
 	tar xfv $offset/config.tar -C $offset
 	rm $offset/config.tar
 
@@ -500,6 +502,8 @@ done
 string="invalid profile"
 for x in $@
 do
+	echo "before cases $x"
+
 	case "${x}" in
 		profile=*)
 			case "${x#*=}" in
@@ -519,23 +523,18 @@ do
 				;;
 				'selinux')
 					string="17.1/selinux "
-					echo "selinux is not a $string"
+					echo "${x#*=} is not supported [selinux]"
 				;;
 				'plasma/systemd')
 					string="17.1/desktop/plasma/systemd "
-					echo "selinux is not a $string"
 				;;
 				'gnome/systemd')
 					string="17.1/desktop/gnome/systemd "
-					echo "selinux is not a $string"
 				;;
 				'hardened/selinux')
 					string="17.1/hardened/selinux "
-					echo "selinux is not a $string"
+					echo "${x#*=} is not supported [selinux]"
 				;;
-				##*)
-				##	echo "$string, exiting ..."
-				##;;
 			esac
 
 			config_mngmt $string $offset
@@ -543,6 +542,8 @@ do
 			chroot $offset /bin/bash -c "profile_settings $string"
 			echo "after profile settings..."
 		;;
+
+
 	esac
 	echo "after cases ${x}"
 done

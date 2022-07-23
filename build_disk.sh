@@ -3,12 +3,20 @@
 #$1 = disk
 #$2 = pool name
 
+# theoretical 	==> 	g1 ... snap g1@safe
+#				==> 	g1@safe clone to g2
+#				==>		g2@variant clone to g3 on boot
+#				<><>	g2@variant clone to build-test, new builds go to g2@variant_build :: g2@gnome_20220131
 
 # generates a standard disk,  EFI partition, zfs encrypted partition using the current system's key
 
 # look for existing key
 # verify the current drive is not mounted
 # verify gdisk and parted are installed
+
+
+##################################################################
+if false; then
 
 sgdisk --zap-all $1
 
@@ -76,26 +84,35 @@ sed -i "s/root=ZFS=$curr_pool/root=ZFS=$next_pool/" $mnt/EFI/boot/refind.conf
 
 # ZFS SEND RECV + PV
 
-partitions=(hardened systemd plasma plasmad gnome gnomed)
 
 echo "preparing for send"
 sleep 10
-zfs send $curr_pool/g2@snap | pv | zfs recv $2/g2
+zfs send $curr_pool/g2@snape | pv | zfs recv $2/g2
+
+####################################################################
+fi
 
 echo "preparing for partitions"
-sleep 10
 
-s
+#partitions=(hardened systemd plasma plasmad gnome gnomed)
+partitions=(plasmad gnomed)
 
-for x in $partitions
+for x in ${partitions[@]}
 do
-	zfs create $2/$x
-	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key $2/$x
+	echo "partition:: $x"
+#	zfs create $2/$x
+#	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key $2/$x
 
-	screen ./batch.sh deploy=/srv/zfs/zroot/$x clear profile=$x&
+#	screen -S "$next_pool/$x" -d -m ./batch.sh deploy=/srv/zfs/$next_pool/$x clear profile=$x
+	./batch.sh deploy=/srv/zfs/$next_pool/$x clear profile=$x
 
 done
 
-# zfs snapshot curr_pool@
-# UPDATE autofs for /boot
+# UPDATE autofs for /boot !!!!
 # UPDATE fstab for swap
+
+# CREATE newpool/distfiles ; /binpkgs ; /usr/local ; /root ;; snap root to /root@user ; /var/lib/lxd ; /var/lib/libvirt
+# root@user will serve as a template for regular users
+
+
+

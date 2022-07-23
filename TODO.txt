@@ -1,6 +1,8 @@
 
 need to correct :
 
+*  one a different tree install, contenst of everything were dumped in to this folder, called profile/...
+
 *	need to validate all installs
 		per major version
 
