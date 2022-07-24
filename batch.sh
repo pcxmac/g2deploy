@@ -32,7 +32,7 @@ function zfs_keys() {
 		listing="$(zfs list | grep "$i/" | awk '{print $1}')"
 
 		echo "$listing"
-		sleep 5
+		#sleep 5
 
 		for j in $listing
 		do
@@ -106,7 +106,7 @@ function clear_fs() {
 	# older inplace delete
 	#find $1 -maxdepth 1 ! -wholename $1 ! -wholename './batch.sh' ! -wholename './*.pkgs' ! -wholename './*.txt' ! -name . -exec rm -r "{}" \;
 
-	echo "deleting old files ..."
+	echo "deleting old files (calculating...)"
 	count="$(find $1/ | wc -l)"
 	if [[ $count > 1 ]]
 	then
