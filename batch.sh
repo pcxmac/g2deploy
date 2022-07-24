@@ -183,14 +183,13 @@ function config_env()
 
 	dst=$1/usr/src
 
-	echo "copying over kernel source..."
-	rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
-
-	dst="$1/lib/modules"
-	src="/lib/modules/$(uname --kernel-release)"
-
-	echo "copying over kernel modules..."
-	rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
+	############################################### DEPRICATED IN FAVOR OF UPDATE=POOL/SET
+	#echo "copying over kernel source..."
+	#rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
+	#dst="$1/lib/modules"
+	#src="/lib/modules/$(uname --kernel-release)"
+	#echo "copying over kernel modules..."
+	#rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
 
 	mSize="$(cat /proc/meminfo | column -t | grep 'MemFree' | awk '{print $2}')"
 	mSize="${mSize}K"
@@ -248,9 +247,9 @@ function profile_settings() {
 		'hardened'|'desktop/plasma'|'desktop/gnome'|'selinux'|'hardened/selinux')
 			echo "configuring common for hardened, plasma and gnome..."
 			rc-update add local
-			rc-update add zfs-mount
+			rc-update add zfs-mount boot
 			rc-update add zfs-load-key boot
-			rc-update add zfs-zed
+			rc-update add zfs-zed boot
 			rc-update add zfs-import boot
 			rc-update add autofs
 			rc-update add cronie
@@ -369,6 +368,55 @@ function profile_settings() {
 	esac
 }
 
+function update() {
+
+			# INPUTS : ${x#*=} - dataset
+
+			dataset=$1
+
+			# does refind exist ?
+			bootref="/boot/EFI/boot/refind.conf"
+			#bootref="${x#*=}"
+			if [ ! -f $bootref ]; then echo "unable to find $bootref"; exit; fi
+
+			# does dataset exist ?
+			# get mountpoint
+			mntpt="$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
+			if [ -z $mntpt ]; then echo "$dataset does not exist"; exit; fi
+
+			src=/usr/src/linux
+			src=$(readlink $src)
+
+			dst=$mntpt/usr/src/$src
+
+			echo "copying over kernel source... /usr/src/$src --> $dst"
+			rsync -a -r -l -H -p --delete-before --info=progress2 /usr/src/$src $dst
+
+
+#			src="/lib/modules/$(uname --kernel-release)"
+
+			src=${src#linux-*}
+			modsrc=/lib/modules/$src
+
+			dst=$mntpt$modsrc
+
+			echo "copying over kernel modules... $modsrc --> $dst"
+			rsync -a -r -l -H -p --delete-before --info=progress2 $modsrc $dst
+
+			# find section in refind.conf
+			line_number=$(grep -n "$dataset " $bootref  | cut -f1 -d:)
+			loadL=$((line_number-2))
+			initrdL=$((line_number-1))
+			echo "line # $line_number , src=  $src"
+			grep -n "$dataset " $bootref
+			sed -n "${loadL}s/loader.*/loader \\/linux\\/$src\\/vmlinuz/p" $bootref
+			sed -n "${initrdL}s/initrd.*/initrd \\/linux\\/$src\\/initramfs/p" $bootref
+			sed -i "${loadL}s/loader.*/loader \\/linux\\/$src\\/vmlinuz/" $bootref
+			sed -i "${initrdL}s/initrd.*/initrd \\/linux\\/$src\\/initramfs/" $bootref
+
+}
+
+
 
 function common() {
 
@@ -474,6 +522,7 @@ do
 	esac
 done
 
+
 # setup working directory with correct files
 for x in $@
 do
@@ -496,6 +545,22 @@ do
 	esac
 done
 
+# update kernel & EFI/boot/refind.conf
+# able to be used by itself ... update=POOL/DATASET which corresponds with the mountpoint of a dataset, which
+# can be then cross checked in the refind.conf and updated, of course everything is checked before updating ...
+# example update=zsys/plasmad
+
+for x in $@
+do
+	#echo $x
+	case "${x}" in
+
+		update=*)
+			dataset="${x#*=}"
+			update $dataset
+		;;
+	esac
+done
 
 
 # install packages and configure system
