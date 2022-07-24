@@ -407,10 +407,13 @@ function update() {
 			line_number=$(grep -n "$dataset " $bootref  | cut -f1 -d:)
 			loadL=$((line_number-2))
 			initrdL=$((line_number-1))
-			echo "line # $line_number , src=  $src"
-			grep -n "$dataset " $bootref
-			sed -n "${loadL}s/loader.*/loader \\/linux\\/$src\\/vmlinuz/p" $bootref
-			sed -n "${initrdL}s/initrd.*/initrd \\/linux\\/$src\\/initramfs/p" $bootref
+
+			##### DEBUG #################################################################
+			#echo "line # $line_number , src=  $src"
+			#grep -n "$dataset " $bootref
+			#sed -n "${loadL}s/loader.*/loader \\/linux\\/$src\\/vmlinuz/p" $bootref
+			#sed -n "${initrdL}s/initrd.*/initrd \\/linux\\/$src\\/initramfs/p" $bootref
+
 			sed -i "${loadL}s/loader.*/loader \\/linux\\/$src\\/vmlinuz/" $bootref
 			sed -i "${initrdL}s/initrd.*/initrd \\/linux\\/$src\\/initramfs/" $bootref
 
@@ -554,7 +557,6 @@ for x in $@
 do
 	#echo $x
 	case "${x}" in
-
 		update=*)
 			dataset="${x#*=}"
 			update $dataset
