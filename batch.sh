@@ -177,19 +177,24 @@ function config_env()
 	mkdir -p $1/srv/crypto/
 	mkdir -p $1/var/db/repos/gentoo
 
-	src=/usr/src/linux-$(uname --kernel-release)
 
 	# REQUIRES BEING INVOKED IN CORRECT ROOTFS
 
-	dst=$1/usr/src
 
 	############################################### DEPRICATED IN FAVOR OF UPDATE=POOL/SET
+	#src=/usr/src/linux-$(uname --kernel-release)
+	#dst=$1/usr/src
 	#echo "copying over kernel source..."
 	#rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
-	#dst="$1/lib/modules"
 	#src="/lib/modules/$(uname --kernel-release)"
-	#echo "copying over kernel modules..."
-	#rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
+
+	# COPY OVER MODULES -- REQUIRED
+	dst="$1/lib/modules"
+	src=/usr/src/linux
+	src=$(readlink $src)
+	modsrc=/lib/modules/$src
+	echo "copying over kernel modules..."
+	rsync -a -r -l -H -p --delete-before --info=progress2 $modsrc $dst
 
 	mSize="$(cat /proc/meminfo | column -t | grep 'MemFree' | awk '{print $2}')"
 	mSize="${mSize}K"
@@ -391,7 +396,6 @@ function update() {
 
 			echo "copying over kernel source... /usr/src/$src --> $dst"
 			rsync -a -r -l -H -p --delete-before --info=progress2 /usr/src/$src $dst
-
 
 #			src="/lib/modules/$(uname --kernel-release)"
 
