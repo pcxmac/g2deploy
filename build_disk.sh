@@ -41,6 +41,8 @@
 pool=$2
 disk=$1
 
+echo "commencing build ..."
+
 ##################################################################
 if false; then
 
@@ -138,24 +140,21 @@ sed -i "s/root=ZFS=$curr_pool/root=ZFS=$next_pool/" $mnt/EFI/boot/refind.conf
 
 # ZFS SEND RECV + PV
 
-
 echo "preparing for send"
-sleep 10
-zfs send $curr_pool/g2@snape | pv | zfs recv $pool/g2
+#sleep 10
+zfs send $curr_pool/g2@snap | pv | zfs recv $pool/g2
 
-####################################################################
-fi
 
 echo "preparing for partitions"
 
-#partitions=(hardened systemd plasma plasmad gnome gnomed)
-partitions=(plasmad gnomed)
+partitions=(hardened systemd plasma plasmad gnome gnomed)
+#partitions=(plasmad gnomed)
 
 for x in ${partitions[@]}
 do
 	echo "partition:: $x"
-#	zfs create $2/$x
-#	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key $2/$x
+	zfs create $2/$x
+	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key $2/$x
 
 #	screen -S "$next_pool/$x" -d -m ./batch.sh deploy=/srv/zfs/$next_pool/$x clear profile=$x
 	./batch.sh deploy=/srv/zfs/$pool/$x clear profile=$x
@@ -163,6 +162,19 @@ do
 done
 
 # UPDATE autofs for /boot !!!!
+
+####################################################################
+fi
+
+echo "whats up ? $disk2"
+
+uuid="$(blkid | grep "${disk}2" | awk '{print$ 2}' | tr -d '"')"
+
+echo "uuid = $uuid"
+
+sed -n "s/UUID=.*/$uuid/p" /etc/autofs/auto.vfat
+
+
 # UPDATE fstab for swap
 
 # CREATE newpool/distfiles ; /binpkgs ; /usr/local ; /root ;; snap root to /root@user ; /var/lib/lxd ; /var/lib/libvirt

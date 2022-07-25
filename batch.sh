@@ -14,6 +14,26 @@
 
 # ARGS $2 = destination $1= profile (default openrc,current directory)
 
+function decompress() {
+	src=$1
+	dst=$2
+	pv $src | tar xz -C $dst
+}
+
+function compress_list() {
+	src=$1
+	dst=$2
+	tar cf - -T $src | (pv -p --timer --rate --bytes > $dst)
+}
+
+function sync() {
+	src=$1
+	dst=$2
+	echo "rsync from $src to $dst"
+	rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
+}
+
+
 function zfs_keys() {
 
 	offset=$1
@@ -180,7 +200,6 @@ function config_env()
 
 	# REQUIRES BEING INVOKED IN CORRECT ROOTFS
 
-
 	############################################### DEPRICATED IN FAVOR OF UPDATE=POOL/SET
 	#src=/usr/src/linux-$(uname --kernel-release)
 	#dst=$1/usr/src
@@ -189,15 +208,16 @@ function config_env()
 	#src="/lib/modules/$(uname --kernel-release)"
 
 	# COPY OVER MODULES -- REQUIRED
-	dst="$1/lib/modules"
-	src=/usr/src/linux
-	src=$(readlink $src)
-	modsrc=/lib/modules/$src
-	echo "copying over kernel modules..."
-	rsync -a -r -l -H -p --delete-before --info=progress2 $modsrc $dst
+	#dst="$1/lib/modules"
+	#src=/usr/src/linux
+	#src=$(readlink $src)
+	#modsrc=/lib/modules/$src
 
+	#echo "copying over kernel modules..."
+	#rsync -a -r -l -H -p --delete-before --info=progress2 $modsrc $dst
 	mSize="$(cat /proc/meminfo | column -t | grep 'MemFree' | awk '{print $2}')"
 	mSize="${mSize}K"
+
 	# MOUNTS
 	echo "msize = $mSize"
 	mount -t proc proc $1/proc
@@ -211,6 +231,7 @@ function config_env()
 	mount -t tmpfs tmpfs $1/run
 	mount --bind /var/lib/portage/binpkgs $1/var/lib/portage/binpkgs
 	mount --bind /var/lib/portage/distfiles $1/var/lib/portage/distfiles
+
 }
 
 function config_mngmt() {
@@ -373,6 +394,72 @@ function profile_settings() {
 	esac
 }
 
+function copymodules() {
+
+			# INPUTS : ${x#*=} - dataset
+
+			dataset=$1
+			mntpt="$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
+			src=/usr/src/linux
+			src=$(readlink $src)
+			src=${src#linux-*}
+			src=/lib/modules/$src
+
+			dst=${mntpt}${src}
+
+			echo "copying over kernel modules... $modsrc --> $dst"
+			mkdir -p $dst
+			rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
+
+}
+
+function copykernel() {
+
+			# INPUTS : ${x#*=} - dataset
+
+			dataset=$1
+
+			mntpt="$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
+
+			src=/usr/src/linux
+			src=$(readlink $src)
+
+			dst=$mntpt/usr/src/$src
+
+			echo "copying over kernel source... /usr/src/$src --> $dst"
+			rsync -a -r -l -H -p --delete-before --info=progress2 /usr/src/$src $dst
+
+}
+
+function editboot() {
+
+			# INPUTS : ${x#*=} - dataset
+
+			dataset=$1
+
+			bootref="/boot/EFI/boot/refind.conf"
+
+			src=/usr/src/linux
+			src=$(readlink $src)
+			src=${src#linux-*}
+
+			# find section in refind.conf
+			line_number=$(grep -n "$dataset " $bootref  | cut -f1 -d:)
+			loadL=$((line_number-2))
+			initrdL=$((line_number-1))
+
+			##### DEBUG #################################################################
+			#echo "line # $line_number , src=  $src"
+			#grep -n "$dataset " $bootref
+			#sed -n "${loadL}s/loader.*/loader \\/linux\\/$src\\/vmlinuz/p" $bootref
+			#sed -n "${initrdL}s/initrd.*/initrd \\/linux\\/$src\\/initramfs/p" $bootref
+			sed -i "${loadL}s/loader.*/loader \\/linux\\/$src\\/vmlinuz/" $bootref
+			sed -i "${initrdL}s/initrd.*/initrd \\/linux\\/$src\\/initramfs/" $bootref
+
+
+
+}
+
 function update() {
 
 			# INPUTS : ${x#*=} - dataset
@@ -389,41 +476,12 @@ function update() {
 			mntpt="$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
 			if [ -z $mntpt ]; then echo "$dataset does not exist"; exit; fi
 
-			src=/usr/src/linux
-			src=$(readlink $src)
-
-			dst=$mntpt/usr/src/$src
-
-			echo "copying over kernel source... /usr/src/$src --> $dst"
-			rsync -a -r -l -H -p --delete-before --info=progress2 /usr/src/$src $dst
-
-#			src="/lib/modules/$(uname --kernel-release)"
-
-			src=${src#linux-*}
-			modsrc=/lib/modules/$src
-
-			dst=$mntpt$modsrc
-
-			echo "copying over kernel modules... $modsrc --> $dst"
-			rsync -a -r -l -H -p --delete-before --info=progress2 $modsrc $dst
-
-			# find section in refind.conf
-			line_number=$(grep -n "$dataset " $bootref  | cut -f1 -d:)
-			loadL=$((line_number-2))
-			initrdL=$((line_number-1))
-
-			##### DEBUG #################################################################
-			#echo "line # $line_number , src=  $src"
-			#grep -n "$dataset " $bootref
-			#sed -n "${loadL}s/loader.*/loader \\/linux\\/$src\\/vmlinuz/p" $bootref
-			#sed -n "${initrdL}s/initrd.*/initrd \\/linux\\/$src\\/initramfs/p" $bootref
-
-			sed -i "${loadL}s/loader.*/loader \\/linux\\/$src\\/vmlinuz/" $bootref
-			sed -i "${initrdL}s/initrd.*/initrd \\/linux\\/$src\\/initramfs/" $bootref
+			# experimenting w/ no kernel source
+			#copykernel $dataset
+			copymodules $dataset
+			editboot $dataset
 
 }
-
-
 
 function common() {
 
@@ -505,18 +563,27 @@ export -f common
 export -f profile_settings
 
 # set working directory, default is current folder
-offset="$(pwd)"
+
+#offset="$(pwd)"
+
 for x in $@
 do
 	case "${x}" in
 		deploy=*)
-			offset="${x#*=}"
+			dataset="${x#*=}"
+			offset="$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
+
+			if [ -z $offset ];then echo "no dataset mountpoint";exit;fi
+			if [ -z $dataset ];then echo "no dataset mountpoint";exit;fi
+
 			check_mounts $offset
 		;;
 	esac
 done
 
+
 echo "offset = $offset"
+echo "dataset = $dataset"
 
 # clear out working directory if set
 for x in $@
@@ -544,6 +611,7 @@ do
 					get_stage3 ${x#*=} $offset
 					echo "running zfs_keys"
 					zfs_keys $offset
+					copymodules $dataset
 					config_env $offset
 					echo "executing $1"
 				;;
