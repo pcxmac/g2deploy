@@ -405,9 +405,9 @@ function copymodules() {
 			src=${src#linux-*}
 			src=/lib/modules/$src
 
-			dst=${mntpt}${src}
+			dst=${mntpt}/lib/modules
 
-			echo "copying over kernel modules... $modsrc --> $dst"
+			echo "copying over kernel modules... $src --> $dst"
 			mkdir -p $dst
 			rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
 
