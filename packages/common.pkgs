@@ -411,12 +411,7 @@ sys-devel/make
 sys-devel/patch
 sys-fs/e2fsprogs
 sys-fs/udev-init-scripts
-sys-fs/zfs
-sys-fs/zfs-kmod
 sys-kernel/genkernel
-sys-kernel/gentoo-sources
-sys-kernel/gentoo-sources
-sys-kernel/gentoo-sources
 sys-kernel/gentoo-sources
 sys-kernel/installkernel-gentoo
 sys-kernel/linux-firmware

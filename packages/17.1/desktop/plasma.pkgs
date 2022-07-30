@@ -3,3 +3,5 @@ kde-plasma/plasma-desktop
 kde-plasma/plasma-meta
 gnome-base/gdm
 kde-apps/konsole
+app-editors/gedit
+app-editors/gedit-plugins

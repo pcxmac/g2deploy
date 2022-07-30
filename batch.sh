@@ -18,16 +18,11 @@ function getZFSMountPoint (){
 	echo "$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
 }
 
-
-
 function decompress() {
 	src=$1
 	dst=$2
 	pv $src | tar xz -C $dst
 }
-
-
-
 
 function compress_list() {
 	src=$1
@@ -35,26 +30,30 @@ function compress_list() {
 	tar cf - -T $src | (pv -p --timer --rate --bytes > $dst)
 }
 
-
-
-
 function sync() {
 	src=$1
 	dst=$2
 	echo "rsync from $src to $dst"
-	rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
+	rsync -c -a -r -l -H -p --delete-before --info=progress2 $src $dst
 }
 
 
 
 function zfs_keys() {
 	offset=$1
+
 	# ALL POOLS ON SYSTEM, FOR GENKERNEL
 	# pools="$(zpool list | awk '{print $1}') | sed '1 d')"
+	
+	
 	# THE POOL BEING DEPLOYED TO ... -- DEPLOYMENT SCRIPT
 	#limit pools to just the deployed pool / not valid for genkernel which would attach all pools & datasets
+	
+	
 	pools="$(cat /proc/mounts | grep "$offset " | awk '{print $1}')"
 	pools="${pools%/*}"
+	
+	
 	for i in $pools
 	do
 		# query datasets
@@ -128,8 +127,6 @@ check_mounts() {
 function clear_fs() {
 	# VERIFY ZFS MOUNT IS in DF
 	echo "prepfs ~ $1"
-	# older inplace delete
-	#find $1 -maxdepth 1 ! -wholename $1 ! -wholename './batch.sh' ! -wholename './*.pkgs' ! -wholename './*.txt' ! -name . -exec rm -r "{}" \;
 	echo "deleting old files (calculating...)"
 	count="$(find $1/ | wc -l)"
 	if [[ $count > 1 ]]
@@ -204,24 +201,6 @@ function config_env()
 	mkdir -p $1/srv/crypto/
 	mkdir -p $1/var/db/repos/gentoo
 
-
-	# REQUIRES BEING INVOKED IN CORRECT ROOTFS
-
-	############################################### DEPRICATED IN FAVOR OF UPDATE=POOL/SET
-	#src=/usr/src/linux-$(uname --kernel-release)
-	#dst=$1/usr/src
-	#echo "copying over kernel source..."
-	#rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
-	#src="/lib/modules/$(uname --kernel-release)"
-
-	# COPY OVER MODULES -- REQUIRED
-	#dst="$1/lib/modules"
-	#src=/usr/src/linux
-	#src=$(readlink $src)
-	#modsrc=/lib/modules/$src
-
-	#echo "copying over kernel modules..."
-	#rsync -a -r -l -H -p --delete-before --info=progress2 $modsrc $dst
 	mSize="$(cat /proc/meminfo | column -t | grep 'MemFree' | awk '{print $2}')"
 	mSize="${mSize}K"
 
@@ -250,7 +229,6 @@ function config_mngmt() {
 	path=$1
 
 	cp ./common.pkgs $offset/package.list
-
 	echo "######################################################################################"
 
 	ls -ail ./packages/$path.pkgs
@@ -259,7 +237,7 @@ function config_mngmt() {
 	cat ./packages/$path.pkgs >> $offset/package.list
 
 	echo "pwd = $pwd"
-	tar cfv $offset/config.tar -T ./etc.cfg
+	tar cfv $offset/config.tar -T ./config/files.cfg
 
 	tar xfv $offset/config.tar -C $offset
 	rm $offset/config.tar
@@ -677,37 +655,10 @@ function update_efi_entry() {
 
 }
 
-#
-#	build a new kernel in to the templates 'update_kernel'
-#		isolated, no datasets, just use system for generating new kernel
-#		requires portage to have been used to install and select a new kernel
-
-#	deploy new kernel to existing installs 'upgrade='
-#		upgrade=pool/dataset
-#		use autofs to key the boot device ? AND fstab ?
-#		looks for newest, and gets respective boot.
-#		install modules
-#		modify boot entries in spec
-#		DO NOT MODIFY autofs
-
-#	deploy new installs, through 'deploy='
-#		new boot device, 
-#		installs modules
-#		build up boot device through rsync
-#		install kernel files
-#		add entries to boot spec
-#		modify autofs for new boot drive	'boot='
-
-#	instantiate new boot drive | existing installation
-#		update autofs		'boot='
-#		kernel is not being upgraded ? KERNEL VERSION must match existing KERNEL ... OR JUST UPGRADE 'kernel='
-#		populate boot drive from template
-#		
-#
 
 # boot_install $DISK $SRC_DIR $PROFILE $TARGET(pool/dataset)
 function boot_install() {
-
+	
 	#install=/dev/EFI_partition
 
 	# this will copy the EFI partition contents over from $DEPLOY/boot, it will alter the refind.conf by searching for the
@@ -749,7 +700,6 @@ function boot_install() {
 		
 	fi
 
-
 	if [ ! "$fsType" = 'vfat' ]
 	then
 		echo "invalid partition"
@@ -786,14 +736,16 @@ function boot_install() {
 #	sgdisk --new 2:0:+8G -t 2:EF00 $disk
 #	sgdisk --new 3:0:+16G -t 3:8200 $disk
 #	sgdisk --new 4:0 -t 4:8300 $disk
-
+0
 
 }
 
+function prepare_disk() {
+
+	disk=$1
 
 
-
-
+}
 
 #############################################################################################################################
 #
@@ -825,6 +777,30 @@ function boot_install() {
 #		ISSUES, DO NOT USE AGAINST EXISTING INSTALLATIONS, SECONDARY USESCASES MUST BE USED A CERTAIN WAY
 #
 #
+#	build a new kernel in to the templates 'update_kernel'
+#		isolated, no datasets, just use system for generating new kernel
+#		requires portage to have been used to install and select a new kernel
+
+#	deploy new kernel to existing installs 'upgrade='
+#		upgrade=pool/dataset
+#		use autofs to key the boot device ? AND fstab ?
+#		looks for newest, and gets respective boot.
+#		install modules
+#		modify boot entries in spec
+#		DO NOT MODIFY autofs
+
+#	deploy new installs, through 'deploy='
+#		new boot device, 
+#		installs modules
+#		build up boot device through rsync
+#		install kernel files
+#		add entries to boot spec
+#		modify autofs for new boot drive	'boot='
+
+#	instantiate new boot drive | existing installation
+#		update autofs		'boot='
+#		kernel is not being upgraded ? KERNEL VERSION must match existing KERNEL ... OR JUST UPGRADE 'kernel='
+#		populate boot drive from template
 #
 #
 #############################################################################################################################

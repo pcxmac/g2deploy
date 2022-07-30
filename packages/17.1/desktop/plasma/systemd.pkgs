@@ -3,3 +3,5 @@ x11-misc/sddm
 kde-plasma/plasma-meta
 gnome-base/gdm
 kde-apps/konsole
+app-editors/gedit
+app-editors/gedit-plugins
