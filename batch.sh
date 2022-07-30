@@ -37,7 +37,10 @@ function sync() {
 	rsync -c -a -r -l -H -p --delete-before --info=progress2 $src $dst
 }
 
-
+function getKVER() {
+	temp="$(readlink /usr/src/linux)"
+	echo "${temp#linux-*}"
+}
 
 function zfs_keys() {
 	offset=$1
@@ -45,11 +48,8 @@ function zfs_keys() {
 	# ALL POOLS ON SYSTEM, FOR GENKERNEL
 	# pools="$(zpool list | awk '{print $1}') | sed '1 d')"
 	
-	
 	# THE POOL BEING DEPLOYED TO ... -- DEPLOYMENT SCRIPT
 	#limit pools to just the deployed pool / not valid for genkernel which would attach all pools & datasets
-	
-	
 	pools="$(cat /proc/mounts | grep "$offset " | awk '{print $1}')"
 	pools="${pools%/*}"
 	
@@ -395,8 +395,7 @@ function copymodules() {
 			dataset=$1
 			mntpt="$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
 			src=/usr/src/linux
-			src=$(readlink $src)
-			src=${src#linux-*}
+			src=getKVER
 			src=/lib/modules/$src
 			dst=${mntpt}/lib/modules
 			echo "copying over kernel modules... $src --> $dst"
@@ -412,8 +411,7 @@ function copykernel() {
 			# INPUTS : ${x#*=} - dataset
 			dataset=$1
 			mntpt="$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
-			src=/usr/src/linux
-			src=$(readlink $src)
+			dst="linux-$(getKVER)"
 			dst=$mntpt/usr/src/$src
 			echo "copying over kernel source... /usr/src/$src --> $dst"
 			rsync -a -r -l -H -p --delete-before --info=progress2 /usr/src/$src $dst
@@ -422,15 +420,12 @@ function copykernel() {
 
 
 
-
 function editboot() {
 
 			# INPUTS : ${x#*=} - dataset
 			dataset=$1
 			bootref="/boot/EFI/boot/refind.conf"
-			src=/usr/src/linux
-			src=$(readlink $src)
-			src=${src#linux-*}
+			src=getKVER
 			# find section in refind.conf
 			line_number=$(grep -n "$dataset " $bootref  | cut -f1 -d:)
 			loadL=$((line_number-2))
@@ -569,8 +564,7 @@ function updateKernel() {
 
 	cd $cDir
 
-	version="$(readlink /usr/src/linux)"
-	version=${version#linux-*}
+	version=getKVER
 
 	mkdir -p $cDir/boot/LINUX/TEMP
 
@@ -672,8 +666,7 @@ function boot_install() {
 	source=$2
 	#profile=$3
 	target=$3	#pool/dataset
-	version="$(readlink /usr/src/linux)"
-	version="${version#linux-*}"
+	version=getKVER
 	offset=getZFSMountPoint $target
 	tmpMount="$offset/boot"
 
@@ -761,6 +754,12 @@ function prepare_disk() {
 #		THIS WILL INSTALL FILES IN TO THE BOOT DRIVE EFI PART, if needed, it will also initialize the whole disk + other partitions
 #		boot=/dev/sdaX   deploy=zsys/g1
 #		
+#
+#		NEED TO VERIFY KERNEL MODULES ARE INSTALLED ON TARGET (pool/ds), verify dataset is contiguous, 
+#
+#
+#
+#
 #		INSTALL A NEW DEPLOYMENT
 #		profile=hardened   deploy=zsys/g1   commit...clear
 #		
@@ -958,6 +957,11 @@ do
 		boot=*)
 			echo "installing/configuring boot @ ${x#*=}"
 			#			 /dev/.  /src/...     profile  dataset 
+			
+
+
+
+
 			boot_install ${x#*=} $(pwd)/boot/ $dataset
 		;;
 	esac
