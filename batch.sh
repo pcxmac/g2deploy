@@ -179,7 +179,7 @@ check_mounts() {
 		while read -r mountpoint
 		do
 			echo "umount $mountpoint"
-			#umount $mountpoint > /dev/null 2>&1
+			umount $mountpoint > /dev/null 2>&1
 		done < <(cat /proc/mounts | grep "$dir\/" | awk '{print $2}')
 		#echo "cycles = $cycle"
 		output="$(cat /proc/mounts | grep "$dir\/" | wc -l)"
@@ -868,56 +868,10 @@ do
 				;;
 			esac
 
-
-# HOW I WANT TO USE THIS SCRIPT
-
- # BUILD A NEW DISK, w/ SAFE PART, USABLE PART, EFI ...
-# BUILD ON DISK { NEW BUILD } or MOVE TO DISK { REMOTE SRC, OR NEW BUILD }
-
-
-
 			for y in $@
 			do
 				case "${y}" in
 					deploy=*)
-						for z in $@
-						do
-							case "${z}" in
-								install=*)
-									echo "installing to disk  ... @ *.geo file"
-
-									# check for disk partitions ... and partition if required
-									disk="$(echo ${z#=*} | sed 's/[0-9]*//g')"
-									disk="$(ls /dev | grep $disk)"
-									
-									pmap='$(cat '
-									
-									if [[ "$(echo $disk | wc -l)" > 1 ]]; then
-									
-
-									# load partition map from geo file
-									geo="$(cat ./config/${z#*=})"
-									for line in "$geo"
-									do
-										index="$(echo "$line" | awk '{print $1}')"
-										offset="$(echo "$line" | awk '{print $2}')"
-										size="$(echo "$line" | awk '{print $3}')"
-										type="$(echo "$line" | awk '{print $4}')"
-										fs="$(echo "$line" | awk '{print $5}')"
-
-
-									done
-									# check for partition types, and format as required ... to include zfs partition
-
-
-									# mount the boot partition to the mountpoint/boot
-
-									# install EFI contents (rsync)
-
-								;;
-							esac
-						done
-
 						echo "checking mounts ..."
 						check_mounts $(getZFSMountPoint ${y#*=})
 						echo "clearing file system ..."
@@ -932,15 +886,7 @@ do
 						chroot $(getZFSMountPoint ${y#*=}) /bin/bash -c "common $string"
 						chroot $(getZFSMountPoint ${y#*=}) /bin/bash -c "profile_settings $string"
 						echo "cleaning up mounts"
-#						check_mounts $(getZFSMountPoint {y#*=})
-						dir="$(echo "$(getZFSMountPoint {y#*=})" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
-						echo "DIR = $dir"
-						output="$(cat /proc/mounts | grep "$dir\/")"
-						echo "output ::: $output"
-
-
-									# update refind.conf spec for the new *deploy target
-
+						check_mounts "$(getZFSMountPoint ${y#*=})"
 					;;
 				esac
 			done
