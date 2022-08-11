@@ -22,16 +22,9 @@
 #
 
 function getPkgs() {
-
-	#validate profile and packages(-z)/$path exists(-f)
 	
 	profile=$1
 	
-	#echo "./packages/$profile.pkgs"
-	#echo "#########################"
-	# 90
-	
-	#valid profile
 	if [-z "$(eselect profile list | grep "$profile ")" ]
 	then
 		echo "getPkgs::invalid profile @ $profile"
@@ -56,6 +49,14 @@ function getG2Profile() {
 	result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
 	result="${result#*/$current/}"
 	echo $result
+}
+
+function getHostZPool () {
+
+	pool="$(mount | grep " / " | awk '{print $1}')"
+	pool="${pool%/*}"
+	echo ${pool}
+
 }
 
 function getZFSMountPoint (){
@@ -253,8 +254,6 @@ function copykernel() {
 
 }
 
-
-
 function editboot() {
 
 			# INPUTS : ${x#*=} - dataset
@@ -315,82 +314,68 @@ function updateKernel() {
 	rm $cDir/boot/LINUX/TEMP -R
 }
 
-
 # add_efi_entry $version $profile $pool/dataset
-
 function add_efi_entry() {
 
-VERSION=$1
-#PROFILE=$2
-DATASET=$2
-POOL="${DATASET%/*}"
-
-UUID="$(blkid | grep "$POOL" | awk '{print $3}' | tr -d '"')"
-
-echo "version = $VERSION"
-echo "pool = $POOL"
-echo "uuid = $UUID"
-
-offset="$(getZFSMountPoint $DATASET)"
-
-echo "offset for add_efi_entry = $offset"
-
-offset="$(getZFSMountPoint $DATASET)/boot/EFI/boot/refind.conf"
-
-echo "offset for add_efi_entry = $offset"
-
-echo '' >> $offset
-echo "menuentry \"Gentoo Linux $VERSION $DATASET\"" >> $offset
-echo '{' >> $offset
-echo '	icon /EFI/boot/icons/os_gentoo.png' >> $offset
-echo "	loader /linux/$VERSION/vmlinuz" >> $offset
-echo "	initrd /linux/$VERSION/initramfs" >> $offset
-echo "	options \"$UUID dozfs root=ZFS=$DATASET default delayacct rw\"" >> $offset
-echo '	#disabled' >> $offset
-echo '}' >> $offset
-
-}
-
-
-# modify_efi_entry $pool $dataset $bootMount
-
-function update_efi_entry() {
-
-	POOL=$1
+	VERSION=$1
+	#PROFILE=$2
 	DATASET=$2
-	BOOT=$3
+	POOL="${DATASET%/*}"
 
-	new_uuid=$(blkid | grep $POOL | awk '{print $3}' | tr -d '"')
-	new_uuid=${new_uuid#*=}
+	echo "DATASET = $DATASET ;; POOL = $POOL"
 
-	echo "new uuid = $new_uuid"
+	UUID="$(blkid | grep "$POOL" | awk '{print $3}' | tr -d '"')"
 
-#	sed -iE "s/UUID=[0-9]+ /$new_uuid/g" $mnt/EFI/boot/refind.conf
-	sed -iE "s/UUID= /$new_uuid/g" $BOOT/boot/EFI/boot/refind.conf
+	echo "version = $VERSION"
+	echo "pool = $POOL"
+	echo "uuid = $UUID"
+
+	offset="$(getZFSMountPoint $DATASET)"
+
+	echo "offset for add_efi_entry = $offset"
+
+	################################# HIGHLY RELATIVE OFFSET !!!!!!!!!!!!!!!!!!!!!!!!
+	offset="$(getZFSMountPoint $DATASET)/boot/EFI/boot/refind.conf"
+	################################################################################
+
+	echo "offset for add_efi_entry = $offset"
+
+	echo '' >> $offset
+	echo "menuentry \"Gentoo Linux $VERSION $DATASET\"" >> $offset
+	echo '{' >> $offset
+	echo '	icon /EFI/boot/icons/os_gentoo.png' >> $offset
+	echo "	loader /linux/$VERSION/vmlinuz" >> $offset
+	echo "	initrd /linux/$VERSION/initramfs" >> $offset
+	echo "	options \"$UUID dozfs root=ZFS=$DATASET default delayacct rw\"" >> $offset
+	echo '	#disabled' >> $offset
+	echo '}' >> $offset
 
 }
-
 
 
 # boot_install $DISK $SRC_DIR $PROFILE $TARGET(pool/dataset)
 function boot_install() {
 	
-	#install=/dev/EFI_partition
-
+	#boot=/dev/EFI_partition
 	# this will copy the EFI partition contents over from $DEPLOY/boot, it will alter the refind.conf by searching for the
 	# pool/dataset, it will adjust the /etc/autofs, after the stage3 is employed & packages installed. kernel
 	# version is updated as well. Aswell the title. Perhaps even ADD a profile to refind.conf
-
 	# verify valid partition and file system exists. (check vfat + verify refind
+
+	#echo "args = $@"
 
 	disk=$1				# partition to install/regulate
 	#sigFile=./boot.sig	# sorted IO
 	source=$2
-	#profile=$3
+	# can include snapshots ... which will be sourced from
 	target=$3	#pool/dataset
-
-	version=getKVER
-	offset=getZFSMountPoint $target
+	
+	# filter for snapshots
+	pdset="${target%@*}"
+	#echo "PDSET = $pdset"
+	version=$(getKVER)
+	offset=$(getZFSMountPoint $pdset)
+	#echo "KVER = $version ;; OFFSET = $offset"
 	tmpMount="$offset/boot"
 
 	if [ ! -d $tmpMount ]
@@ -398,21 +383,23 @@ function boot_install() {
 		mkdir -p $tmpMount
 	fi
 
-	fsType=$(blkid $1 | awk '{print $4}')
+	fsType=$(blkid ${disk}2 | awk '{print $4}')
 	fsType=${fsType#=*}
 	fsType="$(echo $fsType | tr -d '"')"
 	fsType=${fsType#TYPE=*}
+	#echo "FSTYPE @ $fsType"
 
 	if [ "$fsType" = 'vfat' ]
 	then
-		mount -v $disk $tmpMount
+		mount -v ${disk}2 $tmpMount
+		#echo "mounting ${disk}2 to $tmpMount"
 		# could have used rsync with hash check anyways ...
-		echo "checking for file consistency [ $source $tmpMount]"
-		rsync -v -r -l -H -p -c --delete-before --info=progress2 $source $tmpMount
+		#echo "checking for file consistency [ $source $tmpMount]"
+		rsync -r -l -H -p -c --delete-before --info=progress2 $source/* $tmpMount
 		
 		# MODIFY FILES
-		echo "adding EFI ENTRY to template location"
-		add_efi_entry $version $target
+		#echo "adding EFI ENTRY to template location $version ;; $pdset"
+		add_efi_entry $version $pdset
 		
 	fi
 
@@ -426,150 +413,64 @@ function boot_install() {
 		echo "...no parition detected"
 	fi
 
-
+	umount -v $tmpMount
 }
 
-function prepare_disk() {
-	disk=$1
 
+function configure_boot_disk() {
 
-#	mkfs.vfat $disk2
-#	mkswap $disk3
+	disk=$1 #(strip from boot=)
 
-#	mnt="/build_disk_mnt"
+	# prepare_disk /dev/disk 
+	# create partition map
+	# echo "ignore sr0..."
 
-#	mkdir -p $mnt
-#	mount $12 $mnt
-#	cp /boot/* $mnt -R
+	lresult="$(ls /dev | grep ${disk##*/} | wc -l)"
 
+	# if 1, disk is not configured
+	if [[ "$lresult" -eq 1 ]]; then 
+		echo "$disk is present, press enter to configure disk";
+		read 
+	# if >1, disk is configured ?
+	elif [[ "$lresult" -gt 1 ]]; then 
+		echo "$disk is configured, exiting...";
+		# sgdisk --zap-all $disk
+		# partprobe
+		exit
+	# if 0 disk is not present
+	elif [[ "$lresult" -eq 0 ]]; then echo "$disk is NOT configured"; 
+		echo "$disk is missing, exiting..."
+		exit
+	fi
+	
+	sgdisk --new 1:0:+32M -t 1:EF02 ${disk}
+	sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
+	#sgdisk --new 3:0:+16G -t 3:8200 $disk
+	#mkswap $disk3
+	sgdisk --new 3:0 -t 3:8300 ${disk}
 
-#	pool=$2
-#	disk=$1
+	# install boot contents
+	mkfs.vfat ${disk}2
+	#boot_install ${disk}2	
+	options=""
+	#echo "disk = ${disk}3"
 
-#	echo "commencing build ..."
+	# install safe image
+	zpool create ${options} \
+		-O acltype=posixacl \
+		-O compression=lz4 \
+		-O dnodesize=auto \
+		-O normalization=formD \
+		-O relatime=on \
+		-O xattr=sa \
+		-O encryption=aes-256-gcm \
+		-O keyformat=hex \
+		-O keylocation=file:///srv/crypto/zfs.key \
+		-O mountpoint=/srv/zfs/safe safe \
+		${disk}3
 
-#	sgdisk --zap-all $disk
-
-#	partprobe
-
-#	echo "ignore sr0..."
-
-#	sgdisk --new 1:0:+32M -t 1:EF02 $disk
-#	sgdisk --new 2:0:+8G -t 2:EF00 $disk
-#	sgdisk --new 3:0:+16G -t 3:8200 $disk
-#	sgdisk --new 4:0 -t 4:8300 $disk
-
+	# create boot entry for safe image
 }
-
-#############################################################################################################################
-#
-#
-#	profile
-#
-#
-#		deploy					--- each deployment has it's own boot record
-#
-#
-#			clear (dataset)
-#
-#
-#			commit (
-#
-#
-#			update
-#
-#
-#			boot
-#
-#
-#
-#
-#
-#
-#	(((((((((((((((((((((((((((((((( NEED TO FINISH BOOT DRIVE CONFIG / EFI.REFIND CONFIG (automatic updates/additions)
-#
-#
-#
-#
-#
-#		in the future, updates will be handled, perhaps in a different batch. 
-#
-#
-#
-#
-#
-#
-#
-#
-#	deploy=pool/dataset
-#	profile={portage profile}
-#	install=/dev/...#
-#	clear
-#	commit
-#
-
-#	DEFAULT DO's
-
-#	Must have the latest kernel or mask for the current onwards.eix
-
-#
-#	COMMON USE CASES : 
-#
-
-
-#		THIS WILL INSTALL FILES IN TO THE BOOT DRIVE EFI PART, if needed, it will also initialize the whole disk + other partitions
-#		boot=/dev/sdaX   deploy=zsys/g1
-#		
-#
-#		NEED TO VERIFY KERNEL MODULES ARE INSTALLED ON TARGET (pool/ds), verify dataset is contiguous, 
-#
-#
-#
-#
-#		INSTALL A NEW DEPLOYMENT
-#		profile=hardened   deploy=zsys/g1   commit...clear
-#		
-#		UPDATE KERNEL, AND BOOTFS, DEPLOY KERNEL MODULES
-#		update=boot		boot=/dev/sdaX	deploy=zsys/g1
-#		
-#		CREATE A SNAPSHOT, CLONE, TEST UPDATE, VERSION UP	FUTURE USE
-#		update=system	deploy=zsys/g1
-#		
-#		UPDATE CONFIGS: { autofs, fstab, 
-#		update=config ..deploy=zsys/g1
-#
-#
-#		ISSUES, DO NOT USE AGAINST EXISTING INSTALLATIONS, SECONDARY USESCASES MUST BE USED A CERTAIN WAY
-#
-#
-#	build a new kernel in to the templates 'update_kernel'
-#		isolated, no datasets, just use system for generating new kernel
-#		requires portage to have been used to install and select a new kernel
-
-#	deploy new kernel to existing installs 'upgrade='
-#		upgrade=pool/dataset
-#		use autofs to key the boot device ? AND fstab ?
-#		looks for newest, and gets respective boot.
-#		install modules
-#		modify boot entries in spec
-#		DO NOT MODIFY autofs
-
-#	deploy new installs, through 'deploy='
-#		new boot device, 
-#		installs modules
-#		build up boot device through rsync
-#		install kernel files
-#		add entries to boot spec
-#		modify autofs for new boot drive	'boot='
-
-#	instantiate new boot drive | existing installation
-#		update autofs		'boot='
-#		kernel is not being upgraded ? KERNEL VERSION must match existing KERNEL ... OR JUST UPGRADE 'kernel='
-#		populate boot drive from template
-#
-#
-#############################################################################################################################
-
 
 function config_mngmt() {
 
@@ -644,7 +545,7 @@ function get_stage3() {
 
 
 function common() {
-	emergeOpts="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99 --exclude=sys-fs/zfs-kmod --exclude=sys-kernel/gentoo-sources"
+	emergeOpts="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99 --exclude=sys-fs/zfs-kmod --exclude=sys-kernel/gentoo-sources --exclude=sys-kernel/git-sources"
 	emergeOpts2="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99"
 	mkdir -p /var/db/repos/gentoo
 	emerge-webrsync
@@ -829,69 +730,130 @@ export PYTHONPATH=""
 export -f common
 export -f profile_settings
 
+# [script] build=*	work=pool/dataset	<optional>boot=(/dev/bootP)		<optional>send=(send / recv IP)	
+# [script] boot by itself, will install a boot record & safe-partition for a designated deployment			:: work=pool/dataset boot=/dev/sda
+# [script] send, typically by itself 		:: send=host:/pool		work=pool/dataset
+# [script] ... in the future work will be able to refer to a remote host:/pool/dataset and a boot drive can be specified, work will be ssh'd inside the resepctive host
+
+echo "[script...]"
+
+# BUILD PROFILE
 for x in $@
 do
 	#echo "before cases $x"
 	case "${x}" in
-		profile=*)
-			
-			string="invalid profile"
-
+		build=*)
+			echo "build..."
+			# DESIGNATE BUILD PROFILE
+			profile="invalid profile"
+			selection="${x#*=}"
 			case "${x#*=}" in
 				# special cases for strings ending in selinux, and systemd as they can be part of a combination
 				'hardened')
 					# space at end limits selinux
-					string="17.1/hardened "
+					profile="17.1/hardened "
 				;;
 				'systemd')
-					string="17.1/systemd "
+					profile="17.1/systemd "
 				;;
 				'plasma')
-					string="17.1/desktop/plasma "
+					profile="17.1/desktop/plasma "
 				;;
 				'gnome')
-					string="17.1/desktop/gnome "
+					profile="17.1/desktop/gnome "
 				;;
 				'selinux')
-					string="17.1/selinux "
+					profile="17.1/selinux "
 					echo "${x#*=} is not supported [selinux]"
 				;;
 				'plasma/systemd')
-					string="17.1/desktop/plasma/systemd "
+					profile="17.1/desktop/plasma/systemd "
 				;;
 				'gnome/systemd')
-					string="17.1/desktop/gnome/systemd "
+					profile="17.1/desktop/gnome/systemd "
 				;;
 				'hardened/selinux')
-					string="17.1/hardened/selinux "
+					profile="17.1/hardened/selinux "
 					echo "${x#*=} is not supported [selinux]"
 				;;
+				*)
+					profile="invalid profile"
+				;;
 			esac
-
-			for y in $@
-			do
-				case "${y}" in
-					deploy=*)
-						echo "checking mounts ..."
-						check_mounts $(getZFSMountPoint ${y#*=})
-						echo "clearing file system ..."
-						clear_fs $(getZFSMountPoint ${y#*=})
-						echo "exuberant = ${x#*=}"
-						get_stage3 ${x#*=} $(getZFSMountPoint ${y#*=})
-						echo "running zfs_keys"
-						zfs_keys ${y#*=}
-						copymodules ${y#*=}
-						config_env $(getZFSMountPoint ${y#*=})
-						config_mngmt $string $(getZFSMountPoint ${y#*=})
-						chroot $(getZFSMountPoint ${y#*=}) /bin/bash -c "common $string"
-						chroot $(getZFSMountPoint ${y#*=}) /bin/bash -c "profile_settings $string"
-						echo "cleaning up mounts"
-						check_mounts "$(getZFSMountPoint ${y#*=})"
-					;;
-				esac
-			done
 		;;
 	esac
-	#echo "after cases ${x}"
 done
 
+
+
+# DESIGNATE A WORKING DIRECTORY TO 
+for x in $@
+do
+	case "${x}" in
+		work=*)
+			#? zfs= btrfs= generic= tmpfs=
+			directory="$(getZFSMountPoint ${x#*=})"
+			dataset="${x#*=}"
+		;;
+	esac
+done
+
+# BOOT, USED FOR NEW OR EXISTING,IF EXISTING, IGNORE SAFE PARTITION.
+# use case requires work=
+
+#	NOTHING BEING WRITTEN TO VFAT, RSYNC or wtf ??
+#	ZFS NOT INSTANTIATING POOL @SAFE/...
+#
+#
+
+
+for x in $@
+do
+	case "${x}" in
+		boot=*)
+			# by default safe is the boot pool name, should probably option this....
+			# by default all safe partitions are send/recv from g1@safe
+			# boot_profile=getG2Profile ${dataset} 
+			disk=${x#*=}
+			source="./boot"
+			safe_src="safe/g1@safe"
+			configure_boot_disk ${disk}
+			zfs send $(getHostZPool)/g1@safe | pv | zfs recv safe/g1
+			boot_install ${disk} ${source} ${safe_src}
+			zfs snapshot safe/g1@safe
+		;;
+	esac
+done
+
+# 
+for x in $@
+do
+	case "${x}" in
+		deploy)
+			check_mounts ${directory}
+			clear_fs ${directory}
+			get_stage3 ${selection} ${directory}
+			zfs_keys ${dataset}
+			copymodules ${dataset}
+			config_env ${directory}
+			config_mngmt ${profile} ${directory}
+			chroot ${directory} /bin/bash -c "common ${profile}"
+			chroot ${directory} /bin/bash -c "profile_settings ${profile}"
+			config_mngmt ${profile} ${directory}
+		;;
+	esac
+done
+
+# SEND, BOOT PROBABLY WONT BE USED WITH THIS MODE, ex. 
+for x in $@
+do
+	case "${x}" in
+		send=*)
+			
+		;;
+	esac
+done
+
+	check_mounts ${directory}
+
+	#EOF

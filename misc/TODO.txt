@@ -1,7 +1,7 @@
 
 need to correct :
 
-*  one a different tree install, contenst of everything were dumped in to this folder, called profile/...
+*  one a different tree install, contents of everything were dumped in to this folder, called profile/...	???
 
 *	need to validate all installs
 		per major version
@@ -11,7 +11,14 @@ need to correct :
 	need to get rid of 'double login - gdm'
 		~research issue, could be a normal thing
 		video driver issue ? qxl /?
-	
+
+	ADD SWAP support via 
+		zfs create -V 8G -b $(getconf PAGESIZE) -o logbias=throuput -o sync=always -o primarycache=metadata -o com.sun:auto-snapshot=false POOL/DATASET
+		mkswap -f /dev/zvol/POOL/DATASET
+		swapon /dev/zvol/POOL/DATASET
+		{FSTAB} ::  /dev/zvol/POOL/DATASET   none   swap   discard  0 0
+
+	enable SSHD
 
 * eventually incorporate this function in to a dom-0 (spawn)
 
