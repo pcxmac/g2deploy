@@ -545,8 +545,7 @@ function get_stage3() {
 
 
 function common() {
-	emergeOpts="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99 --exclude=sys-fs/zfs-kmod --exclude=sys-kernel/gentoo-sources --exclude=sys-kernel/git-sources"
-	emergeOpts2="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99"
+	emergeOpts="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99"
 	mkdir -p /var/db/repos/gentoo
 	emerge-webrsync
 	locale-gen -A
@@ -567,7 +566,7 @@ function common() {
 	eselect kernel set linux-$kver
 	zcat /proc/config.gz > /usr/src/linux/.config
 	echo "EMERGE ZFS !!!"
-	emerge $emergeOpts2 =zfs-9999 =zfs-kmod-9999
+	emerge $emergeOpts =zfs-9999 =zfs-kmod-9999
 	sync
 	echo "UPDATE EMERGE !!!!!"
 	emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
@@ -803,7 +802,7 @@ done
 
 #	NOTHING BEING WRITTEN TO VFAT, RSYNC or wtf ??
 #	ZFS NOT INSTANTIATING POOL @SAFE/...
-#
+#	WORK=SOURCE DATASET
 #
 
 
@@ -818,9 +817,9 @@ do
 			source="./boot"
 			safe_src="safe/g1@safe"
 			configure_boot_disk ${disk}
-			zfs send $(getHostZPool)/g1@safe | pv | zfs recv safe/g1
+			zfs send $(getHostZPool)/g1@safe | pv | zfs recv ${safe_src%@*}
 			boot_install ${disk} ${source} ${safe_src}
-			zfs snapshot safe/g1@safe
+			#zfs snapshot safe/g1@safe		## DO NOT HAVE TO ACCOMPLISH, CARRIED THROUGH ZFS-SEND
 		;;
 	esac
 done
