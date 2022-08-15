@@ -22,10 +22,8 @@
 #
 
 function getPkgs() {
-	
 	profile=$1
-	
-	if [-z "$(eselect profile list | grep "$profile ")" ]
+	if [ -z "$(eselect profile list | grep "$profile ")" ]
 	then
 		echo "getPkgs::invalid profile @ $profile"
 		
@@ -52,11 +50,9 @@ function getG2Profile() {
 }
 
 function getHostZPool () {
-
 	pool="$(mount | grep " / " | awk '{print $1}')"
 	pool="${pool%/*}"
 	echo ${pool}
-
 }
 
 function getZFSMountPoint (){
@@ -65,15 +61,45 @@ function getZFSMountPoint (){
 }
 
 function decompress() {
+
 	src=$1
 	dst=$2
-	pv $src | tar xz -C $dst
+
+	#echo "SRC = $src	;; DST = $dst"
+
+	# tar -J - bzip2
+	# tar -z - gzip
+	# tar -x - xz
+	
+	compression_type="$(file $src | awk '{print $2}')"
+	
+	case $compression_type in
+	'XZ')
+		pv $src | tar xJf - -C $dst
+		;;	
+	'gzip')
+		pv $src | tar xzf - -C $dst
+		;;
+	esac
+
+}
+
+function compress() {
+	src=$1
+	dst=$2
+	ksize="$(du -sb $src | awk '{print $1}')"
+
+	echo "ksize = $ksize"
+
+	tar cfz - $src | pv -s $ksize  > ${dst}
 }
 
 function compress_list() {
 	src=$1
 	dst=$2
-	tar cf - -T $src | (pv -p --timer --rate --bytes > $dst)
+	
+	#echo "compressing LIST @ $src $dst"
+	tar cfz - -T $src | (pv -p --timer --rate --bytes > $dst)
 }
 
 function sync() {
@@ -85,7 +111,12 @@ function sync() {
 
 function getKVER() {
 	temp="$(readlink /usr/src/linux)"
-	echo "${temp#linux-*}"
+	if [[ -z "$temp" ]]
+	then
+		echo "$(uname --kernel-release)"
+	else
+		echo "${temp#linux-*}"
+	fi
 }
 
 # sig_check $directory $list
@@ -157,7 +188,7 @@ function zfs_keys() {
 					destination="$offset$destination"
 					mkdir -p $destination
 					if test -f "$source"; then
-						echo "copying $source to $destination"
+						#echo "copying $source to $destination"
 						cp $source $destination
 					else
 						echo "key not found for $j"
@@ -172,6 +203,11 @@ function zfs_keys() {
 }
 
 check_mounts() {
+
+	# can use PS AUX to search for 'NAME' (path) for open processes inside the file system, also lsof $offset, 
+	# then just kill -9 all associated processes then UMOUNT
+
+
 	dir="$(echo "$1" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
 	output="$(cat /proc/mounts | grep "$dir\/" | wc -l)"
 	while [[ "$output" != 0 ]]
@@ -179,7 +215,7 @@ check_mounts() {
 		#cycle=0
 		while read -r mountpoint
 		do
-			echo "umount $mountpoint"
+			#echo "umount $mountpoint"
 			umount $mountpoint > /dev/null 2>&1
 		done < <(cat /proc/mounts | grep "$dir\/" | awk '{print $2}')
 		#echo "cycles = $cycle"
@@ -224,6 +260,7 @@ function config_env()
 	mount -t tmpfs tmpfs $1/run
 	mount --bind /var/lib/portage/binpkgs $1/var/lib/portage/binpkgs
 	mount --bind /var/lib/portage/distfiles $1/var/lib/portage/distfiles
+	#mount --bind /usr/src $1/usr/src
 
 }
 
@@ -233,25 +270,27 @@ function copymodules() {
 
 			dataset=$1
 			mntpt="$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
-			src=/usr/src/linux
+			#src=/usr/src/linux
 			src="$(getKVER)"
+			echo "src = $src"
 			src=/lib/modules/$src
-			dst=${mntpt}/lib/modules
+			dst=${mntpt}/lib/modules			
 			echo "copying over kernel modules... $src --> $dst"
 			mkdir -p $dst
 			rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
 }
 
-function copykernel() {
+function compresskernel() {
 
 			# INPUTS : ${x#*=} - dataset
 			dataset=$1
+			#src="/usr/src/linux-$(getKVER)"
+			src="./src/linux-$(getKVER).tar.gz"
+			dst="linux-$(getKVER).tar.gz"
+			dst="$mntpt/$dst"
 			mntpt="$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
-			dst="linux-$(getKVER)"
-			dst=$mntpt/usr/src/$src
-			echo "copying over kernel source... /usr/src/$src --> $dst"
-			rsync -a -r -l -H -p --delete-before --info=progress2 /usr/src/$src $dst
-
+			echo "copying over kernel source... $src --> $dst"
+			rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
 }
 
 function editboot() {
@@ -259,7 +298,7 @@ function editboot() {
 			# INPUTS : ${x#*=} - dataset
 			dataset=$1
 			bootref="/boot/EFI/boot/refind.conf"
-			src=getKVER
+			src="$(getKVER)"
 			# find section in refind.conf
 			line_number=$(grep -n "$dataset " $bootref  | cut -f1 -d:)
 			loadL=$((line_number-2))
@@ -298,7 +337,7 @@ function updateKernel() {
 
 	cd $cDir
 
-	version=getKVER
+	version="$(getKVER)"
 
 	mkdir -p $cDir/boot/LINUX/TEMP
 
@@ -308,6 +347,7 @@ function updateKernel() {
 	mv /boot/vmlinuz-${version} $cDir/boot/LINUX/TEMP/vmlinuz
 
 	tar cfvz $cDir/boot/LINUX/TEMP/modules.tar.gz /lib/modules/${version}
+	#decompress $cDir/boot/LINUX/TEMP/modules.tar.gz /lib/modules/${version}
 
 	echo "transferring over kernel files"
 	rsync -a -r -l -H -p -c --delete-before --progress /boot/TEMP $cDir/LINUX/
@@ -373,8 +413,8 @@ function boot_install() {
 	# filter for snapshots
 	pdset="${target%@*}"
 	#echo "PDSET = $pdset"
-	version=$(getKVER)
-	offset=$(getZFSMountPoint $pdset)
+	version="$(getKVER)"
+	offset="$(getZFSMountPoint $pdset)"
 	#echo "KVER = $version ;; OFFSET = $offset"
 	tmpMount="$offset/boot"
 
@@ -395,10 +435,11 @@ function boot_install() {
 		#echo "mounting ${disk}2 to $tmpMount"
 		# could have used rsync with hash check anyways ...
 		#echo "checking for file consistency [ $source $tmpMount]"
+		echo "sending $source to $tmpMount"
 		rsync -r -l -H -p -c --delete-before --info=progress2 $source/* $tmpMount
 		
 		# MODIFY FILES
-		#echo "adding EFI ENTRY to template location $version ;; $pdset"
+		echo "adding EFI ENTRY to template location $version ;; $pdset"
 		add_efi_entry $version $pdset
 		
 	fi
@@ -412,7 +453,8 @@ function boot_install() {
 	then
 		echo "...no parition detected"
 	fi
-
+	echo "syncing write to boot drive..."
+	sync
 	umount -v $tmpMount
 }
 
@@ -472,79 +514,165 @@ function configure_boot_disk() {
 	# create boot entry for safe image
 }
 
-function config_mngmt() {
+function pkg_mngmt() {
 
 	offset=$2
 	profile=$1
 ##	echo "$profile"
 #	echo "$(getPkgs $profile)"
 	pkgs="$(getPkgs $profile)"
-	tar cfv $offset/config.tar -T ./config/files.cfg
-	tar xfv $offset/config.tar -C $offset
-	rm $offset/config.tar
-	cp /root $offset -Rp
-	cp /home $offset -Rp
-	uses="$(cat ./packages/$profile.conf)"
-	sed -i "/USE/c $uses" $offset/etc/portage/make.conf
 	echo "$pkgs" > $offset/package.list
-	cat $offset/package.list
 }
 
+function config_etc() {
+	offset=$2
+	profile=$1
+
+	#tar cf $offset/config.tar -T ./config/files.cfg
+	#tar xf $offset/config.tar -C $offset
+	echo "compressing to $offset/config.tar"
+	compress_list ./config/files.cfg $offset/config.tar
+	echo "decompressing $offset/config.tar"
+	decompress $offset/config.tar $offset
+
+
+	rm $offset/config.tar
+	#cp ./root $offset -Rp
+	echo "copying home to target @ $offset"
+	rsync -c -a -r -l -H -p --delete-before --info=progress2 ./home $offset
+	#cp ./home $offset -Rp
+	echo "copying root to target @ $offset"
+	rsync -c -a -r -l -H -p --delete-before --info=progress2 ./root $offset
+	uses="$(cat ./packages/$profile.conf)"
+	sed -i "/USE/c $uses" $offset/etc/portage/make.conf
+}
+
+function release_base_string() {
+
+	str=$1
+
+	case $str in
+		"gnome")
+			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
+		;;
+		"plasma")
+			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
+		;;
+		"openrc")
+			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-openrc/"
+		;;
+		"hardened")
+			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/"
+		;;
+		"systemd")
+			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-systemd/"
+		;;
+		"gnome/systemd")
+			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/"
+		;;
+		"plasma/systemd")
+			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/"
+		;;
+		*)
+			baseStr="unsupported profile string!"
+		;;
+	esac
+
+	echo $baseStr
+
+}
+
+function local_stage3() {
+
+	portageDir="/var/lib/portage"
+	str=$1		#	(profile string)	
+	locationStr="$(release_base_string $str)"
+	selectStr="${locationStr#*current-*}"
+	selectStr="${selectStr%*/}"
+
+	urlBase="${portageDir}${locationStr}"
+	urlCurrent="$(ls $urlBase | grep "$selectStr" | grep -v '.xz.')"
+
+	echo "${urlBase}${urlCurrent}"	
+}
+
+function remote_stage3() {
+
+	#	NEED A MODE FOR [ LOCAL RSYNC SERVER ;; THEN MIRROR LIST shuffled ]
+	#	return the method + url of the file if exists, use tally of servers located in ./config/release.mirrors
+	#	methods for getting remote stage3's: { rsync (rsync://domain.tld/MISC/releases); wget (http://domain.tld/MISC/release) }
+
+	serversList="./config/release.mirrors"
+	str=$1		#	(profile string)
+	locationStr="$(release_base_string $str)"
+	selectStr="${locationStr#*current-*}"
+	selectStr="${selectStr%*/}"
+
+	# cycle through mirrors, to find a valid current stage3	
+	while read -r server 
+	do
+		echo "checking $server ..."
+		urlBase="$server$locationStr"
+		urlCurrent="$(curl -s $urlBase | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-' | awk '{print $1}' | head -n 1 )"
+		if [[ -n "$urlCurrent" ]];
+		then 
+			urlCurrent="${urlCurrent%.t*}.tar.xz"
+			echo "${urlBase}${urlCurrent}"
+			exit
+		fi
+		
+	# shuffle the mirror list to alleviate loading the first in line
+	done < <(cat ./config/release.mirrors | shuf)
+
+	# NO servers found, otherwise it would have exited before this line... output empty string to indicate error
+	if [[ -z $urlCurrent ]];
+	then 
+		urlBase="no "
+		urlCurrent="result !"
+		echo ""
+	fi
+	# no default route
+}
 
 function get_stage3() {
 	#echo "getting stage 3"
 	str=$1
 	offset=$2
-	case $str in
-		"gnome")
-			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
-			file="$(curl -s $mirror | grep 'stage3-amd64-desktop-openrc' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
-			file="${file%.xz*}.xz"
-		;;
-		"plasma")
-			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
-			file="$(curl -s $mirror | grep 'stage3-amd64-desktop-openrc' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
-			file="${file%.xz*}.xz"
-		;;
-		"hardened")
-			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/"
-			file="$(curl -s $mirror | grep 'stage3-amd64-openrc' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
-			file="${file%.xz*}.xz"
-		;;
-		"systemd")
-			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-systemd/"
-			file="$(curl -s $mirror | grep 'stage3-amd64-systemd' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
-			file="${file%.xz*}.xz"
-		;;
-		"gnome/systemd")
-			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/"
-			file="$(curl -s $mirror | grep 'stage3-amd64-desktop-systemd' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
-			file="${file%.xz*}.xz"
-		;;
-		"plasma/systemd")
-			mirror="mirror.bytemark.co.uk/gentoo//releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/"
-			file="$(curl -s $mirror | grep 'stage3-amd64-desktop-systemd' | head -1 | sed -e 's/<[^>]*>//g' | awk '{print $1}')"
-			file="${file%.xz*}.xz"
-		;;
-		*)
-			mirror="default"
-			file="default"
-		;;
-	esac
 
-	echo "mirror = $mirror, file = $file"
-	wget $mirror$file --directory-prefix=$offset
-	wget $mirror$file.asc --directory-prefix=$offset
+	local_stage3_url="$(local_stage3 $str)"
+
+	if [ -n "$local_stage3_url" ]
+	then
+		file=${local_stage3_url##*/}
+		#echo "offset = $offset, file = $file"
+		rsync -avP ${local_stage3_url} ${offset}
+		rsync -avP ${local_stage3_url}.asc ${offset}
+	else
+		remote_stage3_url="$(remote_stage3 $str)"
+
+		if [ -n "$remote_stage3_url" ]
+		then
+			file=${remote_stage3_url##*/}
+			#echo "offset = $offset, file = $file"
+			wget ${remote_stage3_url}	--directory-prefix=${offset}
+			wget ${remote_stage3_url}.asc	--directory-prefix=${offset}
+		fi
+	fi
+	
+	echo "offset = $offset, file = $file"
+	
 	gpg --verify $offset/$file.asc
 	rm $offset/$file.asc
 
-	echo "decompressing $file..."
-	tar xf $offset/$file -C $offset
+	echo "decompressing $file...@ $offset"
+	decompress $offset/$file $offset
 	rm $offset/$file
 }
 
 
 function common() {
+	kver=$2
+	key=$1
 	emergeOpts="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99"
 	mkdir -p /var/db/repos/gentoo
 	emerge-webrsync
@@ -558,25 +686,21 @@ function common() {
 	eselect profile set default/linux/amd64/$1
 	echo "BASIC TOOLS EMERGE !!!!!"
 	emerge $emergeOpts gentoolkit eix mlocate genkernel sudo zsh tmux app-arch/lz4 elfutils --ask=n
-	echo "ZFS EMERGE BUILD DEPS ONLY !!!!!"
-	emerge $emergeOpts --onlydeps =zfs-9999 =zfs-kmod-9999
-	# seems outmoded ... perhahs redundant ... maybenot ...
-	echo "BUILDING KERNEL ..."
-	kver="$(uname --kernel-release)"
-	eselect kernel set linux-$kver
-	zcat /proc/config.gz > /usr/src/linux/.config
-	echo "EMERGE ZFS !!!"
-	emerge $emergeOpts =zfs-9999 =zfs-kmod-9999
-	sync
+
+
 	echo "UPDATE EMERGE !!!!!"
 	emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
 	usermod -s /bin/zsh root
 	sudo sh -c 'echo root:@PCXmacR00t | chpasswd'
+
+	# CYCLE THROUGH USERS ?
 	useradd sysop
 	sudo sh -c 'echo sysop:@PCXmacSy$ | chpasswd'
 	usermod -a -G wheel sysop
+	homedir=$(eval echo ~sysop)
+	chown sysop.sysop ${homedir} -R
+
 	qlist -I | sort | uniq > base.pkgs
-	key=$1
 	file_name="${key##*/}"
 	cat ./package.list | sort | uniq > profile.pkgs
 	comm -1 -3 base.pkgs profile.pkgs > tobe.pkgs
@@ -586,6 +710,30 @@ function common() {
 	echo "EMERGE PROFILE PACKAGES !!!!"
 	emerge $emergeOpts $(cat ./tobe.pkgs)
 	rm tobe.pkgs
+
+	echo "BUILDING KERNEL ..."
+	kversion="${kver%*-gentoo}"
+	# THIS is in place to set the requirement for kernel sources, for other packages, might not need this in the future
+	#emerge $emergeOpts =gentoo-sources-$kversion
+	#zcat /proc/config.gz > /usr/src/linux/.config
+	echo "TRYING TO DECOMPRESS KERNEL #############################"
+
+	decompress /linux.tar.gz /
+
+	sleep 10
+	
+	echo "???????????????????????????????"
+	eselect kernel set 1
+		
+	echo "ZFS EMERGE BUILD DEPS ONLY !!!!!"
+	emerge $emergeOpts --onlydeps =zfs-kmod-9999
+	# seems outmoded ... perhahs redundant ... maybenot ...
+
+	echo "EMERGE ZFS !!!"
+	emerge $emergeOpts =zfs-9999 =zfs-kmod-9999
+	zcat /proc/config.gz > /usr/src/linux/.config
+	sync
+
 	echo "SETTING SERVICES"
 	# install dev keys for gentoo
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
@@ -728,13 +876,17 @@ function profile_settings() {
 export PYTHONPATH=""
 export -f common
 export -f profile_settings
+export -f getKVER
+export -f decompress
 
 # [script] build=*	work=pool/dataset	<optional>boot=(/dev/bootP)		<optional>send=(send / recv IP)	
 # [script] boot by itself, will install a boot record & safe-partition for a designated deployment			:: work=pool/dataset boot=/dev/sda
 # [script] send, typically by itself 		:: send=host:/pool		work=pool/dataset
 # [script] ... in the future work will be able to refer to a remote host:/pool/dataset and a boot drive can be specified, work will be ssh'd inside the resepctive host
 
-echo "[script...]"
+
+
+echo "[script... $(getKVER)]"
 
 # BUILD PROFILE
 for x in $@
@@ -793,6 +945,7 @@ do
 			#? zfs= btrfs= generic= tmpfs=
 			directory="$(getZFSMountPoint ${x#*=})"
 			dataset="${x#*=}"
+			
 		;;
 	esac
 done
@@ -800,10 +953,17 @@ done
 # BOOT, USED FOR NEW OR EXISTING,IF EXISTING, IGNORE SAFE PARTITION.
 # use case requires work=
 
-#	NOTHING BEING WRITTEN TO VFAT, RSYNC or wtf ??
+
 #	ZFS NOT INSTANTIATING POOL @SAFE/...
 #	WORK=SOURCE DATASET
-#
+#	NEED TO INSTANTIATE DATASETS like G1 if not present
+#	NEED TO HAVE A WAY TO MANAGE KERNEL BOOT SETS in ./BOOT/LINUX 
+#	NEED a MAKE.CONF SEDitor w/ things like $(nproc) 
+#	NEED more variability for safe dataset and key location. :: MAKE getZFSKEYlocation() function
+# 	NEED *UPDATE* FUNCTION to USE 'SYNC' command in /var/lib/portage as well, 	|| UPDATE=~host
+#		UPDATE=pool/dataset ...
+#		UPDATE needs a watchdog function to kill transactions if they freeze data pulling, reset connection, or timeout for a period then reattempt
+#	NEED A CHECK FOR AVAILABLE GENTOO-SOURCES vs INSTALLED KERNEL, DO NOT PROCEED IF OUT OF DATE, REBUILD AND UPDATE CURRENT KERNEL FIRST, DOES NOT REQUIRE RESTART
 
 
 for x in $@
@@ -816,8 +976,11 @@ do
 			disk=${x#*=}
 			source="./boot"
 			safe_src="safe/g1@safe"
+			key="/srv/crypto.zfs.key"
 			configure_boot_disk ${disk}
+			echo "sending over $(getHostZPool)/g1@safe to ${safe_src%@*}" 
 			zfs send $(getHostZPool)/g1@safe | pv | zfs recv ${safe_src%@*}
+			zfs change-key -o keyformat=hex -o keylocation=file://$key ${safe_src%@*}
 			boot_install ${disk} ${source} ${safe_src}
 			#zfs snapshot safe/g1@safe		## DO NOT HAVE TO ACCOMPLISH, CARRIED THROUGH ZFS-SEND
 		;;
@@ -833,12 +996,13 @@ do
 			clear_fs ${directory}
 			get_stage3 ${selection} ${directory}
 			zfs_keys ${dataset}
-			copymodules ${dataset}
+			copymodules ${dataset}		
+			compresskernel ${dataset}
 			config_env ${directory}
-			config_mngmt ${profile} ${directory}
-			chroot ${directory} /bin/bash -c "common ${profile}"
+			config_etc ${profile} ${directory}
+			pkg_mngmt ${profile} ${directory}
+			chroot ${directory} /bin/bash -c "common ${profile} $(getKVER)"
 			chroot ${directory} /bin/bash -c "profile_settings ${profile}"
-			config_mngmt ${profile} ${directory}
 		;;
 	esac
 done
