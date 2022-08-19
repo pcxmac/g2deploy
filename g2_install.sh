@@ -21,29 +21,36 @@
 #	reusables
 #
 
-function getPkgs() {
+function pkg_mngmt() {
+
 	profile=$1
-	if [ -z "$(eselect profile list | grep "$profile ")" ]
-	then
-		echo "getPkgs::invalid profile @ $profile"
-		
-		exit
-	else
-		if [ -f ./packages/$profile.pkgs ]
-		then
-			echo -e "$(cat ./packages/common.pkgs)\n$(cat ./packages/$profile.pkgs)"
-			
-		else
-			echo "getPkgs::$profile.pkgs not configured"
-			
-		fi
-	fi
+	offset=$2
+
+	commonPkgs="$(cat ./packages/common.pkgs)"
+	profilePkgs="$(cat ./packages/${profile}.pkgs)"
+	allPkgs="$(echo -e "${commonPkgs}\n${profilePkgs}" | uniq | sort)"
+
+	iBase="$(chroot ${offset} /usr/bin/qlist -I)"
+	iBase="$(echo "${iBase}" | uniq | sort)"
+
+	#echo ${allPkgs} > ${offset}/packages_list
+	#echo ${iBase} >> ${offset}/packages_list
+
+	diffPkgs="$(comm -1 -3 <(echo "${iBase}") <(echo "${allPkgs}"))"
+
+	#echo ${diffPkgs} >> ${offset}/packages_list
+	#echo "--------------diffPkgs------------------------------" >> ${offset}/packages_list	
+
+	echo "${diffPkgs}" > ${offset}/package.list
+
 }
+
 
 function getG2Profile() {
 	current="17.1"
-	dataset=$1 
-	mountpoint=getZFSMountPoint $dataset
+	#dataset=$1 
+	#mountpoint=getZFSMountPoint $dataset
+	mountpoint=$1
 	result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
 	result="${result#*/$current/}"
 	echo $result
@@ -239,40 +246,41 @@ function clear_fs() {
 
 function config_env()
 {
-	mkdir -p $1/var/lib/portage/binpkgs
-	mkdir -p $1/var/lib/portage/distfiles
-	mkdir -p $1/srv/crypto/
-	mkdir -p $1/var/db/repos/gentoo
+	offset="$1"
+
+	mkdir -p ${offset}/var/lib/portage/binpkgs
+	mkdir -p ${offset}/var/lib/portage/distfiles
+	mkdir -p ${offset}/srv/crypto/
+	mkdir -p ${offset}/var/lib/portage/repos/gentoo
 
 	mSize="$(cat /proc/meminfo | column -t | grep 'MemFree' | awk '{print $2}')"
 	mSize="${mSize}K"
 
 	# MOUNTS
 	echo "msize = $mSize"
-	mount -t proc proc $1/proc
-	mount --rbind /sys $1/sys
-	mount --make-rslave $1/sys
-	mount --rbind /dev $1/dev
-	mount --make-rslave $1/dev
+	mount -t proc proc ${offset}/proc
+	mount --rbind /sys ${offset}/sys
+	mount --make-rslave ${offset}/sys
+	mount --rbind /dev ${offset}/dev
+	mount --make-rslave ${offset}/dev
 	# because autofs doesn't work right in a chroot ...
-	mount -t tmpfs -o size=$mSize tmpfs $1/tmp
-	mount -t tmpfs tmpfs $1/var/tmp
-	mount -t tmpfs tmpfs $1/run
-	mount --bind /var/lib/portage/binpkgs $1/var/lib/portage/binpkgs
-	mount --bind /var/lib/portage/distfiles $1/var/lib/portage/distfiles
+	mount -t tmpfs -o size=$mSize tmpfs ${offset}/tmp
+	mount -t tmpfs tmpfs ${offset}/var/tmp
+	mount -t tmpfs tmpfs ${offset}/run
+	#mount --bind /var/lib/portage/binpkgs $1/var/lib/portage/binpkgs
+	#mount --bind /var/lib/portage/distfiles $1/var/lib/portage/distfiles
 	#mount --bind /usr/src $1/usr/src
+	#mount --bind /var/db/repos/gentoo $1/var/db/repos/gentoo
 
 }
 
 function copymodules() {
-
 			# INPUTS : ${x#*=} - dataset
-
 			dataset=$1
 			mntpt="$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
 			#src=/usr/src/linux
 			src="$(getKVER)"
-			echo "src = $src"
+			#echo "src = $src"
 			src=/lib/modules/$src
 			dst=${mntpt}/lib/modules			
 			echo "copying over kernel modules... $src --> $dst"
@@ -514,16 +522,6 @@ function configure_boot_disk() {
 	# create boot entry for safe image
 }
 
-function pkg_mngmt() {
-
-	offset=$2
-	profile=$1
-##	echo "$profile"
-#	echo "$(getPkgs $profile)"
-	pkgs="$(getPkgs $profile)"
-	echo "$pkgs" > $offset/package.list
-}
-
 function config_etc() {
 	offset=$2
 	profile=$1
@@ -534,15 +532,18 @@ function config_etc() {
 	compress_list ./config/files.cfg $offset/config.tar
 	echo "decompressing $offset/config.tar"
 	decompress $offset/config.tar $offset
-
-
 	rm $offset/config.tar
+	echo "adding client files..."
+	decompress ./config/client_files.tar.gz $offset
+	
+
 	#cp ./root $offset -Rp
 	echo "copying home to target @ $offset"
 	rsync -c -a -r -l -H -p --delete-before --info=progress2 ./home $offset
 	#cp ./home $offset -Rp
 	echo "copying root to target @ $offset"
 	rsync -c -a -r -l -H -p --delete-before --info=progress2 ./root $offset
+
 	uses="$(cat ./packages/$profile.conf)"
 	sed -i "/USE/c $uses" $offset/etc/portage/make.conf
 }
@@ -674,19 +675,33 @@ function common() {
 	kver=$2
 	key=$1
 	emergeOpts="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99"
-	mkdir -p /var/db/repos/gentoo
-	emerge-webrsync
+
 	locale-gen -A
 	eselect locale set en_US.utf8
+	emerge-webrsync
+
 	echo "SYNC EMERGE !!!!!"
+	#MOUNT --BIND RESOLVES NEED TO CONTINUALLY SYNC, IN FUTURE USE LOCAL MIRROR
 	emerge $emergeOpts --sync --ask=n
-	eselect news read all
+	eselect news read all > /dev/null
 	echo "America/Los_Angeles" > /etc/timezone
 	emerge --config sys-libs/timezone-data
-	eselect profile set default/linux/amd64/$1
-	echo "BASIC TOOLS EMERGE !!!!!"
-	emerge $emergeOpts gentoolkit eix mlocate genkernel sudo zsh tmux app-arch/lz4 elfutils --ask=n
 
+	#	{key%/openrc} :: is a for the edgecase 'openrc' where only that string is non existent with in eselect-profile
+	eselect profile set default/linux/amd64/${key%/openrc}
+
+	echo "BASIC TOOLS EMERGE !!!!!"
+	emerge $emergeOpts gentoolkit eix mlocate genkernel sudo zsh pv tmux app-arch/lz4 elfutils --ask=n
+
+	echo "BUILDING KERNEL ..."
+	ls /linux-${kver}.tar.gz -ailpht
+	ls -ail /usr/src
+	emerge $emergeOpts =gentoo-sources-${kver%*-gentoo}
+	decompress /linux-${kver}.tar.gz /
+ 	rm /linux-${kver}.tar.gz
+
+	# 
+	eselect kernel set linux-${kver}
 
 	echo "UPDATE EMERGE !!!!!"
 	emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
@@ -696,35 +711,24 @@ function common() {
 	# CYCLE THROUGH USERS ?
 	useradd sysop
 	sudo sh -c 'echo sysop:@PCXmacSy$ | chpasswd'
+	echo "home : sysop"
+	usermod --home /home/sysop sysop
+	echo "wheel : sysop"
 	usermod -a -G wheel sysop
-	homedir=$(eval echo ~sysop)
+	echo "shell : sysop"
+	usermod --shell /bin/zsh sysop
+	homedir="$(eval echo ~sysop)"
 	chown sysop.sysop ${homedir} -R
-
-	qlist -I | sort | uniq > base.pkgs
-	file_name="${key##*/}"
-	cat ./package.list | sort | uniq > profile.pkgs
-	comm -1 -3 base.pkgs profile.pkgs > tobe.pkgs
-	rm profile.pkgs
-	rm base.pkgs
-	#rm package.list
-	echo "EMERGE PROFILE PACKAGES !!!!"
-	emerge $emergeOpts $(cat ./tobe.pkgs)
-	rm tobe.pkgs
-
-	echo "BUILDING KERNEL ..."
-	kversion="${kver%*-gentoo}"
-	# THIS is in place to set the requirement for kernel sources, for other packages, might not need this in the future
-	#emerge $emergeOpts =gentoo-sources-$kversion
-	#zcat /proc/config.gz > /usr/src/linux/.config
-	echo "TRYING TO DECOMPRESS KERNEL #############################"
-
-	decompress /linux.tar.gz /
-
-	sleep 10
+	echo "homedir"
 	
-	echo "???????????????????????????????"
-	eselect kernel set 1
-		
+
+	echo "EMERGE PROFILE PACKAGES !!!!"
+	pkgs="/package.list"
+	#file_name="${key##*/}"
+	emerge $emergeOpts $(cat "$pkgs")
+	#rm tobe.pkgs
+
+
 	echo "ZFS EMERGE BUILD DEPS ONLY !!!!!"
 	emerge $emergeOpts --onlydeps =zfs-kmod-9999
 	# seems outmoded ... perhahs redundant ... maybenot ...
@@ -737,8 +741,6 @@ function common() {
 	echo "SETTING SERVICES"
 	# install dev keys for gentoo
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
-####USE ZGENHOSTID ON NEW ZPOOLS
-	#zgenhostid
 	eix-update
 	updatedb
 }
@@ -746,9 +748,9 @@ function common() {
 function profile_settings() {
 	key=$1
 
-	# openrc
-	case ${key#17.1/*} in
-		'hardened'|'desktop/plasma'|'desktop/gnome'|'selinux'|'hardened/selinux')
+	# openrc = ''
+	case ${key#17.1*} in
+		'/openrc' | '/hardened'|'/desktop/plasma'|'/desktop/gnome'|'/selinux'|'/hardened/selinux')
 			echo "configuring common for hardened, plasma and gnome..."
 			rc-update add local
 			rc-update add zfs-mount boot
@@ -763,8 +765,8 @@ function profile_settings() {
 	esac
 
 	# systemd
-	case ${key#17.1/*} in
-		'desktop/plasma/systemd'|'desktop/gnome/systemd'|'systemd')
+	case ${key#17.1*} in
+		'/desktop/plasma/systemd'|'/desktop/gnome/systemd'|'/systemd')
 			echo "configuring systemd..."
 			systemctl enable NetworkManager
 			systemctl enable zfs.target
@@ -783,23 +785,23 @@ function profile_settings() {
 	esac
 
 	# generic console
-	case ${key#17.1/*} in
-		'systemd'|'hardened')
+	case ${key#17.1*} in
+		'/systemd'|'/hardened')
 			echo "generic console setup..."
 		;;
 	esac
 
 	# generic desktop
-	case ${key#17.1/*} in
-		'desktop/plasma'|'desktop/gnome')
+	case ${key#17.1} in
+		'/desktop/plasma'|'/desktop/gnome')
 			echo "generic desktop setup"
 			sed -i "/DISPLAYMANAGER/c DISPLAYMANAGER='gdm'" /etc/conf.d/display-manager
 		;;
 	esac
 
 	# generic openrc desktop
-	case ${key#17.1/*} in
-		'desktop/plasma'|'desktop/gnome')
+	case ${key#17.1*} in
+		'/desktop/plasma'|'/desktop/gnome')
 			echo "configuring openrc common graphical environments: plasma and gnome..."
 			emerge --ask --noreplace gui-libs/display-manager-init --ask=n
 			rc-update add elogind boot
@@ -809,8 +811,8 @@ function profile_settings() {
 	esac
 
 	# generic systemd desktop
-	case ${key#17.1/*} in
-		'desktop/plasma/systemd'|'desktop/gnome/systemd')
+	case ${key#17.1*} in
+		'/desktop/plasma/systemd'|'/desktop/gnome/systemd')
 			echo "configuring systemd common graphical environments: plasma and gnome..."
 			systemctl enable gdm.service
 		;;
@@ -822,8 +824,8 @@ function profile_settings() {
 
 
 	# generic plasma
-	case ${key#17.1/*} in
-		'desktop/plasma'|'desktop/plasma/systemd')
+	case ${key#17.1*} in
+		'/desktop/plasma'|'/desktop/plasma/systemd')
 			echo "configuring plasma..."
 			dir="/var/lib/AccountsService/users"
 			mkdir -p $dir
@@ -833,8 +835,8 @@ function profile_settings() {
 	esac
 
 	# generic gnome
-	case ${key#17.1/*} in
-		'desktop/gnome'|'desktop/gnome/systemd')
+	case ${key#17.1*} in
+		'/desktop/gnome'|'/desktop/gnome/systemd')
 			echo "configuring gnome..."
 			dir="/var/lib/AccountsService/users"
 			mkdir -p $dir
@@ -844,29 +846,32 @@ function profile_settings() {
 	esac
 
 	# specific use cases for individual profiles
-	case ${key#17.1/} in
-		'desktop/plasma')
+	case ${key#17.1} in
+		'/desktop/plasma')
 			echo "configuring plasma/openrc"
 		;;
-		'desktop/plasma/systemd')
+		'/desktop/plasma/systemd')
 			echo "configuring plasma/systemd"
 		;;
-		'desktop/gnome')
+		'/desktop/gnome')
 			echo "configuring gnome/openrc..."
 		;;
-		'desktop/gnome/systemd')
+		'/desktop/gnome/systemd')
 			echo "configuring gnome-systemd"
 		;;
-		'systemd')
+		'/systemd')
 			echo "nothing special for systemd"
 		;;
-		'hardened')
+		'')
+			echo "nothing special for openrc"
+		;;
+		'/hardened')
 			echo "nothing special for hardened"
 		;;
-		'selinux')
+		'/selinux')
 			echo "selinux not supported"
 		;;
-		'hardened/selinux')
+		'/hardened/selinux')
 			echo "hardened/selinux not supported"
 		;;
 	esac
@@ -878,13 +883,12 @@ export -f common
 export -f profile_settings
 export -f getKVER
 export -f decompress
+export -f getG2Profile
 
 # [script] build=*	work=pool/dataset	<optional>boot=(/dev/bootP)		<optional>send=(send / recv IP)	
 # [script] boot by itself, will install a boot record & safe-partition for a designated deployment			:: work=pool/dataset boot=/dev/sda
 # [script] send, typically by itself 		:: send=host:/pool		work=pool/dataset
 # [script] ... in the future work will be able to refer to a remote host:/pool/dataset and a boot drive can be specified, work will be ssh'd inside the resepctive host
-
-
 
 echo "[script... $(getKVER)]"
 
@@ -903,6 +907,10 @@ do
 				'hardened')
 					# space at end limits selinux
 					profile="17.1/hardened "
+				;;
+				'openrc')
+					# space at end limits selinux
+					profile="17.1/openrc"
 				;;
 				'systemd')
 					profile="17.1/systemd "
@@ -935,8 +943,6 @@ do
 	esac
 done
 
-
-
 # DESIGNATE A WORKING DIRECTORY TO 
 for x in $@
 do
@@ -953,7 +959,6 @@ done
 # BOOT, USED FOR NEW OR EXISTING,IF EXISTING, IGNORE SAFE PARTITION.
 # use case requires work=
 
-
 #	ZFS NOT INSTANTIATING POOL @SAFE/...
 #	WORK=SOURCE DATASET
 #	NEED TO INSTANTIATE DATASETS like G1 if not present
@@ -963,8 +968,52 @@ done
 # 	NEED *UPDATE* FUNCTION to USE 'SYNC' command in /var/lib/portage as well, 	|| UPDATE=~host
 #		UPDATE=pool/dataset ...
 #		UPDATE needs a watchdog function to kill transactions if they freeze data pulling, reset connection, or timeout for a period then reattempt
-#	NEED A CHECK FOR AVAILABLE GENTOO-SOURCES vs INSTALLED KERNEL, DO NOT PROCEED IF OUT OF DATE, REBUILD AND UPDATE CURRENT KERNEL FIRST, DOES NOT REQUIRE RESTART
 
+	############ NEED A PKG FILE FOR TOOLS. 
+#	openrc case is satisfied through string substitution for just ${VAR%/openrc}
+#	config_etc mkdir's need to be part of a compressed archive deployment
+#	NEED TO CHECK SET LOCALES, SAYS UNSUPPORTED ...
+#	
+#	CURRENT PROBLEMATIC ; BINARY PACKAGE HOST OVER RSYNC AND SNAPSHOT ACCESS OVER RSYNC.
+#	NEED TO UPGRADE BINARY PKG COMPRESSION to lz4 & FORMAT TO GPKG https://wiki.gentoo.org/wiki/Binary_package_guide#Setting_up_a_binary_package_host
+#	
+#	FOR BINHOST-SSH, add key from server to client ./.ssh/authorized_keys
+#		:: make.conf { PORTAGE_BINHOST="ssh://portage@SERVER/var/lib/portage/binpkgs"
+#	
+#	amd64.packages.server.tld/17.1/desktop/plasma/systemd
+#	amd64.packages.server.tld/17.0/hardened
+
+#	>>>>>>> each domain will log requests to different files, each domain will add the package to sigma.PROFILE.pkgs under $/packages/17.X... 
+#	GETBINPKG only from clients, BUILD BINPKGS on server only. 
+#
+#	UPDATE PROCESS : --sync, distfiles+repos+snapshots, update kernel+zfs+other kernel modules (like vbox), merge
+#
+#	DOM0 callback get host adapter for the container, cycle up to *.*.*.1/32 that should be the 'machine bridge IP, which will host dom-0 calls
+#
+#	remote install from rescue disk
+#	
+#		identify: virtualdisk / realdisk, hostIP
+#		ssh-copyid
+#		ssh-script boot drive config
+#		scp over boot contents
+#		* NOTE, this script does not parse YAML or more complex configs with multiple disks...
+#		
+#	
+#	
+#	
+#	
+#	
+#	
+#	
+#	
+#	
+#	
+#	
+#	
+#	
+#	
+#	
+#	
 
 for x in $@
 do
@@ -992,6 +1041,7 @@ for x in $@
 do
 	case "${x}" in
 		deploy)
+			PROMPT_COMMAND="g2build @ ${directory}"
 			check_mounts ${directory}
 			clear_fs ${directory}
 			get_stage3 ${selection} ${directory}
@@ -1001,6 +1051,7 @@ do
 			config_env ${directory}
 			config_etc ${profile} ${directory}
 			pkg_mngmt ${profile} ${directory}
+			#cat ${directory}/package.list
 			chroot ${directory} /bin/bash -c "common ${profile} $(getKVER)"
 			chroot ${directory} /bin/bash -c "profile_settings ${profile}"
 		;;

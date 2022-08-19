@@ -1,3 +1,4 @@
+net-misc/scponly
 app-crypt/gentoo-keys
 net-fs/sshfs
 app-misc/screen
@@ -65,7 +66,6 @@ app-arch/bzip2
 app-arch/cpio
 app-arch/gzip
 app-arch/libarchive
-app-arch/lz4
 app-arch/rpm2targz
 app-arch/tar
 app-arch/unzip
