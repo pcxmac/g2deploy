@@ -23,20 +23,20 @@
 
 function pkg_mngmt() {
 
-	profile=$1
-	offset=$2
+	local profile=$1
+	local offset=$2
 
-	commonPkgs="$(cat ./packages/common.pkgs)"
-	profilePkgs="$(cat ./packages/${profile}.pkgs)"
-	allPkgs="$(echo -e "${commonPkgs}\n${profilePkgs}" | uniq | sort)"
+	local commonPkgs="$(cat ./packages/common.pkgs)"
+	local profilePkgs="$(cat ./packages/${profile}.pkgs)"
+	local allPkgs="$(echo -e "${commonPkgs}\n${profilePkgs}" | uniq | sort)"
 
-	iBase="$(chroot ${offset} /usr/bin/qlist -I)"
+	local iBase="$(chroot ${offset} /usr/bin/qlist -I)"
 	iBase="$(echo "${iBase}" | uniq | sort)"
 
 	#echo ${allPkgs} > ${offset}/packages_list
 	#echo ${iBase} >> ${offset}/packages_list
 
-	diffPkgs="$(comm -1 -3 <(echo "${iBase}") <(echo "${allPkgs}"))"
+	local diffPkgs="$(comm -1 -3 <(echo "${iBase}") <(echo "${allPkgs}"))"
 
 	#echo ${diffPkgs} >> ${offset}/packages_list
 	#echo "--------------diffPkgs------------------------------" >> ${offset}/packages_list	
@@ -47,30 +47,30 @@ function pkg_mngmt() {
 
 
 function getG2Profile() {
-	current="17.1"
+	local current="17.1"
 	#dataset=$1 
 	#mountpoint=getZFSMountPoint $dataset
-	mountpoint=$1
-	result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
+	local mountpoint=$1
+	local result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
 	result="${result#*/$current/}"
 	echo $result
 }
 
 function getHostZPool () {
-	pool="$(mount | grep " / " | awk '{print $1}')"
+	local pool="$(mount | grep " / " | awk '{print $1}')"
 	pool="${pool%/*}"
 	echo ${pool}
 }
 
 function getZFSMountPoint (){
-	dataset=$1
+	local dataset=$1
 	echo "$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
 }
 
 function decompress() {
 
-	src=$1
-	dst=$2
+	local src=$1
+	local dst=$2
 
 	#echo "SRC = $src	;; DST = $dst"
 
@@ -78,7 +78,7 @@ function decompress() {
 	# tar -z - gzip
 	# tar -x - xz
 	
-	compression_type="$(file $src | awk '{print $2}')"
+	local compression_type="$(file $src | awk '{print $2}')"
 	
 	case $compression_type in
 	'XZ')
@@ -92,55 +92,60 @@ function decompress() {
 }
 
 function compress() {
-	src=$1
-	dst=$2
-	ksize="$(du -sb $src | awk '{print $1}')"
-
+	local src=$1
+	local dst=$2
+	local ksize="$(du -sb $src | awk '{print $1}')"
 	echo "ksize = $ksize"
-
 	tar cfz - $src | pv -s $ksize  > ${dst}
 }
 
 function compress_list() {
-	src=$1
-	dst=$2
+	local src=$1
+	local dst=$2
 	
 	#echo "compressing LIST @ $src $dst"
 	tar cfz - -T $src | (pv -p --timer --rate --bytes > $dst)
 }
 
 function sync() {
-	src=$1
-	dst=$2
+	local src=$1
+	local dst=$2
 	echo "rsync from $src to $dst"
 	rsync -c -a -r -l -H -p --delete-before --info=progress2 $src $dst
 }
 
 function getKVER() {
-	temp="$(readlink /usr/src/linux)"
-	if [[ -z "$temp" ]]
+	
+	local selector="$(eselect kernel list | grep '*' | awk '{print $3}')"
+	if [[ -n "$selector" ]]
 	then
-		echo "$(uname --kernel-release)"
+		echo "$selector"
 	else
-		echo "${temp#linux-*}"
+		local softlink="$(readlink /usr/src/linux)"
+		if [[ -z "$softlink" ]]
+		then
+			echo "$(uname --kernel-release)"
+		else
+			echo "${softlink#linux-*}"
+		fi
 	fi
 }
 
 # sig_check $directory $list
 function sig_check() {
-	srcDirectory = $1
-	validSums = "$(cat $2)"
+	local srcDirectory=$1
+	local validSums="$(cat $2)"
 	# verify md5sums and if file exists, echo invalid md5sums, report error or 0
-	cDir=$(pwd)
-	cd $srcDirectory
-	error=0
+	local cDir=$(pwd)
+	cd ${srcDirectory}
+	local error=0
 	for line in $validSums
 	do
-		lineSum="$(echo $line | awk '{print $1}')"
-		lineFile="$(echo $line | awk '{print $2}')"
+		local lineSum="$(echo $line | awk '{print $1}')"
+		local lineFile="$(echo $line | awk '{print $2}')"
 		if [ ! -f $lineFile ]; then echo "missing file @$lineFile"; error=1;
 		else
-			thisSum="$(md5sum $lineFile | awk '{print $1}')"
+			local thisSum="$(md5sum $lineFile | awk '{print $1}')"
 			if [ "$thisSum" != "$lineSum" ];then echo "invalid md5sum @$lineSum"; error=1; fi
 			# this sum is valid
 		fi
@@ -301,23 +306,31 @@ function compresskernel() {
 			rsync -a -r -l -H -p --delete-before --info=progress2 $src $dst
 }
 
+
+# SEARCHES FOR APPROPRIATE DATASET AND MODIFIES KERNEL AND INITRD LINES TO UPDATE
 function editboot() {
 
 			# INPUTS : ${x#*=} - dataset
-			dataset=$1
-			bootref="/boot/EFI/boot/refind.conf"
-			src="$(getKVER)"
+			local dataset="$1"
+			local bootref="/boot/EFI/boot/refind.conf"
+			local src="$2"
 			# find section in refind.conf
-			line_number=$(grep -n "$dataset " $bootref  | cut -f1 -d:)
-			loadL=$((line_number-2))
-			initrdL=$((line_number-1))
-			##### DEBUG #################################################################
-			#echo "line # $line_number , src=  $src"
-			#grep -n "$dataset " $bootref
-			#sed -n "${loadL}s/loader.*/loader \\/linux\\/$src\\/vmlinuz/p" $bootref
-			#sed -n "${initrdL}s/initrd.*/initrd \\/linux\\/$src\\/initramfs/p" $bootref
-			sed -i "${loadL}s/loader.*/loader \\/linux\\/$src\\/vmlinuz/" $bootref
-			sed -i "${initrdL}s/initrd.*/initrd \\/linux\\/$src\\/initramfs/" $bootref
+			line_number=$(grep -n "${dataset} " ${bootref}  | cut -f1 -d:)
+			if [[ -n "${line_number}" ]]
+			then
+				loadL=$((line_number-2))
+				initrdL=$((line_number-1))
+				##### DEBUG #################################################################
+				#echo "line # $line_number , src=  $src"
+				#grep -n "$dataset " $bootref
+				#sed -n "${loadL}s/loader.*/loader \\/linux\\/$src\\/vmlinuz/p" $bootref
+				#sed -n "${initrdL}s/initrd.*/initrd \\/linux\\/$src\\/initramfs/p" $bootref
+				sed -i "${loadL}s/loader.*/loader \\/LINUX\\/${src}\\/vmlinuz/" ${bootref}
+				sed -i "${initrdL}s/initrd.*/initrd \\/LINUX\\/${src}\\/initramfs/" ${bootref}
+			else
+				add_efi_entry ${src} ${dataset}
+			fi
+
 }
 
 
@@ -378,12 +391,13 @@ function add_efi_entry() {
 	echo "pool = $POOL"
 	echo "uuid = $UUID"
 
-	offset="$(getZFSMountPoint $DATASET)"
+	offset="/boot/EFI/boot/refind.conf"
+	#offset="$(getZFSMountPoint $DATASET)"
 
 	echo "offset for add_efi_entry = $offset"
 
 	################################# HIGHLY RELATIVE OFFSET !!!!!!!!!!!!!!!!!!!!!!!!
-	offset="$(getZFSMountPoint $DATASET)/boot/EFI/boot/refind.conf"
+	#offset="$(getZFSMountPoint $DATASET)/boot/EFI/boot/refind.conf"
 	################################################################################
 
 	echo "offset for add_efi_entry = $offset"
@@ -403,7 +417,7 @@ function add_efi_entry() {
 
 # boot_install $DISK $SRC_DIR $PROFILE $TARGET(pool/dataset)
 function boot_install() {
-	
+
 	#boot=/dev/EFI_partition
 	# this will copy the EFI partition contents over from $DEPLOY/boot, it will alter the refind.conf by searching for the
 	# pool/dataset, it will adjust the /etc/autofs, after the stage3 is employed & packages installed. kernel
@@ -448,7 +462,7 @@ function boot_install() {
 		
 		# MODIFY FILES
 		echo "adding EFI ENTRY to template location $version ;; $pdset"
-		add_efi_entry $version $pdset
+		add_efi_entry ${version} ${dset}
 		
 	fi
 
@@ -522,9 +536,18 @@ function configure_boot_disk() {
 	# create boot entry for safe image
 }
 
+function patch_files() {
+
+	offset=$1
+	rsync -avP ./files.patch/* ${offset}/
+
+}
+
 function config_etc() {
 	offset=$2
 	profile=$1
+
+	patch_files ${offset}
 
 	#tar cf $offset/config.tar -T ./config/files.cfg
 	#tar xf $offset/config.tar -C $offset
@@ -533,8 +556,10 @@ function config_etc() {
 	echo "decompressing $offset/config.tar"
 	decompress $offset/config.tar $offset
 	rm $offset/config.tar
+	
 	echo "adding client files..."
-	decompress ./config/client_files.tar.gz $offset
+	#compress ./files.patch/* ${offset}/patch.tar.gz
+	#decompress ${offset}/patch.tar.gz ${offset}
 	
 
 	#cp ./root $offset -Rp
@@ -544,8 +569,34 @@ function config_etc() {
 	echo "copying root to target @ $offset"
 	rsync -c -a -r -l -H -p --delete-before --info=progress2 ./root $offset
 
-	uses="$(cat ./packages/$profile.conf)"
-	sed -i "/USE/c $uses" $offset/etc/portage/make.conf
+
+
+
+	##############################################
+
+	# THIS IS NOT MANGLING MAKE.CONF PROPERLY, OLD VALUES STILL PRESENT !!!
+
+
+
+
+
+	# common
+	while read line; do
+		PREFIX=${line%*=}
+		sed -i "/${PREFIX}/c ${line}" ${offset}/etc/portage/make.conf
+	done <./packages/common.conf
+	
+	# specific
+	while read line; do
+		PREFIX=${line%*=}
+		sed -i "/${PREFIX}/c ${line}" ${offset}/etc/portage/make.conf	
+	done <./packages/${profile}.conf
+
+
+	#uses="$(cat ./packages/$profile.conf)"
+	#sed -i "/USE/c $uses" $offset/etc/portage/make.conf
+
+
 }
 
 function release_base_string() {
@@ -745,6 +796,7 @@ function common() {
 	updatedb
 }
 
+
 function profile_settings() {
 	key=$1
 
@@ -877,6 +929,38 @@ function profile_settings() {
 	esac
 }
 
+function update_host() {
+
+	emerge --sync
+	# sync package masks/keywords/usecases etc... (kernel version is regulated through mask)
+	emerge -uDn @world
+
+	current_kernel="linux-$(uname --kernel-release)"
+	latest_kernel="$(eselect kernel list | tail -n 1 | awk '{print $2}')"
+
+	if [[ "$current_kernel" == "$latest_kernel" ]]; then echo "no changes"; exit; fi
+
+	eselect kernel set $(eselect kernel list | tail -n 1 | awk '{print $2}')
+
+	cd /usr/src/linux
+	zcat /proc/config.gz > ./.config
+
+	make -j $(nproc);
+	make modules_install;
+	make install;
+	emerge zfs-kmod zfs;
+	genkernel --install initramfs --compress-initramfs-type=lz4 --zfs_keys
+	sync
+
+	#<prepfs>
+	#<chroot> ${working_directory} /bin/bash
+	#	sync config files
+	#	emerge --sync
+	#	emerge -uDn @world
+
+
+
+}
 
 export PYTHONPATH=""
 export -f common
@@ -884,6 +968,9 @@ export -f profile_settings
 export -f getKVER
 export -f decompress
 export -f getG2Profile
+
+export PROMPT_COMMAND="g2build @ ${directory}"
+
 
 # [script] build=*	work=pool/dataset	<optional>boot=(/dev/bootP)		<optional>send=(send / recv IP)	
 # [script] boot by itself, will install a boot record & safe-partition for a designated deployment			:: work=pool/dataset boot=/dev/sda
@@ -1000,20 +1087,45 @@ done
 #		
 #	
 #	
+#	g2deploy :
+#		work=pool/dataset
+#		build=profile
+#		deploy	{ execute build for environment, for build=profile }
+#		boot=/device
+#		update
 #	
+#	USECASES
+#
+#		->DEPLOY (boot optional)
+#		->UPGRADE (w/ boot, optional)
+#		->INSTALL (boot+)
+#
+#		
+#		# create a working environment
+#		work=pool/set build=profile deploy || Deploy a BUILD on SET 
+#		
+#		# upgrade existing working environment
+#		work=pool/set upgrade (upgrades kernel, modules, boot files, packages == snapshots on to pool/set@KVER)
+#		[ kernel, modules & bootfiles are generated on host, saved in ./boot and deployed to working set ]
+#		
+#		# build a new boot disk
+#			DETECT if boot env exists { look for EFI partition, scan for configuration[refind], check working set (on or off boot disk) }
+#			boot=/device work=pool/set 
+#			
+#		# upgrade existing working environment (no deploy asserted), 	
+#			work=pool/dataset 
+#			update 
+#			
+#		# update existing boot environment
+#			work=pool/dataset
+#			update
+#			boot=/device
 #	
-#	
-#	
-#	
-#	
-#	
-#	
-#	
-#	
-#	
-#	
-#	
-#	
+#			remove /var/db/pkgs & repo
+#			
+#			
+#			
+#		
 
 for x in $@
 do
@@ -1026,12 +1138,34 @@ do
 			source="./boot"
 			safe_src="safe/g1@safe"
 			key="/srv/crypto.zfs.key"
-			configure_boot_disk ${disk}
+			# LOOK FOR ZPOOL PARTITION & VFAT PARTITION, THEN LOOK FOR REFIND/LINUX EXIT OUT OF INSTANTIATION IF PRESENT
+			
+			zpool import -a -f
+			#z_exists="$(blkid | grep "${x}" | grep 'zfs_member')"
+
+			vfat_partition="$(blkid | \grep ${disk} | \grep 'vfat')"
+			vrat_partition="${vfat_partition%*:}"
+			
+			if [[ -z "${vfat_partition}" ]] 
+			then
+				configure_boot_disk ${disk}
+				boot_install ${disk} ${source} ${safe_src}
+			fi
+			#zfs snapshot safe/g1@safe		## DO NOT HAVE TO ACCOMPLISH, CARRIED THROUGH ZFS-SEND
+
+			zpool_partition="$(blkid | \grep ${disk} | \grep 'zfs_member')"
+			zpool_partition="${zpool_partition%*:}"
+			zpool_label="$(blkid | grep ${zpool_partition} | awk '{print $2}' | tr -d '"')"
+			zpool_label="${zpool_label#=*}"
+
 			echo "sending over $(getHostZPool)/g1@safe to ${safe_src%@*}" 
 			zfs send $(getHostZPool)/g1@safe | pv | zfs recv ${safe_src%@*}
 			zfs change-key -o keyformat=hex -o keylocation=file://$key ${safe_src%@*}
-			boot_install ${disk} ${source} ${safe_src}
-			#zfs snapshot safe/g1@safe		## DO NOT HAVE TO ACCOMPLISH, CARRIED THROUGH ZFS-SEND
+
+			# ADD DEFAULT BOOT ENTRY
+			
+			
+
 		;;
 	esac
 done
@@ -1041,7 +1175,6 @@ for x in $@
 do
 	case "${x}" in
 		deploy)
-			PROMPT_COMMAND="g2build @ ${directory}"
 			check_mounts ${directory}
 			clear_fs ${directory}
 			get_stage3 ${selection} ${directory}
@@ -1053,10 +1186,68 @@ do
 			pkg_mngmt ${profile} ${directory}
 			#cat ${directory}/package.list
 			chroot ${directory} /bin/bash -c "common ${profile} $(getKVER)"
+			patch_files ${directory}
 			chroot ${directory} /bin/bash -c "profile_settings ${profile}"
 		;;
 	esac
 done
+
+# update
+for x in $@
+do
+	case "${x}" in
+		update)
+		
+			check_mounts ${directory}
+			patch_files ${directory}
+			emerge --sync
+			# sync package masks/keywords/usecases etc... (kernel version is regulated through mask)
+			emerge -uDn @world --ask=n
+
+			current_kernel="linux-$(uname --kernel-release)"
+			latest_kernel="$(eselect kernel list | tail -n 1 | awk '{print $2}')"
+
+			echo "current kernel = ${current_kernel}"
+			echo "latest kernel = ${latest_kernel}"
+
+			eselect kernel set ${latest_kernel}
+
+			if [[ ! -f ./src/${latest_kernel}.tar.gz ]]
+			then
+				zcat /proc/config.gz > /usr/src/${latest_kernel}/.config
+				(cd /usr/src/${latest_kernel} ; make -j $(nproc))
+				(cd /usr/src/${latest_kernel} ; make modules_install)
+				(cd /usr/src/${latest_kernel} ; make install)
+				emerge zfs-kmod zfs;
+				compress /usr/src/${latest_kernel} ./src/${latest_kernel}.tar.gz 
+				genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
+			fi
+
+			if [[ ! -d /boot/LINUX/${latest_kernel#linux-*} ]]
+			then
+				pathboot=/boot/LINUX/${latest_kernel#linux-*}
+				mkdir ${pathboot} -p
+				compress /lib/modules/${latest_kernel#linux-*} $pathboot/modules.tar.gz
+				mv /boot/initramfs-${latest_kernel#linux-*}.img ${pathboot}/initramfs
+				mv /boot/vmlinuz-${latest_kernel#linux-*} ${pathboot}/vmlinuz
+				mv /boot/System.map-${latest_kernel#linux-*} ${pathboot}/System.map-${latest_kernel#linux-*}
+				mv /boot/config-${latest_kernel#linux-*} ${pathboot}/config-${latest_kernel#linux-*}
+			fi
+
+			echo "dataset = ${dataset} ;; directory = ${directory} ###################################"
+
+			editboot ${dataset} ${latest_kernel#linux-*}
+			echo "@ ${directory}"
+			config_env ${directory}
+			chroot ${directory} /usr/bin/emerge --sync
+			chroot ${directory} /usr/bin/emerge -b -uDN --with-bdeps=y @world --ask=n
+			check_mounts ${directory}
+			patch_files ${directory}
+
+		;;
+	esac
+done
+
 
 # SEND, BOOT PROBABLY WONT BE USED WITH THIS MODE, ex. 
 for x in $@
@@ -1068,6 +1259,5 @@ do
 	esac
 done
 
-	check_mounts ${directory}
-
-	#EOF
+check_mounts ${directory}
+#EOF
