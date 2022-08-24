@@ -318,19 +318,17 @@ function editboot() {
 			line_number=$(grep -n "${dataset} " ${bootref}  | cut -f1 -d:)
 			if [[ -n "${line_number}" ]]
 			then
+				billz="/666-"
+				menuL=$((line_number-5))
 				loadL=$((line_number-2))
 				initrdL=$((line_number-1))
-				##### DEBUG #################################################################
-				#echo "line # $line_number , src=  $src"
-				#grep -n "$dataset " $bootref
-				#sed -n "${loadL}s/loader.*/loader \\/linux\\/$src\\/vmlinuz/p" $bootref
-				#sed -n "${initrdL}s/initrd.*/initrd \\/linux\\/$src\\/initramfs/p" $bootref
-				sed -i "${loadL}s/loader.*/loader \\/LINUX\\/${src}\\/vmlinuz/" ${bootref}
-				sed -i "${initrdL}s/initrd.*/initrd \\/LINUX\\/${src}\\/initramfs/" ${bootref}
+				sed -i "${menuL}s|menuentry.*|menuentry \"Gentoo Linux ${src} ${dataset}\" |" ${bootref}
+				sed -i "${loadL}s|loader.*|loader \\/linux\\/${src}\\/vmlinuz|" ${bootref}
+				sed -i "${initrdL}s|initrd.*|initrd \\/linux\\/${src}\\/initramfs|" ${bootref}
 			else
 				add_efi_entry ${src} ${dataset}
 			fi
-
+			
 }
 
 
@@ -538,16 +536,44 @@ function configure_boot_disk() {
 
 function patch_files() {
 
-	offset=$1
+	local offset=$1
+	local profile=$2
+	
 	rsync -avP ./files.patch/* ${offset}/
 
+	lineNum=0
+
+	# common
+	while read line; do
+		((LineNum+=1))
+		PREFIX=${line%=*}
+		SUFFIX=${line#*=}
+		if [[ -n $line ]]
+		then
+			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf
+			#echo "$LineNum ***$line***  --> $PREFIX && $SUFFIX"
+		fi
+	done <./packages/common.conf
+			
+		# specific
+	while read line; do
+		((LineNum+=1))
+		PREFIX=${line%=*}
+		SUFFIX=${line#*=}
+		if [[ -n $line ]]
+		then
+			sed -i "/\$PREFIX/c $line" ${offset}/etc/portage/make.conf	
+			#echo "$LineNum ***$line***  --> $PREFIX && $SUFFIX"
+		fi
+	done <./packages/${profile}.conf
 }
 
 function config_etc() {
-	offset=$2
-	profile=$1
 
-	patch_files ${offset}
+	local offset=$2
+	local profile=$1
+
+	patch_files ${offset} ${profile}
 
 	#tar cf $offset/config.tar -T ./config/files.cfg
 	#tar xf $offset/config.tar -C $offset
@@ -568,29 +594,6 @@ function config_etc() {
 	#cp ./home $offset -Rp
 	echo "copying root to target @ $offset"
 	rsync -c -a -r -l -H -p --delete-before --info=progress2 ./root $offset
-
-
-
-
-	##############################################
-
-	# THIS IS NOT MANGLING MAKE.CONF PROPERLY, OLD VALUES STILL PRESENT !!!
-
-
-
-
-
-	# common
-	while read line; do
-		PREFIX=${line%*=}
-		sed -i "/${PREFIX}/c ${line}" ${offset}/etc/portage/make.conf
-	done <./packages/common.conf
-	
-	# specific
-	while read line; do
-		PREFIX=${line%*=}
-		sed -i "/${PREFIX}/c ${line}" ${offset}/etc/portage/make.conf	
-	done <./packages/${profile}.conf
 
 
 	#uses="$(cat ./packages/$profile.conf)"
@@ -738,6 +741,8 @@ function common() {
 	echo "America/Los_Angeles" > /etc/timezone
 	emerge --config sys-libs/timezone-data
 
+
+
 	#	{key%/openrc} :: is a for the edgecase 'openrc' where only that string is non existent with in eselect-profile
 	eselect profile set default/linux/amd64/${key%/openrc}
 
@@ -754,8 +759,10 @@ function common() {
 	# 
 	eselect kernel set linux-${kver}
 
-	echo "UPDATE EMERGE !!!!!"
-	emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
+	############################################# UPDATE AFTER DEPLOY
+	#echo "UPDATE EMERGE !!!!!"
+	#emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
+	
 	usermod -s /bin/zsh root
 	sudo sh -c 'echo root:@PCXmacR00t | chpasswd'
 
@@ -780,12 +787,9 @@ function common() {
 	#rm tobe.pkgs
 
 
-	echo "ZFS EMERGE BUILD DEPS ONLY !!!!!"
-	emerge $emergeOpts --onlydeps =zfs-kmod-9999
-	# seems outmoded ... perhahs redundant ... maybenot ...
-
+	# THIS KERNEL MODULE WILL BE OVER WRITTEN BY THE MODULES FROM THE HOST
 	echo "EMERGE ZFS !!!"
-	emerge $emergeOpts =zfs-9999 =zfs-kmod-9999
+	\emerge =zfs-9999 =zfs-kmod-9999
 	zcat /proc/config.gz > /usr/src/linux/.config
 	sync
 
@@ -795,6 +799,15 @@ function common() {
 	eix-update
 	updatedb
 }
+
+
+##########################################################################################################
+#
+#
+#	NEED A SERVICES FILE PER PROFILE. *.services
+#
+#
+
 
 
 function profile_settings() {
@@ -948,7 +961,7 @@ function update_host() {
 	make -j $(nproc);
 	make modules_install;
 	make install;
-	emerge zfs-kmod zfs;
+	\emerge =zfs-kmod-9999 =zfs-9999;
 	genkernel --install initramfs --compress-initramfs-type=lz4 --zfs_keys
 	sync
 
@@ -1186,7 +1199,7 @@ do
 			pkg_mngmt ${profile} ${directory}
 			#cat ${directory}/package.list
 			chroot ${directory} /bin/bash -c "common ${profile} $(getKVER)"
-			patch_files ${directory}
+			patch_files ${directory} ${profile}
 			chroot ${directory} /bin/bash -c "profile_settings ${profile}"
 		;;
 	esac
@@ -1196,13 +1209,21 @@ done
 for x in $@
 do
 	case "${x}" in
-		update)
+		update | deploy)
 		
-			check_mounts ${directory}
-			patch_files ${directory}
-			emerge --sync
+			profile="$(getG2Profile ${directory})"
+			#profile="shit"
+
+			echo "PROFILE :: ${profile}"
+
+			#check_mounts ${directory}
+			patch_files ${directory} ${profile}
+
+			echo "help"
+
+#			emerge --sync
 			# sync package masks/keywords/usecases etc... (kernel version is regulated through mask)
-			emerge -uDn @world --ask=n
+#			emerge -uDn @world --ask=n
 
 			current_kernel="linux-$(uname --kernel-release)"
 			latest_kernel="$(eselect kernel list | tail -n 1 | awk '{print $2}')"
@@ -1221,20 +1242,21 @@ do
 				emerge zfs-kmod zfs;
 				compress /usr/src/${latest_kernel} ./src/${latest_kernel}.tar.gz 
 				genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
-			fi
-
-			if [[ ! -d /boot/LINUX/${latest_kernel#linux-*} ]]
-			then
+				
 				pathboot=/boot/LINUX/${latest_kernel#linux-*}
 				mkdir ${pathboot} -p
-				compress /lib/modules/${latest_kernel#linux-*} $pathboot/modules.tar.gz
+
+				suffix=${latest_kernel##*-}
+
 				mv /boot/initramfs-${latest_kernel#linux-*}.img ${pathboot}/initramfs
 				mv /boot/vmlinuz-${latest_kernel#linux-*} ${pathboot}/vmlinuz
 				mv /boot/System.map-${latest_kernel#linux-*} ${pathboot}/System.map-${latest_kernel#linux-*}
 				mv /boot/config-${latest_kernel#linux-*} ${pathboot}/config-${latest_kernel#linux-*}
 			fi
 
-			echo "dataset = ${dataset} ;; directory = ${directory} ###################################"
+			echo "syncing kernel modules for ${latest_kernel#linux-*}"
+			
+			rsync -c -a -r -l -H -p --delete-before --info=progress2 /lib/modules/${latest_kernel#linux-*} $directory/lib/modules/
 
 			editboot ${dataset} ${latest_kernel#linux-*}
 			echo "@ ${directory}"
@@ -1242,7 +1264,7 @@ do
 			chroot ${directory} /usr/bin/emerge --sync
 			chroot ${directory} /usr/bin/emerge -b -uDN --with-bdeps=y @world --ask=n
 			check_mounts ${directory}
-			patch_files ${directory}
+
 
 		;;
 	esac
