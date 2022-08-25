@@ -728,7 +728,7 @@ function get_stage3() {
 function common() {
 	kver=$2
 	key=$1
-	emergeOpts="--usepkg --binpkg-respect-use=y --verbose --tree --backtrack=99"
+	emergeOpts="--buildpkg=n --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"
 
 	locale-gen -A
 	eselect locale set en_US.utf8
@@ -741,20 +741,18 @@ function common() {
 	echo "America/Los_Angeles" > /etc/timezone
 	emerge --config sys-libs/timezone-data
 
-
-
+	echo "BUILDING KERNEL ..."
+	emerge $emergeOpts =gentoo-sources-${kver%*-gentoo}
+	decompress /linux-${kver}.tar.gz /usr/src
+	rm /linux-${kver}.tar.gz
+	eselect kernel set linux-${kver}
+		
 	#	{key%/openrc} :: is a for the edgecase 'openrc' where only that string is non existent with in eselect-profile
 	eselect profile set default/linux/amd64/${key%/openrc}
 
 	echo "BASIC TOOLS EMERGE !!!!!"
 	emerge $emergeOpts gentoolkit eix mlocate genkernel sudo zsh pv tmux app-arch/lz4 elfutils --ask=n
 
-	echo "BUILDING KERNEL ..."
-	ls /linux-${kver}.tar.gz -ailpht
-	ls -ail /usr/src
-	emerge $emergeOpts =gentoo-sources-${kver%*-gentoo}
-	decompress /linux-${kver}.tar.gz /
- 	rm /linux-${kver}.tar.gz
 
 	# 
 	eselect kernel set linux-${kver}
@@ -786,6 +784,11 @@ function common() {
 	emerge $emergeOpts $(cat "$pkgs")
 	#rm tobe.pkgs
 
+	# THIS KERNEL MODULE WILL BE OVER WRITTEN BY THE MODULES FROM THE HOST
+	echo "EMERGE ZFS BUILD DEPS !!!"
+	\emerge $emergeOpts --onlydeps =zfs-9999 =zfs-kmod-9999 
+	zcat /proc/config.gz > /usr/src/linux/.config
+	sync
 
 	# THIS KERNEL MODULE WILL BE OVER WRITTEN BY THE MODULES FROM THE HOST
 	echo "EMERGE ZFS !!!"
@@ -1196,10 +1199,10 @@ do
 			compresskernel ${dataset}
 			config_env ${directory}
 			config_etc ${profile} ${directory}
+			patch_files ${directory} ${profile}
 			pkg_mngmt ${profile} ${directory}
 			#cat ${directory}/package.list
 			chroot ${directory} /bin/bash -c "common ${profile} $(getKVER)"
-			patch_files ${directory} ${profile}
 			chroot ${directory} /bin/bash -c "profile_settings ${profile}"
 		;;
 	esac
