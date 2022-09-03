@@ -21,6 +21,19 @@
 #	reusables
 #
 
+function pause() {
+    stty -echo < /dev/tty
+    while read line ; do
+        echo "$line"
+        if read -n1 -t0.0001 -u3 3</dev/tty ; then 
+            echo paused.
+            read -n1 -u3 3</dev/tty
+        fi
+    done
+    stty echo < /dev/tty
+}
+
+
 function pkg_mngmt() {
 
 	local profile=$1
@@ -91,6 +104,16 @@ function decompress() {
 
 }
 
+### NEED A UNIVERSAL TRANSPORT MECHANISM FOR SYNCING ALL FILES. SCP, RSYNC ?
+#
+#		SYNC() HOST w/ SOURCE
+#		SEND TO SOURCE DESTINATION
+#		RECV FROM SOURCE DESTINATION
+#		COMPRESSION AND ENCRYPTION ARE TRANSPARENT
+#		
+#
+#############################################################################
+
 function compress() {
 	local src=$1
 	local dst=$2
@@ -107,7 +130,7 @@ function compress_list() {
 	tar cfz - -T $src | (pv -p --timer --rate --bytes > $dst)
 }
 
-function sync() {
+function rSync() {
 	local src=$1
 	local dst=$2
 	echo "rsync from $src to $dst"
@@ -116,19 +139,26 @@ function sync() {
 
 function getKVER() {
 	
-	local selector="$(eselect kernel list | grep '*' | awk '{print $3}')"
+	# ADDING PROVISION FOR FINDING MOST RECENT KVER, despite what is installed (universal approach)
+
+		
+	
+	local selector="$(eselect kernel list | grep '*' | awk '{print $2}')"
 	if [[ -n "$selector" ]]
 	then
-		echo "$selector"
+		selector="${selector#linux-*}"
 	else
 		local softlink="$(readlink /usr/src/linux)"
 		if [[ -z "$softlink" ]]
 		then
-			echo "$(uname --kernel-release)"
+			selector="$(uname --kernel-release)"
 		else
-			echo "${softlink#linux-*}"
+			selector="${softlink#linux-*}"
 		fi
 	fi
+
+	# filter for r* ? ... not here.
+	echo "${selector}"
 }
 
 # sig_check $directory $list
@@ -171,7 +201,7 @@ function zfs_keys() {
 		# query datasets
 		listing="$(zfs list | grep "$i/" | awk '{print $1}')"
 		echo "$listing"
-		#sleep 5
+
 		for j in $listing
 		do
 			#dSet="$(zpool get bootfs $i | awk '{print $3}' | sed -n '2 p')"
@@ -234,6 +264,8 @@ check_mounts() {
 		output="$(cat /proc/mounts | grep "$dir\/" | wc -l)"
 	done
 }
+
+tac <(echo $vars)
 
 function clear_fs() {
 	# VERIFY ZFS MOUNT IS in DF
@@ -316,6 +348,9 @@ function editboot() {
 			local src="$2"
 			# find section in refind.conf
 			line_number=$(grep -n "${dataset} " ${bootref}  | cut -f1 -d:)
+			
+			echo "line_number = $line_number" 2>&1
+			
 			if [[ -n "${line_number}" ]]
 			then
 				billz="/666-"
@@ -326,6 +361,7 @@ function editboot() {
 				sed -i "${loadL}s|loader.*|loader \\/linux\\/${src}\\/vmlinuz|" ${bootref}
 				sed -i "${initrdL}s|initrd.*|initrd \\/linux\\/${src}\\/initramfs|" ${bootref}
 			else
+				echo "adding EFI ENTRY !!! ${dataset} for ${src}" 2>&1
 				add_efi_entry ${src} ${dataset}
 			fi
 			
@@ -389,7 +425,7 @@ function add_efi_entry() {
 	echo "pool = $POOL"
 	echo "uuid = $UUID"
 
-	offset="/boot/EFI/boot/refind.conf"
+	local offset="/tmp/boot/boot/EFI/boot/refind.conf"
 	#offset="$(getZFSMountPoint $DATASET)"
 
 	echo "offset for add_efi_entry = $offset"
@@ -428,13 +464,27 @@ function boot_install() {
 	#sigFile=./boot.sig	# sorted IO
 	source=$2
 	# can include snapshots ... which will be sourced from
-	target=$3	#pool/dataset
+
+
+	target=$3	#pool/dataset	???????????????????????????	 I DONT THINK I NEED THIS VARIABLE
+	
+	echo "disk = $disk" 2>&1
+	echo "source = $source" 2>&1
+	echo "target = $target" 2>&1
 	
 	# filter for snapshots
 	pdset="${target%@*}"
 	#echo "PDSET = $pdset"
 	version="$(getKVER)"
-	offset="$(getZFSMountPoint $pdset)"
+	
+	#offset="$(getZFSMountPoint $pdset)"
+	offset="/tmp/boot"
+
+
+	echo "pdset = $pdset" 2>&1
+	echo "version = $version" 2>&1
+	echo "offset = $offset" 2>&1
+	
 	#echo "KVER = $version ;; OFFSET = $offset"
 	tmpMount="$offset/boot"
 
@@ -449,6 +499,9 @@ function boot_install() {
 	fsType=${fsType#TYPE=*}
 	#echo "FSTYPE @ $fsType"
 
+	echo "fsType = $fsType" 2>&1
+
+
 	if [ "$fsType" = 'vfat' ]
 	then
 		mount -v ${disk}2 $tmpMount
@@ -456,11 +509,13 @@ function boot_install() {
 		# could have used rsync with hash check anyways ...
 		#echo "checking for file consistency [ $source $tmpMount]"
 		echo "sending $source to $tmpMount"
-		rsync -r -l -H -p -c --delete-before --info=progress2 $source/* $tmpMount
+		rsync -r -l -H -p -c --delete-before --info=progress2 $source/boot/* $tmpMount
 		
 		# MODIFY FILES
 		echo "adding EFI ENTRY to template location $version ;; $pdset"
-		add_efi_entry ${version} ${dset}
+		echo "version = $version, dset = $dset  pdset = $pdset" 2>&1
+
+		add_efi_entry ${version} ${pdset}
 		
 	fi
 
@@ -475,6 +530,7 @@ function boot_install() {
 	fi
 	echo "syncing write to boot drive..."
 	sync
+	
 	umount -v $tmpMount
 }
 
@@ -639,13 +695,13 @@ function release_base_string() {
 
 function local_stage3() {
 
-	portageDir="/var/lib/portage"
-	str=$1		#	(profile string)	
-	locationStr="$(release_base_string $str)"
-	selectStr="${locationStr#*current-*}"
+	local portageDir="/var/lib/portage"
+	local str=$1		#	(profile string)	
+	local locationStr="$(release_base_string $str)"
+	local selectStr="${locationStr#*current-*}"
 	selectStr="${selectStr%*/}"
 
-	urlBase="${portageDir}${locationStr}"
+	local urlBase="${portageDir}${locationStr}"
 	urlCurrent="$(ls $urlBase | grep "$selectStr" | grep -v '.xz.')"
 
 	echo "${urlBase}${urlCurrent}"	
@@ -691,10 +747,14 @@ function remote_stage3() {
 
 function get_stage3() {
 	#echo "getting stage 3"
-	str=$1
-	offset=$2
+	local profile=$1
+	local offset=$2
 
-	local_stage3_url="$(local_stage3 $str)"
+	local_stage3_url="$(local_stage3 $profile)"
+
+	echo "$local_stage3_url" >&2
+
+
 
 	if [ -n "$local_stage3_url" ]
 	then
@@ -703,7 +763,7 @@ function get_stage3() {
 		rsync -avP ${local_stage3_url} ${offset}
 		rsync -avP ${local_stage3_url}.asc ${offset}
 	else
-		remote_stage3_url="$(remote_stage3 $str)"
+		remote_stage3_url="$(remote_stage3 $profile)"
 
 		if [ -n "$remote_stage3_url" ]
 		then
@@ -742,10 +802,15 @@ function common() {
 	emerge --config sys-libs/timezone-data
 
 	echo "BUILDING KERNEL ..."
-	emerge $emergeOpts =gentoo-sources-${kver%*-gentoo}
+	
+	echo "kver = ${kver} modified ::: ${kver%-gentoo*}${kver#*gentoo}" 
+	
+	emerge $emergeOpts =gentoo-sources-${kver%-gentoo*}${kver#*gentoo}
 	decompress /linux-${kver}.tar.gz /usr/src
 	rm /linux-${kver}.tar.gz
 	eselect kernel set linux-${kver}
+
+
 		
 	#	{key%/openrc} :: is a for the edgecase 'openrc' where only that string is non existent with in eselect-profile
 	eselect profile set default/linux/amd64/${key%/openrc}
@@ -755,7 +820,7 @@ function common() {
 
 
 	# 
-	eselect kernel set linux-${kver}
+
 
 	############################################# UPDATE AFTER DEPLOY
 	#echo "UPDATE EMERGE !!!!!"
@@ -792,7 +857,7 @@ function common() {
 
 	# THIS KERNEL MODULE WILL BE OVER WRITTEN BY THE MODULES FROM THE HOST
 	echo "EMERGE ZFS !!!"
-	\emerge =zfs-9999 =zfs-kmod-9999
+	\emerge =zfs-9999 =zfs-kmod-9999 --buildpkg=n
 	zcat /proc/config.gz > /usr/src/linux/.config
 	sync
 
@@ -964,7 +1029,7 @@ function update_host() {
 	make -j $(nproc);
 	make modules_install;
 	make install;
-	\emerge =zfs-kmod-9999 =zfs-9999;
+	\emerge =zfs-kmod-9999 =zfs-9999 --buildpkg=n --ask=n;
 	genkernel --install initramfs --compress-initramfs-type=lz4 --zfs_keys
 	sync
 
@@ -1151,7 +1216,12 @@ do
 			# by default all safe partitions are send/recv from g1@safe
 			# boot_profile=getG2Profile ${dataset} 
 			disk=${x#*=}
-			source="./boot"
+
+
+			#source="./boot"
+			source="rsync://192.168.122.108/home/"
+
+
 			safe_src="safe/g1@safe"
 			key="/srv/crypto.zfs.key"
 			# LOOK FOR ZPOOL PARTITION & VFAT PARTITION, THEN LOOK FOR REFIND/LINUX EXIT OUT OF INSTANTIATION IF PRESENT
@@ -1161,7 +1231,7 @@ do
 
 			vfat_partition="$(blkid | \grep ${disk} | \grep 'vfat')"
 			vrat_partition="${vfat_partition%*:}"
-			
+
 			if [[ -z "${vfat_partition}" ]] 
 			then
 				configure_boot_disk ${disk}
@@ -1174,9 +1244,17 @@ do
 			zpool_label="$(blkid | grep ${zpool_partition} | awk '{print $2}' | tr -d '"')"
 			zpool_label="${zpool_label#=*}"
 
+
 			echo "sending over $(getHostZPool)/g1@safe to ${safe_src%@*}" 
+			echo "------------------------------------------------------"
+
+
+			
+			
 			zfs send $(getHostZPool)/g1@safe | pv | zfs recv ${safe_src%@*}
 			zfs change-key -o keyformat=hex -o keylocation=file://$key ${safe_src%@*}
+
+			echo "///////////////////////////////////////////////////////"
 
 			# ADD DEFAULT BOOT ENTRY
 			
@@ -1193,7 +1271,13 @@ do
 		deploy)
 			check_mounts ${directory}
 			clear_fs ${directory}
+
+			echo "GET STAGE3"
+
+			echo "selection = ${selection} directory ${directory}"
+
 			get_stage3 ${selection} ${directory}
+
 			zfs_keys ${dataset}
 			copymodules ${dataset}		
 			compresskernel ${dataset}
@@ -1202,6 +1286,11 @@ do
 			patch_files ${directory} ${profile}
 			pkg_mngmt ${profile} ${directory}
 			#cat ${directory}/package.list
+			
+			echo "$(getKVER) ///////////////////////////////////////////////////////////////////////"
+			
+
+			
 			chroot ${directory} /bin/bash -c "common ${profile} $(getKVER)"
 			chroot ${directory} /bin/bash -c "profile_settings ${profile}"
 		;;
@@ -1213,20 +1302,29 @@ for x in $@
 do
 	case "${x}" in
 		update | deploy)
+#-----------------------------------------------------
+			
+
+			emergeOpts="--buildpkg=n --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"
 		
 			profile="$(getG2Profile ${directory})"
 			#profile="shit"
 
 			echo "PROFILE :: ${profile}"
 
-			#check_mounts ${directory}
+			check_mounts ${directory}
+
+			mount --bind /var/lib/portage/binpkgs ${directory}/var/lib/portage/binpkgs
+			mount --bind /var/lib/portage/distfiles ${directory}/var/lib/portage/distfiles
+
 			patch_files ${directory} ${profile}
 
-			echo "help"
 
-#			emerge --sync
+
+
+			#emerge --sync
 			# sync package masks/keywords/usecases etc... (kernel version is regulated through mask)
-#			emerge -uDn @world --ask=n
+			#emerge -uDn @world --ask=n --buildpkg=y
 
 			current_kernel="linux-$(uname --kernel-release)"
 			latest_kernel="$(eselect kernel list | tail -n 1 | awk '{print $2}')"
@@ -1236,16 +1334,17 @@ do
 
 			eselect kernel set ${latest_kernel}
 
+
 			if [[ ! -f ./src/${latest_kernel}.tar.gz ]]
 			then
 				zcat /proc/config.gz > /usr/src/${latest_kernel}/.config
 				(cd /usr/src/${latest_kernel} ; make -j $(nproc))
 				(cd /usr/src/${latest_kernel} ; make modules_install)
 				(cd /usr/src/${latest_kernel} ; make install)
-				emerge zfs-kmod zfs;
+				emerge =zfs-kmod-9999 =zfs-9999 --buildpkg=n --ask=n;
 				compress /usr/src/${latest_kernel} ./src/${latest_kernel}.tar.gz 
 				genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
-				
+
 				pathboot=/boot/LINUX/${latest_kernel#linux-*}
 				mkdir ${pathboot} -p
 
@@ -1257,15 +1356,21 @@ do
 				mv /boot/config-${latest_kernel#linux-*} ${pathboot}/config-${latest_kernel#linux-*}
 			fi
 
+
+
+			echo "editing boot record"
+			
+			editboot ${latest_kernel#linux-*} ${directory}
+
 			echo "syncing kernel modules for ${latest_kernel#linux-*}"
 			
 			rsync -c -a -r -l -H -p --delete-before --info=progress2 /lib/modules/${latest_kernel#linux-*} $directory/lib/modules/
 
-			editboot ${dataset} ${latest_kernel#linux-*}
 			echo "@ ${directory}"
 			config_env ${directory}
 			chroot ${directory} /usr/bin/emerge --sync
-			chroot ${directory} /usr/bin/emerge -b -uDN --with-bdeps=y @world --ask=n
+			chroot ${directory} /usr/bin/emerge -b -uDN @world $emergeOpts
+
 			check_mounts ${directory}
 
 
@@ -1273,16 +1378,146 @@ do
 	esac
 done
 
+echo "THIS !!!"
+
+
+
+						#uses="$(cat ${binpkgs}Packages | awk 'BEGIN{RS=ORS="\n\n";FS=OFS="\n"}/CPV: ${package}/' | awk 'BEGIN{RS=ORS="\n\n";FS=OFS="\n"}/${package}/' | grep "'^USE*'")"
+						#cat ${binpkgs}Packages | awk 'BEGIN{RS=ORS="\n\n";FS=OFS="\n"}/CPV: x11-wm/mutter-42.3/' 
+						#| awk 'BEGIN{RS=ORS="\n\n";FS=OFS="\n"}/${package}/' | grep "'^USE*'"
+						#echo $uses
+						#positive="$(echo $uses | grep '^+*')"
+						#negative="$(echo $uses | grep '^-*')"
+						#echo $positive
+						#echo $negative
 
 # SEND, BOOT PROBABLY WONT BE USED WITH THIS MODE, ex. 
 for x in $@
 do
 	case "${x}" in
-		send=*)
+		syncfiles)		# USE THIS TO UPDATE DISTFILES/REPOS/RELEASES/...
+			;;
+	
+	
+		prunepkgs)		# THIS ONE WILL GET RID OF DUPLICATES, or ANY BINPKG GREATER THAN -1
+
+			binpkgs="/var/lib/portage/binpkgs/amd64/17.1"
+			iFile=$binpkgs/Packages.temp
+			
+			echo "PRUNAGE"
+			
+			pgraph="$(cat $binpkgs/Packages | awk "BEGIN{RS="\n\n";FS="\n"}/GENTOO_MIRRORS:/")"
+			echo "$pgraph" >! $iFile
+			
+			installBase="$(cat ${binpkgs}/Packages | grep "^CPV: " | uniq | sed 's/^CPV: //')"
+				
+			for package in ${installBase}
+			do 
+				packagef="$(echo $package | sed 's/\//\\\//g')"
+				echo -e "----------------"
+				instances="$(cat ${binpkgs}/Packages| awk "BEGIN{RS=ORS="\n\n";FS=OFS="\n"}/CPV: ${packagef}/" | sed '/^REPO:.*/a\\' | grep "PATH: " | sed 's/^PATH: //')"
+
+
+#
+#				delete the files and entries (or don't add to)
+#				need to filter instances by BUILD# as well as existing
+#				
+#
+
+				for instance in $(tac <(echo "$instances"))
+				do 
+
+					path="$(cat ${binpkgs}/Packages| awk "BEGIN{RS="\n\n";FS="\n"}/CPV: ${packagef}/" | sed '/^REPO:.*/a\\' | \
+						awk "BEGIN{RS="\n\n";FS="\n"}/BUILD_ID: ${build}/" | sed '/^REPO:.*/a\\' | grep '^PATH*')"
+
+					
+					echo $instance
+
+				done
+			done
+			
+			# eclean-pkg --ask
+			
+		;;
+
+		pkgtest)
+			# use quickpkg and compare against binpkgs/../../Packages information, take hash, look@ flags, size of file, etc...
+		
+		;;
+		pkgbld)
+			
+			binpkgs="/var/lib/portage/binpkgs/amd64/17.1/"
+			
+			echo "WHAT DA FAQ"
+			
+			# read dummy.list and get qlist for each distro, ignore missing distros
+			dummy_list="$(cat ./dummy.files/dummy.list)"
+
+			for distro in ${dummy_list}
+			do
+				directory="$(getZFSMountPoint ${distro})"
+				#installBase="$(chroot ${directory} /usr/bin/qlist -I --slots)"
+				installBase="$(cd ${directory}/var/db/pkg/ && ls -d */*|sed 's/\/$//')"
+
+				
+				
+				#echo "$installBase"
+				for package in ${installBase}
+				do 
+					echo -n "."
+					
+					flags="$(chroot ${directory} equery uses ${package} | awk '{print $1}')"
+				
+					if [[ -n $flags ]]
+					then
+						echo ""
+						
+						pvals="$(echo "$flags" | grep '^+')"
+						nvals="$(echo "$flags" | grep '^-')"
+						packagef="$(echo $package | sed 's/\//\\\//g')"
+						
+						count=$(cat ${binpkgs}Packages| awk "BEGIN{RS=ORS="\n\n";FS=OFS="\n"}/CPV: ${packagef}/" | grep 'BUILD_ID: ' | awk '{print $2}')
+						builds=$(cat ${binpkgs}Packages| awk "BEGIN{RS=ORS="\n\n";FS=OFS="\n"}/CPV: ${packagef}/" | grep 'BUILD_ID: ' | awk '{print $2}' | uniq)
+						
+						echo "checking $package ... for $distro "
+						#echo $count
+						#echo $uniqs
+						#echo $sha1s
+						
+						for build in ${builds[@]}
+						do
+							echo "build = ***$build*** w/ $builds"
+							sha1=$(cat ${binpkgs}Packages| awk "BEGIN{RS="\n\n";FS="\n"}/CPV: ${packagef}/" | sed '/^REPO:.*/a\\' | \
+								awk "BEGIN{RS="\n\n";FS="\n"}/BUILD_ID: ${build}/" | grep '^SHA1*')
+							stamp=$(cat ${binpkgs}Packages| awk "BEGIN{RS="\n\n";FS="\n"}/CPV: ${packagef}/" | sed '/^REPO:.*/a\\' | \
+								awk "BEGIN{RS="\n\n";FS="\n"}/BUILD_ID: 1/" | grep '^MTIME*')
+							uses=$(cat ${binpkgs}Packages | awk "BEGIN{RS="\n\n";FS="\n"}/CPV: ${packagef}/" | sed '/^REPO:.*/a\\' | \
+								awk "BEGIN{RS="\n\n";FS="\n"}/BUILD_ID: ${build}/" | grep '^USE*')
+
+							echo $stamp
+
+							#echo "${package} @ $(date -d @${stamp#MTIME: *}) w/ ${uses#USE: *} ::${sha1#SHA1: *}"
+
+							#echo ${flags}
+
+						done
+
+						sleep 0.5
+					fi
+				# get a specific build ID's use flags for mutter
+
+				done
+
+			done
+	
+			# for each distro, chroot and build each package, chroot ${directory} (exported) binary_pkgbld
+			#		for errors, log an error in dummy.files/distro.log "error, *-*/PKG on this $date, $BuildLog
+			#			place the build log in dummy.files/distro_folder/build_log.output
+			#		for completions log in dummy.files/distro.log "completions #X of #Y on this $date
 			
 		;;
 	esac
 done
 
-check_mounts ${directory}
+
 #EOF
