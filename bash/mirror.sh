@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#	ARGS: 	$MIRROR { associated mirror file } $PROFILE{ eselect* }
+#	ARGS: 	$TYPE{ release, snapshots, distfiles, repos } $PROFILE{ eselect* }
 #	OUTPUT: [SCORED] [RANDOMIZED] MIRROR URL (file)
 #
 #	TYPE:
@@ -10,13 +10,19 @@
 #			REPOS		:	echo the URL for repos sync (file|rsync://)
 
 	profile="$2"
-	mirror="$1"
-	#root="$(pwd)"
+	type="$1"
+	root="$(pwd)"
 	mirror_type="invalid"
 	release_base_string="invalid"
 	serversList="invalid"
 
-	case $profile in
+	case ${profile} in
+		"selinux")
+			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-hardened-selinux-openrc/"
+		;;
+		"clang")
+			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-clang-openrc/"
+		;;		
 		"gnome")
 			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
 		;;
@@ -46,42 +52,23 @@
 #		;;
 	esac
 
-	case "${mirror##*/}" in
 
-		release*)
-			serversList="$mirror"
-		;;
-		snaps*)
-			serversList="$mirror"
-		;;
-		dist*)
-			serversList="$mirror"
-		;;
-		repos*)
-			serversList="$mirror"
+	case "${type##*/}" in
+		release*|snaps*|dist*|repos*)
+			serversList="$type"
 		;;
 		*)
-			#echo ${mirror##*/}
-			echo "invalid input :: ${mirror##*/}"
+			echo "invalid input"
 			exit
 		;;
 	esac
-
-	if [[ ! -f $mirror ]]
-	then
-		echo "$mirror not found"
-		exit
-	fi
-
 	#FILE:///
     while read -r server
     do
-		#echo "server :: ${server}"
     	case ${server%://*} in
 			"file")
-				case "${mirror##*/}" in
+				case "${type##*/}" in
 					release*)
-
 						if [[ "$release_base_string" != "invalid" ]]
 						then
 						locationStr="$release_base_string"
@@ -137,46 +124,46 @@
     do
     	case ${server%://*} in
             "rsync" | "http" | "ftp")
-				case "${mirror##*/}" in
+				case "${type##*/}" in
             	release*)
 					if [[ "$release_base_string" != "invalid" ]]
                     then
 
-						locationStr="$release_base_string"
-						urlBase="$server/$locationStr"
+					locationStr="$release_base_string"
+					urlBase="$server/$locationStr"
 
-						selectStr="${locationStr#*current-*}"
-						selectStr="${selectStr%*/}"
+					selectStr="${locationStr#*current-*}"
+					selectStr="${selectStr%*/}"
 
-						urlCurrent="$(curl -s $urlBase | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-' | awk '{print $1}' | head -n 1 )"
-						urlCurrent="${urlCurrent%.t*}"
-
-						if [[ -n $urlCurrent ]]
-	                    then
-							echo "${urlBase}${urlCurrent}.tar.xz"
-							echo "${urlBase}${urlCurrent}.tar.xz.asc"
-	        	            exit
-						fi
-                	fi
+					urlCurrent="$(curl -s $urlBase | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-' | awk '{print $1}' | head -n 1 )"
+					urlCurrent="${urlCurrent%.t*}"
+					
+					if [[ -n $urlCurrent ]] 
+                    then
+						echo "${urlBase}${urlCurrent}.tar.xz"
+						echo "${urlBase}${urlCurrent}.tar.xz.asc"
+	                    exit
+					fi
+                fi
 				;;
                 dist*)
 
-					if [[ ${server#*://} ]]
+					if [[ ${server#*://} ]] 
                     then
                 		echo $server
 						exit
                     fi
                 ;;
                 repos*)
-
-					if [[ ${server#*://} ]]
+                    
+					if [[ ${server#*://} ]] 
                     then
                        echo $server
                        exit
                     fi
                 ;;
                 snaps*)
-
+                    
 					if [[ ${server#*://} ]]
                     then
                        echo $server
