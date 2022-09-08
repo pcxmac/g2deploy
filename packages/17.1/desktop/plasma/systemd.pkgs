@@ -5,3 +5,4 @@ gnome-base/gdm
 kde-apps/konsole
 app-editors/gedit
 app-editors/gedit-plugins
+app-editors/vscode

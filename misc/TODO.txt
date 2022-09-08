@@ -1,3 +1,18 @@
+INTEGRATE THE ESYNC.SH script in to the functionality of this stuff
+TURN THE PROGRAM IN TO PYTHON
+REVAMP SOURCE CONTROL, use conventions like rsync:/// file:/// ..., all source locations need to become URLs. 
+REVAMP MIRROS AND A SCORING SYSTEM
+
+
+
+
+
+
+
+
+
+
+
 
 need to correct :
 

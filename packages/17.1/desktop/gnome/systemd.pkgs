@@ -4,3 +4,4 @@ gnome-base/gnome-control-center
 gnome-extra/gnome-shell-extensions
 app-editors/gedit
 app-editors/gedit-plugins
+app-editors/vscode

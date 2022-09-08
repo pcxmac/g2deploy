@@ -1,15 +1,31 @@
 #!/bin/bash
 
+# ARGS: $SOURCE		$DESTINATION
+
+source="$1"
+destination="$2"
+
 /sbin/rc-service rsyncd stop
 /sbin/rc-service lighttpd stop
 /bin/sync
-/var/lib/portage/sync-distfiles.sh
-/var/lib/portage/sync-snapshots.sh
-/var/lib/portage/sync-releases.sh
 
-#/bin/echo "$(date)" >> /root/last_update.txt
+#/var/lib/portage/sync-repos.sh
+URL=./mirror.sh repos * 
+rsync -ah --info=progress2 $URL /var/lib/portage/repos/gentoo
 
-/usr/bin/emerge --sync --verbose --ask=n
+#/var/lib/portage/sync-snapshots.sh
+URL=./mirror.sh snapshots *
+rsync -ah --info=progress2 $URL /var/lib/portage/snapshots
+
+#/var/lib/portage/sync-releases.sh
+URL=./mirror.sh releases *
+rsync -ah --info=progress2 $URL /var/lib/portage/releases
+
+#/var/lib/portage/sync-distfiles.sh
+URL=./mirror.sh releases *
+rsync -ah --info=progress2 $URL /var/lib/portage/distfiles
+
+
 /usr/bin/eix-update
 
 hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | /usr/bin/awk '{print $8}')"

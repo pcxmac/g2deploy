@@ -252,6 +252,7 @@ check_mounts() {
 
 	dir="$(echo "$1" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
 	output="$(cat /proc/mounts | grep "$dir\/" | wc -l)"
+	echo $output 2>&1
 	while [[ "$output" != 0 ]]
 	do
 		#cycle=0
@@ -658,130 +659,121 @@ function config_etc() {
 
 }
 
-function release_base_string() {
+#function release_base_string() {
+#
+#	str=$1
+#
+#	case $str in
+#		"gnome")
+#			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
+#		;;
+#		"plasma")
+#			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
+#		;;
+#		"openrc")
+#			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-openrc/"
+#		;;
+#		"hardened")
+#			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/"
+#		;;
+#		"systemd")
+#			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-systemd/"
+#		;;
+#		"gnome/systemd")
+#			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/"
+#		;;
+#		"plasma/systemd")
+#			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/"
+#		;;
+#		*)
+#			baseStr="unsupported profile string!"
+#		;;
+#	esac
 
-	str=$1
+#	echo $baseStr
 
-	case $str in
-		"gnome")
-			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
-		;;
-		"plasma")
-			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
-		;;
-		"openrc")
-			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-openrc/"
-		;;
-		"hardened")
-			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/"
-		;;
-		"systemd")
-			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-systemd/"
-		;;
-		"gnome/systemd")
-			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/"
-		;;
-		"plasma/systemd")
-			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/"
-		;;
-		*)
-			baseStr="unsupported profile string!"
-		;;
-	esac
+#}
 
-	echo $baseStr
+#function local_stage3() {
+#
+#	local portageDir="/var/lib/portage"
+#	local str=$1		#	(profile string)	
+#	local locationStr="$(release_base_string $str)"
+#	local selectStr="${locationStr#*current-*}"
+#	selectStr="${selectStr%*/}"
 
-}
+#	local urlBase="${portageDir}${locationStr}"
+#	urlCurrent="$(ls $urlBase | grep "$selectStr" | grep -v '.xz.')"
 
-function local_stage3() {
+#	echo "${urlBase}${urlCurrent}"	
+#}
 
-	local portageDir="/var/lib/portage"
-	local str=$1		#	(profile string)	
-	local locationStr="$(release_base_string $str)"
-	local selectStr="${locationStr#*current-*}"
-	selectStr="${selectStr%*/}"
-
-	local urlBase="${portageDir}${locationStr}"
-	urlCurrent="$(ls $urlBase | grep "$selectStr" | grep -v '.xz.')"
-
-	echo "${urlBase}${urlCurrent}"	
-}
-
-function remote_stage3() {
+#function remote_stage3() {
 
 	#	NEED A MODE FOR [ LOCAL RSYNC SERVER ;; THEN MIRROR LIST shuffled ]
 	#	return the method + url of the file if exists, use tally of servers located in ./config/release.mirrors
 	#	methods for getting remote stage3's: { rsync (rsync://domain.tld/MISC/releases); wget (http://domain.tld/MISC/release) }
 
-	serversList="./config/release.mirrors"
-	str=$1		#	(profile string)
-	locationStr="$(release_base_string $str)"
-	selectStr="${locationStr#*current-*}"
-	selectStr="${selectStr%*/}"
+#	serversList="./config/release.mirrors"
+#	str=$1		#	(profile string)
+#	locationStr="$(release_base_string $str)"
+#	selectStr="${locationStr#*current-*}"
+#	selectStr="${selectStr%*/}"
 
 	# cycle through mirrors, to find a valid current stage3	
-	while read -r server 
-	do
-		echo "checking $server ..."
-		urlBase="$server$locationStr"
-		urlCurrent="$(curl -s $urlBase | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-' | awk '{print $1}' | head -n 1 )"
-		if [[ -n "$urlCurrent" ]];
-		then 
-			urlCurrent="${urlCurrent%.t*}.tar.xz"
-			echo "${urlBase}${urlCurrent}"
-			exit
-		fi
+#	while read -r server 
+#	do
+#		echo "checking $server ..."
+#		urlBase="$server$locationStr"
+#		urlCurrent="$(curl -s $urlBase | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-' | awk '{print $1}' | head -n 1 )"
+#		if [[ -n "$urlCurrent" ]];
+#		then 
+#			urlCurrent="${urlCurrent%.t*}.tar.xz"
+#			echo "${urlBase}${urlCurrent}"
+#			exit
+#		fi
 		
 	# shuffle the mirror list to alleviate loading the first in line
-	done < <(cat ./config/release.mirrors | shuf)
+#	done < <(cat ./config/release.mirrors | shuf)
 
 	# NO servers found, otherwise it would have exited before this line... output empty string to indicate error
-	if [[ -z $urlCurrent ]];
-	then 
-		urlBase="no "
-		urlCurrent="result !"
-		echo ""
-	fi
-	# no default route
-}
+#	if [[ -z $urlCurrent ]];
+#	then 
+#		urlBase="no "
+#		urlCurrent="result !"
+#		echo ""
+#	fi
+#	# no default route
+#}
 
 function get_stage3() {
 	#echo "getting stage 3"
 	local profile=$1
 	local offset=$2
 
-	local_stage3_url="$(local_stage3 $profile)"
+	files="$(./bash/mirror.sh releases $profile)"
+	filexz="$(echo $files | grep '.xz$')"
+	fileasc="$(echo $files | grep '.asc$')"
 
-	echo "$local_stage3_url" >&2
+	#echo "file = $files"
 
+	case ${server%://*} in
+		"file://")
+			rsync -avP $filexz ${offset}
+			rsync -avP $filesasc ${offset}
+		;;
+		"http://")
+			wget $filexz	--directory-prefix=${offset}
+			wget $fileasc	--directory-prefix=${offset}
+		;;
+	esac
 
+	gpg --verify $offset/$fileasc
+	rm $offset/$fileasc
 
-	if [ -n "$local_stage3_url" ]
-	then
-		file=${local_stage3_url##*/}
-		#echo "offset = $offset, file = $file"
-		rsync -avP ${local_stage3_url} ${offset}
-		rsync -avP ${local_stage3_url}.asc ${offset}
-	else
-		remote_stage3_url="$(remote_stage3 $profile)"
-
-		if [ -n "$remote_stage3_url" ]
-		then
-			file=${remote_stage3_url##*/}
-			#echo "offset = $offset, file = $file"
-			wget ${remote_stage3_url}	--directory-prefix=${offset}
-			wget ${remote_stage3_url}.asc	--directory-prefix=${offset}
-		fi
-	fi
-	
-	echo "offset = $offset, file = $file"
-	
-	gpg --verify $offset/$file.asc
-	rm $offset/$file.asc
-
-	echo "decompressing $file...@ $offset"
-	decompress $offset/$file $offset
-	rm $offset/$file
+	echo "decompressing $filexz...@ $offset"
+	decompress $offset/$filexz $offset
+	rm $offset/$filexz
 }
 
 
@@ -818,10 +810,6 @@ function common() {
 	echo "BASIC TOOLS EMERGE !!!!!"
 	emerge $emergeOpts gentoolkit eix mlocate genkernel sudo zsh pv tmux app-arch/lz4 elfutils --ask=n
 
-
-	# 
-
-
 	############################################# UPDATE AFTER DEPLOY
 	#echo "UPDATE EMERGE !!!!!"
 	#emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
@@ -842,7 +830,6 @@ function common() {
 	chown sysop.sysop ${homedir} -R
 	echo "homedir"
 	
-
 	echo "EMERGE PROFILE PACKAGES !!!!"
 	pkgs="/package.list"
 	#file_name="${key##*/}"
@@ -1269,10 +1256,9 @@ for x in $@
 do
 	case "${x}" in
 		deploy)
+
 			check_mounts ${directory}
 			clear_fs ${directory}
-
-			echo "GET STAGE3"
 
 			echo "selection = ${selection} directory ${directory}"
 
