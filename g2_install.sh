@@ -750,30 +750,35 @@ function get_stage3() {
 	#echo "getting stage 3"
 	local profile=$1
 	local offset=$2
+	
+	files="$(./bash/mirror.sh ./config/releases.mirrors $profile)"
+	filexz="$(echo "${files}" | grep '.xz$')"
+	fileasc="$(echo "${files}" | grep '.asc$')"
+	serverType="${filexz%//*}"
 
-	files="$(./bash/mirror.sh releases $profile)"
-	filexz="$(echo $files | grep '.xz$')"
-	fileasc="$(echo $files | grep '.asc$')"
-
-	#echo "file = $files"
-
-	case ${server%://*} in
-		"file://")
-			rsync -avP $filexz ${offset}
-			rsync -avP $filesasc ${offset}
+	case ${serverType%://*} in
+		"file:/")
+			echo "RSYNCING" 2>&1
+			rsync -avP ${filexz#*//} ${offset}
+			rsync -avP ${fileasc#*//} ${offset}
 		;;
-		"http://")
+		"http:/")
+			echo "WGETTING" 2>&1
 			wget $filexz	--directory-prefix=${offset}
 			wget $fileasc	--directory-prefix=${offset}
 		;;
 	esac
 
+	fileasc=${fileasc##*/}
+	filexz=${filexz##*/}
+
 	gpg --verify $offset/$fileasc
 	rm $offset/$fileasc
 
-	echo "decompressing $filexz...@ $offset"
+	echo "decompressing $filexz...@ $offset" 2>&1
 	decompress $offset/$filexz $offset
 	rm $offset/$filexz
+
 }
 
 

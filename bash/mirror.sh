@@ -77,11 +77,11 @@
 						selectStr="${locationStr#*current-*}"
 						selectStr="${selectStr%*/}"
 
-#						echo $urlBase 
-#						ls $urlBase | grep $selectStr 
-
 						urlCurrent_xz="$(ls $urlBase | grep "$selectStr" | grep ".xz$")"
 						urlCurrent_asc="$(ls $urlBase | grep "$selectStr" | grep ".asc$")"
+						
+						# redefine urlBase for correct URL format, file:/// relative file reference is invalid
+						urlBase="${server}${locationStr}"
 
 						if [[ -n $urlCurrent_xz ]] 
     	                then
@@ -89,7 +89,16 @@
 							echo "${urlBase}${urlCurrent_asc}"
 							exit
 						fi
-
+					else
+						case ${server%://*} in
+							file)
+								if [[ -n ${server} ]] 
+								then
+									echo "${server}"
+									exit
+								fi
+							;;
+						esac
 					fi
 					;;
 					dist*)
@@ -123,11 +132,9 @@
     while read -r server
     do
     	case ${server%://*} in
-            "rsync" | "http" | "ftp")
+            rsync | http | ftp)
 				case "${type##*/}" in
             	release*)
-					if [[ "$release_base_string" != "invalid" ]]
-                    then
 
 					locationStr="$release_base_string"
 					urlBase="$server/$locationStr"
@@ -137,14 +144,29 @@
 
 					urlCurrent="$(curl -s $urlBase | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-' | awk '{print $1}' | head -n 1 )"
 					urlCurrent="${urlCurrent%.t*}"
-					
-					if [[ -n $urlCurrent ]] 
+
+
+					if [[ "$release_base_string" != "invalid" ]]
                     then
-						echo "${urlBase}${urlCurrent}.tar.xz"
-						echo "${urlBase}${urlCurrent}.tar.xz.asc"
-	                    exit
-					fi
-                fi
+
+						if [[ -n $urlCurrent ]] 
+						then
+							echo "${urlBase}${urlCurrent}.tar.xz"
+							echo "${urlBase}${urlCurrent}.tar.xz.asc"
+							exit
+						fi
+					
+					else
+					#	case ${server%://*} in
+					#		rsync)
+								if [[ -n ${server} ]] 
+								then
+									echo "${server}"
+									exit
+								fi
+					#		;;
+					#	esac
+                	fi
 				;;
                 dist*)
 
