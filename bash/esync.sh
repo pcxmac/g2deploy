@@ -38,7 +38,8 @@ hostip="$(/bin/ip --brief address show dev $hostip | /usr/bin/awk '{print $3}')"
 /bin/sed -i "s|   DATE:.*|   DATE: $(date)|" /etc/rsync/rsyncd.motd
 
 #/bin/echo "sleeping till ... $(date --date='+2 minutes')"
-/usr/bin/sleep 120
+echo "sleeping..."
+/usr/bin/sleep 10
 /bin/sync
 
 /sbin/rc-service rsyncd start

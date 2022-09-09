@@ -4,7 +4,7 @@ REVAMP SOURCE CONTROL, use conventions like rsync:/// file:/// ..., all source l
 REVAMP MIRROS AND A SCORING SYSTEM
 
 
-
+*** FIND A WAY TO RSYNC the kernel source so that it can be reMAKEd cleanly and ZFS-KMOD builds flawlessly.
 
 
 

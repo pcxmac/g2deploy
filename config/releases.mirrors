@@ -1,21 +1,18 @@
-http://mirror.bytemark.co.uk/gentoo/
+#file:///var/lib/portage/
+rsync://192.168.122.108/gentoo-releases/amd64
+http://192.168.122.108/gentoo
 
-http://gentoo.mirrors.tera-byte.com/
-
-http://gentoo.gossamerhost.com/
-
-https://gentoo.osuosl.org/
-
-https://mirror.leaseweb.com/gentoo/
+#http://mirror.bytemark.co.uk/gentoo/
+#http://gentoo.mirrors.tera-byte.com/
+#http://gentoo.gossamerhost.com/
+#https://gentoo.osuosl.org/
+#https://mirror.leaseweb.com/gentoo/
 rsync://mirror.leaseweb.com/gentoo/releases/amd64
-http://gentoo-mirror.flux.utah.edu/
-
-https://mirrors.rit.edu/gentoo/
+#http://gentoo-mirror.flux.utah.edu/
+#https://mirrors.rit.edu/gentoo/
 rsync://mirrors.rit.edu/gentoo/releases/amd64
-https://mirror.rackspace.com/gentoo/
+#https://mirror.rackspace.com/gentoo/
 rsync://mirror.rackspace.com/gentoo/releases/amd64
-
-file:///var/lib/portage/
 
 rsync://mirror.csclub.uwaterloo.ca/gentoo-distfiles/releases/amd64
 rsync://mirrors.tera-byte.com/gentoo/releases/amd64

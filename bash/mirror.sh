@@ -11,122 +11,58 @@
 
 	profile="$2"
 	type="$1"
-	root="$(pwd)"
-	mirror_type="invalid"
 	release_base_string="invalid"
 	serversList="invalid"
 
 	case ${profile} in
-		"selinux")
-			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-hardened-selinux-openrc/"
-		;;
-		"clang")
-			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-clang-openrc/"
-		;;		
-		"gnome")
-			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
-		;;
-		"plasma")
-			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
-		;;
-		"openrc")
-			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-openrc/"
-		;;
-		"hardened")
-			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/"
-		;;
-		"systemd")
-			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-systemd/"
-		;;
-		"gnome/systemd")
-			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/"
-		;;
-		"plasma/systemd")
-			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/"
-		;;
-#		"*")
-#			release_base_string="not a release search"
-#		;;
-#		*)
-#			#release_base_string=""
-#		;;
+		selinux)		release_base_string="releases/amd64/autobuilds/current-stage3-amd64-hardened-${profile}-openrc/"	;;
+		hardened|clang)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}-openrc/"			;;
+		gnome|plasma)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"			;;
+		openrc|systemd)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}/"					;;
+		*/systemd)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-${profile#*/}/"			;;
 	esac
-
 
 	case "${type##*/}" in
-		release*|snaps*|dist*|repos*)
-			serversList="$type"
-		;;
-		*)
-			echo "invalid input"
-			exit
-		;;
+		release*|snaps*|dist*|repos*)	serversList="$type"				;;
+		*)								echo "invalid input";exit		;;
 	esac
+
 	#FILE:///
     while read -r server
     do
     	case ${server%://*} in
-			"file")
+			file)
 				case "${type##*/}" in
 					release*)
-						if [[ "$release_base_string" != "invalid" ]]
-						then
-						locationStr="$release_base_string"
-						urlBase="${server#*://}${locationStr}"
-
-						selectStr="${locationStr#*current-*}"
-						selectStr="${selectStr%*/}"
-
-						urlCurrent_xz="$(ls $urlBase | grep "$selectStr" | grep ".xz$")"
-						urlCurrent_asc="$(ls $urlBase | grep "$selectStr" | grep ".asc$")"
-						
-						# redefine urlBase for correct URL format, file:/// relative file reference is invalid
-						urlBase="${server}${locationStr}"
-
-						if [[ -n $urlCurrent_xz ]] 
-    	                then
-							echo "${urlBase}${urlCurrent_xz}"
-							echo "${urlBase}${urlCurrent_asc}"
-							exit
-						fi
-					else
-						case ${server%://*} in
-							file)
-								if [[ -n ${server} ]] 
-								then
-									echo "${server}"
-									exit
-								fi
-							;;
-						esac
-					fi
-					;;
-					dist*)
-						if [[ -d ${server#*://} ]]
-						then
-							echo $server
-							exit
+						if [[ "$release_base_string" != "invalid" ]];	then
+							locationStr="$release_base_string"
+							urlBase="${server#*://}${locationStr}"
+							selectStr="${locationStr#*current-*}"
+							selectStr="${selectStr%*/}"
+							urlCurrent_xz="$(ls $urlBase | grep "$selectStr" | grep ".xz$")"
+							urlCurrent_asc="$(ls $urlBase | grep "$selectStr" | grep ".asc$")"
+							# redefine urlBase for correct URL format, file:/// relative file reference is invalid
+							urlBase="${server}${locationStr}"
+							if [[ -n $urlCurrent_xz ]];	then
+								echo "${urlBase}${urlCurrent_xz}"
+								echo "${urlBase}${urlCurrent_asc}"
+								exit
+							fi
+						else
+							case ${server%://*} in
+								file)
+									if [[ -n ${server} ]];	then	echo "${server}";	exit;	fi
+								;;
+							esac
 						fi
 					;;
-					repos*)
-						if [[ -d ${server#*://} ]]
-						then
-							echo $server
-							exit
-						fi
-					;;
-					snaps*)
-						if [[ -d ${server#*://} ]]
-						then
-							echo $server
-							exit
-						fi
+					dist*|repos*|snaps*)
+						if [[ -d ${server#*://} ]];	then			echo ${server};		exit;	fi
 					;;
 				esac
 			;;
 		esac
     done < <(cat $serversList | shuf)
-
 
     # {WEB}://
     while read -r server
@@ -135,62 +71,27 @@
             rsync | http | ftp)
 				case "${type##*/}" in
             	release*)
-
 					locationStr="$release_base_string"
 					urlBase="$server/$locationStr"
-
 					selectStr="${locationStr#*current-*}"
 					selectStr="${selectStr%*/}"
-
-					urlCurrent="$(curl -s $urlBase | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-' | awk '{print $1}' | head -n 1 )"
+					# filter for curl content, and grep'ing through mangled URLs, ie last few characters are missing or distorted
+					urlCurrent="$(curl -s $urlBase | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"
+					urlCurrent="$(echo $urlCurrent | awk '{print $1}' | head -n 1 )"
 					urlCurrent="${urlCurrent%.t*}"
-
-
-					if [[ "$release_base_string" != "invalid" ]]
-                    then
-
-						if [[ -n $urlCurrent ]] 
-						then
+					if [[ "$release_base_string" != "invalid" ]]; then
+						if [[ -n $urlCurrent ]];	then	
 							echo "${urlBase}${urlCurrent}.tar.xz"
 							echo "${urlBase}${urlCurrent}.tar.xz.asc"
 							exit
 						fi
-					
 					else
-					#	case ${server%://*} in
-					#		rsync)
-								if [[ -n ${server} ]] 
-								then
-									echo "${server}"
-									exit
-								fi
-					#		;;
-					#	esac
+						if [[ -n ${server} ]];	then	echo "${server}";	exit;	fi
                 	fi
 				;;
-                dist*)
-
-					if [[ ${server#*://} ]] 
-                    then
-                		echo $server
-						exit
-                    fi
-                ;;
-                repos*)
-                    
-					if [[ ${server#*://} ]] 
-                    then
-                       echo $server
-                       exit
-                    fi
-                ;;
-                snaps*)
-                    
-					if [[ ${server#*://} ]]
-                    then
-                       echo $server
-                       exit
-                    fi
+                dist*|repos*|snaps*)
+					echo "${server}"
+					exit
                 ;;
             esac
 		;;
