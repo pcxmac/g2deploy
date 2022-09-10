@@ -659,92 +659,6 @@ function config_etc() {
 
 }
 
-#function release_base_string() {
-#
-#	str=$1
-#
-#	case $str in
-#		"gnome")
-#			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
-#		;;
-#		"plasma")
-#			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
-#		;;
-#		"openrc")
-#			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-openrc/"
-#		;;
-#		"hardened")
-#			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/"
-#		;;
-#		"systemd")
-#			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-systemd/"
-#		;;
-#		"gnome/systemd")
-#			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/"
-#		;;
-#		"plasma/systemd")
-#			baseStr="/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/"
-#		;;
-#		*)
-#			baseStr="unsupported profile string!"
-#		;;
-#	esac
-
-#	echo $baseStr
-
-#}
-
-#function local_stage3() {
-#
-#	local portageDir="/var/lib/portage"
-#	local str=$1		#	(profile string)	
-#	local locationStr="$(release_base_string $str)"
-#	local selectStr="${locationStr#*current-*}"
-#	selectStr="${selectStr%*/}"
-
-#	local urlBase="${portageDir}${locationStr}"
-#	urlCurrent="$(ls $urlBase | grep "$selectStr" | grep -v '.xz.')"
-
-#	echo "${urlBase}${urlCurrent}"	
-#}
-
-#function remote_stage3() {
-
-	#	NEED A MODE FOR [ LOCAL RSYNC SERVER ;; THEN MIRROR LIST shuffled ]
-	#	return the method + url of the file if exists, use tally of servers located in ./config/release.mirrors
-	#	methods for getting remote stage3's: { rsync (rsync://domain.tld/MISC/releases); wget (http://domain.tld/MISC/release) }
-
-#	serversList="./config/release.mirrors"
-#	str=$1		#	(profile string)
-#	locationStr="$(release_base_string $str)"
-#	selectStr="${locationStr#*current-*}"
-#	selectStr="${selectStr%*/}"
-
-	# cycle through mirrors, to find a valid current stage3	
-#	while read -r server 
-#	do
-#		echo "checking $server ..."
-#		urlBase="$server$locationStr"
-#		urlCurrent="$(curl -s $urlBase | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-' | awk '{print $1}' | head -n 1 )"
-#		if [[ -n "$urlCurrent" ]];
-#		then 
-#			urlCurrent="${urlCurrent%.t*}.tar.xz"
-#			echo "${urlBase}${urlCurrent}"
-#			exit
-#		fi
-		
-	# shuffle the mirror list to alleviate loading the first in line
-#	done < <(cat ./config/release.mirrors | shuf)
-
-	# NO servers found, otherwise it would have exited before this line... output empty string to indicate error
-#	if [[ -z $urlCurrent ]];
-#	then 
-#		urlBase="no "
-#		urlCurrent="result !"
-#		echo ""
-#	fi
-#	# no default route
-#}
 
 function get_stage3() {
 	#echo "getting stage 3"
@@ -756,13 +670,15 @@ function get_stage3() {
 	fileasc="$(echo "${files}" | grep '.asc$')"
 	serverType="${filexz%//*}"
 
+	echo "X = ${serverType%://*}"
+
 	case ${serverType%://*} in
 		"file:/")
 			echo "RSYNCING" 2>&1
 			rsync -avP ${filexz#*//} ${offset}
 			rsync -avP ${fileasc#*//} ${offset}
 		;;
-		"http:/")
+		http)
 			echo "WGETTING" 2>&1
 			wget $filexz	--directory-prefix=${offset}
 			wget $fileasc	--directory-prefix=${offset}
@@ -778,7 +694,7 @@ function get_stage3() {
 	echo "decompressing $filexz...@ $offset" 2>&1
 	decompress $offset/$filexz $offset
 	rm $offset/$filexz
-
+	#sleep 30
 }
 
 
@@ -806,8 +722,6 @@ function common() {
 	decompress /linux-${kver}.tar.gz /usr/src
 	rm /linux-${kver}.tar.gz
 	eselect kernel set linux-${kver}
-
-
 		
 	#	{key%/openrc} :: is a for the edgecase 'openrc' where only that string is non existent with in eselect-profile
 	eselect profile set default/linux/amd64/${key%/openrc}
@@ -843,14 +757,14 @@ function common() {
 
 	# THIS KERNEL MODULE WILL BE OVER WRITTEN BY THE MODULES FROM THE HOST
 	echo "EMERGE ZFS BUILD DEPS !!!"
-	\emerge $emergeOpts --onlydeps =zfs-9999 =zfs-kmod-9999 
-	zcat /proc/config.gz > /usr/src/linux/.config
+	\emerge $emergeOpts --onlydeps =zfs-kmod-9999 
+	#zcat /proc/config.gz > /usr/src/linux/.config
 	sync
 
 	# THIS KERNEL MODULE WILL BE OVER WRITTEN BY THE MODULES FROM THE HOST
 	echo "EMERGE ZFS !!!"
 	\emerge =zfs-9999 =zfs-kmod-9999 --buildpkg=n
-	zcat /proc/config.gz > /usr/src/linux/.config
+	#zcat /proc/config.gz > /usr/src/linux/.config
 	sync
 
 	echo "SETTING SERVICES"
@@ -1279,9 +1193,7 @@ do
 			#cat ${directory}/package.list
 			
 			echo "$(getKVER) ///////////////////////////////////////////////////////////////////////"
-			
-
-			
+					
 			chroot ${directory} /bin/bash -c "common ${profile} $(getKVER)"
 			chroot ${directory} /bin/bash -c "profile_settings ${profile}"
 		;;

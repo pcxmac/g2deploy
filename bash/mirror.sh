@@ -15,16 +15,17 @@
 	serversList="invalid"
 
 	case ${profile} in
-		selinux)		release_base_string="releases/amd64/autobuilds/current-stage3-amd64-hardened-${profile}-openrc/"	;;
+		musl*)			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}-hardened"		;;
+		selinux)		release_base_string="releases/amd64/autobuilds/current-stage3-amd64-hardened-${profile}-openrc/";;
 		hardened|clang)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}-openrc/"			;;
 		gnome|plasma)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"			;;
-		openrc|systemd)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}/"					;;
-		*/systemd)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-${profile#*/}/"			;;
+		openrc|systemd)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}/"				;;
+		*/systemd)		release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-${profile#*/}/"		;;
 	esac
 
 	case "${type##*/}" in
-		release*|snaps*|dist*|repos*)	serversList="$type"				;;
-		*)								echo "invalid input";exit		;;
+		bin*|pack*|kernel*|release*|snaps*|dist*|repos*)		serversList="$type"				;;
+		*)														echo "invalid input";exit		;;
 	esac
 
 	#FILE:///
@@ -56,7 +57,7 @@
 							esac
 						fi
 					;;
-					dist*|repos*|snaps*)
+					bin*|pack*|kernel*|dist*|repos*|snaps*)
 						if [[ -d ${server#*://} ]];	then			echo ${server};		exit;	fi
 					;;
 				esac
@@ -89,7 +90,7 @@
 						if [[ -n ${server} ]];	then	echo "${server}";	exit;	fi
                 	fi
 				;;
-                dist*|repos*|snaps*)
+                bin*|pack*|kernel*|dist*|repos*|snaps*)
 					echo "${server}"
 					exit
                 ;;

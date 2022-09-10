@@ -1,0 +1,3 @@
+rsync://192.168.122.108/gentoo-kernels
+#file:///var/lib/portage/kernels
+#http://192.168.122.108/gentoo/kernels
