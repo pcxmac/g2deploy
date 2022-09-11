@@ -328,7 +328,10 @@ function system()
 
 function services()
 {
-    echo "hello"
+	local lineNum=0
+	local service_list=$1
+
+	bash <(curl "${service_list}")
 }
 
 function install_kernel()
@@ -461,30 +464,21 @@ export -f services
 export -f install_modules
 
 	### NEED F/S CONTEXT SENSITIVE
-
-    #buildup ${profile} ${directory}
-    #zfs_keys ${dataset}
-    
+    buildup ${profile} ${directory}
+    zfs_keys ${dataset}	
 	##############################
-	
-	#patches ${directory}
-	#pkgProcessor ${profile} ${directory}
-    #chroot ${directory} /bin/bash -c "locales ${profile}"
+	patches ${directory}
+	pkgProcessor ${profile} ${directory}
+    chroot ${directory} /bin/bash -c "locales ${profile}"
+	install_kernel ${directory}
+	chroot ${directory} /bin/bash -c "install_modules"
+	chroot ${directory} /bin/bash -c "system"
+	chroot ${directory} /bin/bash -c "users ${profile}"
+	services_URL="$(./mirror.sh ../config/package.mirrors *)/${profile}.services" | sed 's/ //g' | sed "s/\"/'/g"
+	chroot ${directory} /bin/bash -c "services ${services_URL}"
 
-	echo "END OF LOCALES"
-
-# system
-	#chroot ${directory} /bin/bash -c "system"
-
-	echo "END OF SYSTEM"
-	#chroot ${directory} /bin/bash -c "users ${profile}"
-
-	echo "END OF USERS"
-
-
-# kernel + modules
-	#install_kernel ${directory}
-	#chroot ${directory} /bin/bash -c "install_modules"
-
-	# services
-	chroot ${directory} /bin/bash -c "services"
+# potential cleanup items
+#
+#	move binpkgs for client to /tmp as well, disable binpkg building
+#	reflash modules
+#
