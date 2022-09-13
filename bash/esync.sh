@@ -5,25 +5,44 @@
 #source="$1"
 #destination="$2"
 
+#SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/.."
+SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
+SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
+
+echo $SCRIPT_DIR
+
 /sbin/rc-service rsyncd stop
 /sbin/rc-service lighttpd stop
 /bin/sync
 
-#/var/lib/portage/sync-repos.sh
-URL=./mirror.sh ../config/repos.mirrors * 
-rsync -aP --info=progress2 $URL /var/lib/portage/repos/gentoo
+echo "${SCRIPT_DIR}"
 
-#/var/lib/portage/sync-snapshots.sh
-URL=./mirror.sh ../config/snapshots.mirrors *
-rsync -aP --info=progress2 $URL /var/lib/portage/snapshots
+URL="rsync://rsync.us.gentoo.org/gentoo-portage/"
 
-#/var/lib/portage/sync-releases.sh
-URL=./mirror.sh ../config/releases.mirrors *
-rsync -aP --info=progress2 $URL /var/lib/portage/releases
+echo "############################### [ REPOS ] ###################################"
+#URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/repos.mirrors * )"
+echo -e "SYNCING w/ ***$URL*** [REPOS]"
+rsync -avPI --info=progress2 --no-perms --ignore-existing --no-owner --no-group ${URL} /var/lib/portage/repos/gentoo
 
-#/var/lib/portage/sync-distfiles.sh
-URL=./mirror.sh ../config/distfiles.mirrors *
-rsync -aP --info=progress2 $URL /var/lib/portage/distfiles
+
+echo "############################### [ SNAPSHOTS ] ###################################"
+URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/snapshots.mirrors * )"
+echo -e "SYNCING w/ $URL \e[25,42m[SNAPSHOTS]\e[0m";sleep 1
+rsync -avPI --info=progress2 --ignore-existing --no-perms --no-owner --no-group ${URL} /var/lib/portage/
+
+
+echo "############################### [ RELEASES ] ###################################"
+URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors * )"
+echo -e "SYNCING w/ $URL \e[25,42m[RELEASES]\e[0m";sleep 1
+
+# destination URL is extended due to 'amd64' being the only requested arch for releases, perhaps select for, in this script later ie x32, amd64, arm,...
+rsync -avPI --info=progress2 --ignore-existing --no-perms --no-owner --no-group ${URL} /var/lib/portage/releases
+
+
+echo "############################### [ DISTFILES ] ###################################"
+URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/distfiles.mirrors * )"
+echo -e "SYNCING w/ $URL \e[25,42m[DISTFILES]\e[0m";sleep 1
+rsync -avPI --info=progress2 --ignore-existing --no-perms --no-owner --no-group ${URL} /var/lib/portage/
 
 echo "updating mlocate-db"
 /usr/bin/updatedb
@@ -44,3 +63,4 @@ echo "sleeping..."
 
 /sbin/rc-service rsyncd start
 /sbin/rc-service lighttpd start
+

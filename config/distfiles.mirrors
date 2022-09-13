@@ -6,6 +6,6 @@ rsync://rsync.nl.gentoo.org/gentoo/distfiles
 rsync://rsync.uk.gentoo.org/gentoo/distfiles
 rsync://rsync.jp.gentoo.org/gentoo/distfiles
 rsync://rsync.kr.gentoo.org/gentoo/distfiles
-rsync://rsync.ca.gentoo.org/gentoo/distfiles
+#rsync://rsync.ca.gentoo.org/gentoo/distfiles
 rsync://rsync.us.gentoo.org/gentoo/distfiles
 rsync://mirror.csclub.uwaterloo.ca/gentoo-distfiles

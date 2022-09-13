@@ -1,4 +1,4 @@
-file:///var/lib/portage/
+#file:///var/lib/portage/
 #rsync://192.168.122.108/gentoo-releases/amd64
 #http://192.168.122.108/gentoo
 

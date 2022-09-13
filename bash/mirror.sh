@@ -11,7 +11,7 @@
 
 	profile="$2"
 	type="$1"
-	release_base_string="invalid"
+	release_base_string=""
 	serversList="invalid"
 
 	case ${profile} in
@@ -21,6 +21,7 @@
 		gnome|plasma)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"			;;
 		openrc|systemd)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}/"				;;
 		*/systemd)		release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-${profile#*/}/"		;;
+		*)				release_base_string=""																			;;
 	esac
 
 	case "${type##*/}" in
@@ -69,32 +70,42 @@
     while read -r server
     do
     	case ${server%://*} in
-            rsync | http | ftp)
+			rsync)
 				case "${type##*/}" in
-            	release*)
-					locationStr="$release_base_string"
-					urlBase="$server/$locationStr"
-					selectStr="${locationStr#*current-*}"
-					selectStr="${selectStr%*/}"
-					# filter for curl content, and grep'ing through mangled URLs, ie last few characters are missing or distorted
-					urlCurrent="$(curl -s $urlBase | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"
-					urlCurrent="$(echo $urlCurrent | awk '{print $1}' | head -n 1 )"
-					urlCurrent="${urlCurrent%.t*}"
-					if [[ "$release_base_string" != "invalid" ]]; then
-						if [[ -n $urlCurrent ]];	then	
-							echo "${urlBase}${urlCurrent}.tar.xz"
-							echo "${urlBase}${urlCurrent}.tar.xz.asc"
-							exit
+            		release*)
+						if [[ -z $release_base_string ]];	then	echo "${server}";	exit;	fi
+					;;
+					bin*|pack*|kernel*|dist*|repos*|snaps*)
+						echo "${server}"
+						exit
+                	;;
+				esac
+			;;
+          	http | ftp)
+				case "${type##*/}" in
+            		release*)
+						locationStr="$release_base_string"
+						urlBase="$server/$locationStr"
+						selectStr="${locationStr#*current-*}"
+						selectStr="${selectStr%*/}"
+						# filter for curl content, and grep'ing through mangled URLs, ie last few characters are missing or distorted
+						urlCurrent="$(curl -s $urlBase | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"
+						urlCurrent="$(echo $urlCurrent | awk '{print $1}' | head -n 1 )"
+						urlCurrent="${urlCurrent%.t*}"
+						if [[ "$release_base_string" != "invalid" ]]; then
+							if [[ -n $urlCurrent ]];	then	
+								echo "${urlBase}${urlCurrent}.tar.xz"
+								echo "${urlBase}${urlCurrent}.tar.xz.asc"
+								exit
+							fi
 						fi
-					else
-						if [[ -n ${server} ]];	then	echo "${server}";	exit;	fi
-                	fi
-				;;
-                bin*|pack*|kernel*|dist*|repos*|snaps*)
-					echo "${server}"
-					exit
-                ;;
-            esac
-		;;
-    esac
-done < <(cat $serversList | shuf)
+					;;
+                	bin*|pack*|kernel*|dist*|repos*|snaps*)
+						echo "${server}"
+						exit
+                	;;
+
+	            esac
+			;;
+    	esac
+	done < <(cat $serversList | shuf)
