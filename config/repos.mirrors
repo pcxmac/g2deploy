@@ -13,7 +13,7 @@ rsync://rsync.nl.gentoo.org/gentoo-portage/
 rsync://rsync.pl.gentoo.org/gentoo-portage/
 rsync://rsync.uk.gentoo.org/gentoo-portage/
 rsync://rsync.jp.gentoo.org/gentoo-portage/
-rsync://rsync.kr.gentoo.org/gentoo-portage/
+#rsync://rsync.kr.gentoo.org/gentoo-portage/
 rsync://rsync.ru.gentoo.org/gentoo-portage/
 rsync://rsync.tw.gentoo.org/gentoo-portage/
 rsync://rsync.au.gentoo.org/gentoo-portage/

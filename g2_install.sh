@@ -140,8 +140,8 @@ function rSync() {
 function getKVER() {
 	
 	# ADDING PROVISION FOR FINDING MOST RECENT KVER, despite what is installed (universal approach)
-
-		
+	
+	
 	
 	local selector="$(eselect kernel list | grep '*' | awk '{print $2}')"
 	if [[ -n "$selector" ]]

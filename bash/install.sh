@@ -1,14 +1,26 @@
 #!/bin/bash
 
-    # INPUTS    BUILD=(ex.)'hardened'  
-    #           WORK=chroot offset
+    # INPUTS    BUILD=(ex.)'hardened'  	- build profile
+    #           WORK=chroot offset		- working directory for install, skip if exists (DEPLOY).
+	#			BOOT=/dev/sdX			- install to boot device, after generating image
+	#			RECV=XXX				- RECV from server remotely, requires the host to be booted through medium, and mounted (ALL F/S) BTRFS+ZFS are block sends
+	#			
+
+	#	future features : 	
+	#		test to see if pool exists, add new zfs datasets if no dataset, other partition types.
+	#		boot medium, 
+	#		
+
+	SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
+	SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 function add_efi_entry() 
 {
 
 	VERSION=$1
-	#PROFILE=$2
 	DATASET=$2
+	offset="${3}/boot/EFI/boot/refind.conf"
+
 	POOL="${DATASET%/*}"
 
 	echo "DATASET = $DATASET ;; POOL = $POOL"
@@ -19,7 +31,6 @@ function add_efi_entry()
 	echo "pool = $POOL"
 	echo "uuid = $UUID"
 
-	local offset="/tmp/boot/boot/EFI/boot/refind.conf"
 	#offset="$(getZFSMountPoint $DATASET)"
 
 	echo "offset for add_efi_entry = $offset"
@@ -32,12 +43,11 @@ function add_efi_entry()
 
 	echo "offset for add_efi_entry = $offset"
 
-	echo '' >> $offset
 	echo "menuentry \"Gentoo Linux $VERSION $DATASET\"" >> $offset
 	echo '{' >> $offset
 	echo '	icon /EFI/boot/icons/os_gentoo.png' >> $offset
-	echo "	loader /linux/$VERSION/vmlinuz" >> $offset
-	echo "	initrd /linux/$VERSION/initramfs" >> $offset
+	echo "	loader /linux/${VERSION#*linux-}/vmlinuz" >> $offset
+	echo "	initrd /linux/${VERSION#*linux-}/initramfs" >> $offset
 	echo "	options \"$UUID dozfs root=ZFS=$DATASET default delayacct rw\"" >> $offset
 	echo '	#disabled' >> $offset
 	echo '}' >> $offset
@@ -47,37 +57,25 @@ function add_efi_entry()
 
 function getKVER() 
 {
-	
-	# ADDING PROVISION FOR FINDING MOST RECENT KVER, despite what is installed (universal approach)
 
-		
-	
-	local selector="$(eselect kernel list | grep '*' | awk '{print $2}')"
-	if [[ -n "$selector" ]]
-	then
-		selector="${selector#linux-*}"
-	else
-		local softlink="$(readlink /usr/src/linux)"
-		if [[ -z "$softlink" ]]
-		then
-			selector="$(uname --kernel-release)"
-		else
-			selector="${softlink#linux-*}"
-		fi
-	fi
+	# coded for ftp accessable directory listing w/ curl and kernel.mirrors
 
-	# filter for r* ? ... not here.
-	echo "${selector}"
+	url_kernel="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
+	kver="$(curl ${url_kernel} | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep '.tar.gz$')"
+	kver=${kver%.tar.gz*}
+	echo ${kver}
+
 }
 
 function getG2Profile() {
-	local current="17.1"
-	#dataset=$1 
-	#mountpoint=getZFSMountPoint $dataset
+
+	# assumes that .../amd64/17.X/... ; X will be preceeded by a decimal
+
 	local mountpoint=$1
 	local result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
-	result="${result#*/$current/}"
+	result="${result#*.[0-9]/}"
 	echo $result
+
 }
 
 function getHostZPool () {
@@ -95,206 +93,163 @@ function getZFSMountPoint (){
 function setup_boot()	
 {
 
-	# INPUTS : $1 = (DATASET)
-	local dSet=$1
-
-	          # by default safe is the boot pool name, should probably option this....
-			# by default all safe partitions are send/recv from g1@safe
-			# boot_profile=getG2Profile ${dataset} 
-	local disk=$2
+			local dSet=$1
+			local disk=$2
+			local offset="$(zfs get mountpoint ${dSet} 2>&1 | sed -n 2p | awk '{print $3}')"
 
 
-			#source="./boot"
-			source="rsync://192.168.122.108/gentoo-patchfiles/boot"
-			safe_src="usb/${dSet#*/}@safe"
-			#key="/srv/crypto.zfs.key"
-			# LOOK FOR ZPOOL PARTITION & VFAT PARTITION, THEN LOOK FOR REFIND/LINUX EXIT OUT OF INSTANTIATION IF PRESENT
+			ksrc="$(./mirror.sh ../config/kernel.mirrors *)"
+			kver="$(getKVER)"
+			kver="${kver#*linux-}"
+
+			echo "designate pool name:"
+			read POOL
+
+			safe_src="$POOL/${dSet#*/}@safe"
+
+			echo $safe_src
 
 			zpool import -a -f
-			#z_exists="$(blkid | grep "${x}" | grep 'zfs_member')"
+			pool_exists="$(zpool list $POOL | sed '1d')" 2>/dev/null
 
+			echo ${pool_exists}
+
+			if [[ -n ${pool_exists} ]]
+			then 
+				echo "pool : ${pool_exists} exists, delete (y/n):"
+				read DELPOOL
+
+				if [[ ${DELPOOL} == "y" ]]
+				then 
+					zpool destroy ${DELPOOL}
+				else
+					echo "exiting due to existing pool conflict"
+					exit
+				fi
+
+			fi
+			
 			vfat_partition="$(blkid | \grep ${disk} | \grep 'vfat')"
-			vrat_partition="${vfat_partition%*:}"
+			vfat_partition="${vfat_partition%*:}"
+
+
 
 			if [[ -z "${vfat_partition}" ]] 
 			then
-				configure_boot_disk ${disk}
-				boot_install ${disk} ${source} ${safe_src}
+
+				lresult="$(ls /dev | grep ${disk##*/} | wc -l)"
+
+				echo "LRESULT = $lresult" 2>&1
+
+				if [[ "$lresult" -eq 1 ]]
+				then 
+					echo "$disk is present, press enter to configure disk";
+					read 
+				elif [[ "$lresult" -gt 1 ]]
+				then 
+					echo "$disk is configured,wipe ? (y/n):"
+					read wipe
+					if [[ ${wipe} == "y" ]]
+					then	
+						clear_fs ${disk}
+						sgdisk --zap-all ${disk}
+						partprobe
+					else
+						exit
+					fi
+				elif [[ "$lresult" -eq 0 ]]; then echo "$disk is NOT configured"; 
+					echo "$disk is missing, exiting..."
+					exit
+				fi
+				
+				sgdisk --new 1:0:+32M -t 1:EF02 ${disk}
+				sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
+				sgdisk --new 3:0 -t 3:8300 ${disk}
+
+				mkfs.vfat ${disk}2
+				options=""
+
+				zpool create ${options} \
+					-O acltype=posixacl \
+					-O compression=lz4 \
+					-O dnodesize=auto \
+					-O normalization=formD \
+					-O relatime=on \
+					-O xattr=sa \
+					-O encryption=aes-256-gcm \
+					-O keyformat=hex \
+					-O keylocation=file:///srv/crypto/zfs.key \
+					-O mountpoint=/srv/zfs/${POOL} ${POOL} \
+					${disk}3
+
+				pdset="${safe_src%@*}"
+				#version="$(getKVER ${offset}))"
+				version="$(getKVER)"
+
+
+				fsType=$(blkid ${disk}2 | awk '{print $4}')
+				fsType=${fsType#=*}
+				fsType="$(echo $fsType | tr -d '"')"
+				fsType=${fsType#TYPE=*}
+				#echo "FSTYPE @ $fsType"
+				echo "fsType = $fsType" 2>&1
+
+
+				if [ "$fsType" = 'vfat' ]
+				then
+					echo "OFFSET ============ ${offset}"
+					mount -v ${disk}2 ${offset}/boot
+					echo "sending $source to ${offset}/boot"
+					source="rsync://192.168.122.108/gentoo-patchfiles/boot/"
+					rsync -r -l -H -p -c --delete-before --info=progress2 $source ${offset}/boot
+	
+					echo "${ksrc}${kver} --output $offset/boot/LINUX/"
+					echo "mv ${offset}/boot/LINUX/${ksrc#*://}${kver} ${offset}/boot/LINUX/"
+					wget -r --no-verbose ${ksrc}${kver} -P $offset/boot/LINUX/
+					mv ${offset}/boot/LINUX/${ksrc#*://}${kver} ${offset}/boot/LINUX/
+					tempdir=${ksrc#*://}
+					echo "${tempdir} ... tempdir"
+					tempdir=${tempdir%/kernels*}					
+					echo "${tempdir} ... tempdir"
+					echo "rm ${offset}/boot/LINUX/${tempdir} -R"
+					rm ${offset}/boot/LINUX/${tempdir} -R
+
+					# MODIFY FILES
+					echo "adding EFI ENTRY to template location $version ;; $pdset"
+					echo "version = $version, dset = $dset  pdset = $pdset" 2>&1
+
+					add_efi_entry ${version} ${pdset} ${offset}
+				
+					echo "syncing write to boot drive..."
+					sync
+
+					umount -v $${offset}/boot
+				fi
+
+				if [ ! "$fsType" = 'vfat' ]
+				then
+					echo "invalid partition"
+				fi
+
+				if [ -z "$fsType" ]
+				then
+					echo "...no parition detected"
+				fi
 			fi
-			#zfs snapshot safe/g1@safe		## DO NOT HAVE TO ACCOMPLISH, CARRIED THROUGH ZFS-SEND
 
-			zpool_partition="$(blkid | \grep ${disk} | \grep 'zfs_member')"
-			zpool_partition="${zpool_partition%*:}"
-			zpool_label="$(blkid | grep "${zpool_partition}" | awk '{print $2}' | tr -d '"')"
-			zpool_label="$(echo ${zpool_label#=*} | uniq)"
-
-			#echo "zpool_partition == ${zpool_partition} :::::::::::::"
-			#echo "zpool_label == ${zpool_label} :::::::::::::::::"
+			#zpool_partition="$(blkid | \grep ${disk} | \grep 'zfs_member')"
+			#zpool_partition="${zpool_partition%*:}"
+			#zpool_label="$(blkid | grep "${zpool_partition}" | awk '{print $2}' | tr -d '"')"
+			#zpool_label="$(echo ${zpool_label#=*} | uniq)"
 
 			echo "sending over ${dSet}@safe to ${safe_src%@*}" 
 			echo "------------------------------------------------------"
 			
 			zfs send ${dSet}@safe | pv | zfs recv ${safe_src%@*}
-			#zfs change-key -o keyformat=hex -o keylocation=file://$key ${safe_src%@*}
 
 			echo "///////////////////////////////////////////////////////"
-
-			# ADD DEFAULT BOOT ENTRY
  
  }
-
-
-
-# boot_install $DISK $SRC_DIR $PROFILE $TARGET(pool/dataset)
-function boot_install() {
-
-	#boot=/dev/EFI_partition
-	# this will copy the EFI partition contents over from $DEPLOY/boot, it will alter the refind.conf by searching for the
-	# pool/dataset, it will adjust the /etc/autofs, after the stage3 is employed & packages installed. kernel
-	# version is updated as well. Aswell the title. Perhaps even ADD a profile to refind.conf
-	# verify valid partition and file system exists. (check vfat + verify refind
-
-	#echo "args = $@"
-
-	disk=$1				# partition to install/regulate
-	#sigFile=./boot.sig	# sorted IO
-	source=$2
-	# can include snapshots ... which will be sourced from
-
-
-	target=$3	#pool/dataset	???????????????????????????	 I DONT THINK I NEED THIS VARIABLE
-	
-	echo "disk = $disk" 2>&1
-	echo "source = $source" 2>&1
-	echo "target = $target" 2>&1
-	
-	# filter for snapshots
-	pdset="${target%@*}"
-	#echo "PDSET = $pdset"
-	version="$(getKVER)"
-	
-	#offset="$(getZFSMountPoint $pdset)"
-	offset="/tmp"
-
-
-	echo "pdset = $pdset" 2>&1
-	echo "version = $version" 2>&1
-	echo "offset = $offset" 2>&1
-	
-	#echo "KVER = $version ;; OFFSET = $offset"
-	tmpMount="$offset/boot"
-
-	if [ ! -d $tmpMount ]
-	then
-		mkdir -p $tmpMount
-	fi
-
-	fsType=$(blkid ${disk}2 | awk '{print $4}')
-	fsType=${fsType#=*}
-	fsType="$(echo $fsType | tr -d '"')"
-	fsType=${fsType#TYPE=*}
-	#echo "FSTYPE @ $fsType"
-
-	echo "fsType = $fsType" 2>&1
-
-
-	if [ "$fsType" = 'vfat' ]
-	then
-		mount -v ${disk}2 $tmpMount
-		#echo "mounting ${disk}2 to $tmpMount"
-		# could have used rsync with hash check anyways ...
-		#echo "checking for file consistency [ $source $tmpMount]"
-		echo "sending $source to $tmpMount"
-		rsync -r -l -H -p -c --delete-before --info=progress2 $source $tmpMount
-		
-		# MODIFY FILES
-		echo "adding EFI ENTRY to template location $version ;; $pdset"
-		echo "version = $version, dset = $dset  pdset = $pdset" 2>&1
-
-		add_efi_entry ${version} ${pdset}
-		
-	fi
-
-	if [ ! "$fsType" = 'vfat' ]
-	then
-		echo "invalid partition"
-	fi
-
-	if [ -z "$fsType" ]
-	then
-		echo "...no parition detected"
-	fi
-	echo "syncing write to boot drive..."
-	sync
-	
-	umount -v $tmpMount
-}
-
-
-function configure_boot_disk() 
-{
-
-	disk=$1 #(strip from boot=)
-
-	# prepare_disk /dev/disk 
-	# create partition map
-	# echo "ignore sr0..."
-
-	lresult="$(ls /dev | grep ${disk##*/} | wc -l)"
-
-	echo $lresult 2>&1
-
-	# if 1, disk is not configured
-	if [[ "$lresult" -eq 1 ]]; then 
-		echo "$disk is present, press enter to configure disk";
-		read 
-	# if >1, disk is configured ?
-	elif [[ "$lresult" -gt 1 ]]; then 
-		echo "$disk is configured, exiting...";
-		# sgdisk --zap-all $disk
-		# partprobe
-		exit
-	# if 0 disk is not present
-	elif [[ "$lresult" -eq 0 ]]; then echo "$disk is NOT configured"; 
-		echo "$disk is missing, exiting..."
-		exit
-	fi
-	
-	
-	sgdisk --new 1:0:+32M -t 1:EF02 ${disk}
-	sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
-	#sgdisk --new 3:0:+16G -t 3:8200 $disk
-	#mkswap $disk3
-	sgdisk --new 3:0 -t 3:8300 ${disk}
-
-	# install boot contents
-	mkfs.vfat ${disk}2
-	#boot_install ${disk}2	
-	options=""
-	#echo "disk = ${disk}3"
-
-	local newSet="usb"
-
-	# install safe image
-	zpool create ${options} \
-		-O acltype=posixacl \
-		-O compression=lz4 \
-		-O dnodesize=auto \
-		-O normalization=formD \
-		-O relatime=on \
-		-O xattr=sa \
-		-O encryption=aes-256-gcm \
-		-O keyformat=hex \
-		-O keylocation=file:///srv/crypto/zfs.key \
-		-O mountpoint=/srv/zfs/${newSet} ${newSet} \
-		${disk}3
-
-	# create boot entry for safe image
-}
-
-
-    #KVER = what ever genkernel reports
-    #KEY - 
 
 function decompress() {
 
@@ -353,10 +308,8 @@ function rSync() {
 	rsync -c -a -r -l -H -p --delete-before --info=progress2 $src $dst
 }
 
-
-    
-
-function zfs_keys() {
+function zfs_keys() 
+{
 	# ALL POOLS ON SYSTEM, FOR GENKERNEL
 	# pools="$(zpool list | awk '{print $1}') | sed '1 d')"
 	
@@ -372,7 +325,7 @@ function zfs_keys() {
 	do
 		# query datasets
 		listing="$(zfs list | grep "$i/" | awk '{print $1}')"
-		echo "$listing"
+		#echo "$listing"
 
 		for j in $listing
 		do
@@ -404,18 +357,17 @@ function zfs_keys() {
 					if test -f "$source"; then
 						#echo "copying $source to $destination"
 						cp $source $destination
-					else
-						echo "key not found for $j"
+					#else
+						#echo "key not found for $j"
 					fi
-					echo "coppied $source to $destination for $j"
-				else
-					echo "nothing to do for $j ..."
+					#echo "coppied $source to $destination for $j"
+				#else
+					#echo "nothing to do for $j ..."
 				fi
 			fi
 		done
 	done
 }
-
 
 function users()
 {
@@ -439,9 +391,10 @@ function clear_mounts()
 {
 	local offset=$1
 
-	procs="$(lsof ${offset} | sed '1d' | awk '{print $2}' | uniq)" 
-	echo "killing $(echo $procs | wc -l) process(s)"  2>&1
-	for process in ${procs}; do kill -9 ${process}; done
+	#procs="$(lsof ${mountpoint} | sed '1d' | awk '{print $2}' | uniq)" 
+	#echo "killing $(echo $procs | wc -l) process(s)"  2>&1
+	#for process in ${procs}; do kill -9 ${process}; done
+	#echo "umount $mountpoint"
 
     dir="$(echo "$offset" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
 	output="$(cat /proc/mounts | grep "$dir\/" | wc -l)"
@@ -451,8 +404,11 @@ function clear_mounts()
 		#cycle=0
 		while read -r mountpoint
 		do
+
 			#echo "umount $mountpoint"
+			#read
 			umount $mountpoint > /dev/null 2>&1
+		
 		done < <(cat /proc/mounts | grep "$dir\/" | awk '{print $2}')
 		#echo "cycles = $cycle"
 		output="$(cat /proc/mounts | grep "$dir\/" | wc -l)"
@@ -542,7 +498,7 @@ function buildup()
 
 function system()
 {
-	emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"
+	emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y"
 	#emergeOpts="--buildpkg=n --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"
 
 	echo "BASIC TOOLS EMERGE !!!!!"
@@ -569,48 +525,60 @@ function services()
 function install_kernel()
 {
 	local offset=$1
+	kver="$(getKVER)"
+	kver="${kver#*linux-}"
+	#kver="${kver%-gentoo*}"
+	ksrc="$(./mirror.sh ../config/kernel.mirrors *)"
 
-	rsync -ahP --info=progress2 $(./mirror.sh ../config/kernel.mirrors *)/current/ $offset
-	archive="$(ls ${offset} | grep '^linux.*.gz$')"
-	ksrc=${archive%*.tar.gz}
-	pkgV=${archive#linux-*} 
-	pkgV=${pkgV%*-gentoo*}
+	emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y "
+	chroot ${offset} /usr/bin/emerge $emergeOpts --getbinpkg=y =gentoo-sources-${kver%-gentoo*}
 
-	emergeOpts="--binpkg-respect-use=y --verbose --tree --backtrack=99 --ask=n"
-	chroot ${offset} /usr/bin/emerge $emergeOpts --getbinpkg=y =gentoo-sources-${pkgV}
+	#bsrc="${kver}-gentoo"
+
+	echo "${ksrc}linux-${kver}.tar.gz --output $offset/linux-${kver}.tar.gz"
+	curl -L ${ksrc}linux-${kver}.tar.gz --output $offset/linux-${kver}.tar.gz
+
+	echo "${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz"
+	curl -L ${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz
 
 	echo "decompressing kernel... $offset/$archive <<<<<<<<<<"
-	pv ${offset}/${archive} | tar xzf - -C ${offset}
-	rm ${offset}/${archive}
+	pv ${offset}/linux-${kver}.tar.gz | tar xzf - -C ${offset}
+	rm ${offset}/linux-${kver}.tar.gz
 
-	echo "decompressing modules...  $offset/${ksrc#*-}/modules.tar.gz"
-	pv $offset/${ksrc#*-}/modules.tar.gz | tar xzf - -C ${offset}
-	
-	rsync -ahP --info=progress2 ${offset}/${ksrc#*-}/ ${offset}/boot/
-	rm ${offset}/${ksrc#*-} -R
+	echo "decompressing modules...  $offset/modules.tar.gz"
+	pv $offset/modules.tar.gz | tar xzf - -C ${offset}
+	rm ${offset}/modules.tar.gz
 
-	echo "selecting kernel... ${ksrc}"
-	chroot ${offset} /usr/bin/eselect kernel set ${ksrc}
+	echo "selecting kernel... linux-${kver}"
+	chroot ${offset} /usr/bin/eselect kernel set linux-${kver}
+
+	#sleep 30
 }
 
 function install_modules()
 {
-		emergeOpts="--binpkg-respect-use=y --verbose --tree --backtrack=99"
-		emerge $emergeOpts --buildpkg=y --getbinpkg=y --onlydeps =zfs-kmod-9999 
-		emerge $emergeOpts --buildpkg=n --getbinpkg=n =zfs-kmod-9999 
-		emerge $emergeOpts --buildpkg=y --getbinpkg=y --onlydeps =zfs-9999
-		emerge $emergeOpts --buildpkg=n --getbinpkg=n =zfs-9999
-		emerge $emergeOpts --buildpkg=n --getbinpkg=n app-emulation/virtualbox-modules
+	emergeOpts=""
+	#emergeOpts="--binpkg-respect-use=y --verbose --tree --backtrack=99"
+	#emerge $emergeOpts --buildpkg=y --getbinpkg=y --binpkg-respect-use=y --onlydeps =zfs-kmod-9999 
+	emerge $emergeOpts zfs-kmod
+	#emerge $emergeOpts --onlydeps --buildpkg=y --getbinpkg=y --binpkg-respect-use=y =zfs-9999
+	emerge $emergeOpts zfs
+	#emerge $emergeOpts app-emulation/virtualbox-modules
 }
 
 
 function patches()
 {
     local offset=$1
+	local profile=$2
 	local lineNum=0
 
     echo "patching system files..."
-    rsync -avP /var/lib/portage/patchfiles/ ${offset}
+    rsync -a --info=progress2 /var/lib/portage/patchfiles/ ${offset}
+
+	#
+	#	build profile musl throws this in to the trash, lots of HTML/XML are injected
+	#
 
 	echo "patching make.conf..."
 	while read line; do
@@ -639,7 +607,7 @@ function patches()
 			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf	
 		fi
 	# 																	    remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
-	done < <(curl $(echo "$(./mirror.sh ../config/package.mirrors *)/${profile}.conf" | sed 's/ //g' | sed "s/\"/'/g"))
+	done < <(curl $(echo "$(./mirror.sh ../config/package.mirrors *)/${_profile}.conf" | sed 's/ //g' | sed "s/\"/'/g"))
 }
 
 function locales()
@@ -672,17 +640,20 @@ function pkgProcessor()
     local profile=$1
 	local offset=$2
 
+	echo $profile 2>&1
+	echo $offset 2>&1
+
 	url="$(echo "$(./mirror.sh ../config/package.mirrors *)/common.pkgs" | sed 's/ //g')"
 	commonPkgs="$(curl $url)"
-	#echo ":::: $url"
+	echo ":::: $url"
 	url="$(echo "$(./mirror.sh ../config/package.mirrors *)/${profile}.pkgs" | sed 's/ //g')"
 	profilePkgs="$(curl $url)"
-	#echo ":::: $url"
+	echo ":::: $url"
 
 	local allPkgs="$(echo -e "${commonPkgs}\n${profilePkgs}" | uniq | sort)"
 
-	echo "$commonPkgs" 2>&1
-	echo "$profilePkgs" 2>&1
+	#echo "***$commonPkgs***" 2>&1
+	#echo "***$profilePkgs***" 2>&1
 
 	local iBase="$(chroot ${offset} /usr/bin/qlist -I)"
 	iBase="$(echo "${iBase}" | uniq | sort)"
@@ -690,6 +661,8 @@ function pkgProcessor()
 	local diffPkgs="$(comm -1 -3 <(echo "${iBase}") <(echo "${allPkgs}"))"
 
 	echo "${diffPkgs}" > ${offset}/package.list
+
+	#sleep 60
 }
 
 
@@ -714,7 +687,7 @@ selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened 
             work=*)
                 #? zfs= btrfs= generic= tmpfs=
             	directory="$(zfs get mountpoint ${x#*=} 2>&1 | sed -n 2p | awk '{print $3}')"
-                dataset="${x#*=}"             
+                dataset="${x#*=}"
             ;;
         esac
     done
@@ -726,50 +699,49 @@ selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened 
             build=*)
                 echo "build..."
                 # DESIGNATE BUILD PROFILE
-                profile="invalid profile"
+                _profile="invalid profile"
 
                 selection="${x#*=}"
 
-
                 case "${x#*=}" in
                     # special cases for strings ending in selinux, and systemd as they can be part of a combination
-                    'musl')
-                        # space at end limits selinux
-                        profile="17.0/musl/hardened "
-                    ;;
+                    #'musl')
+                        # space at end limits selinux	...		NOT SUPPORTED
+                    #    _profile="17.0/musl/hardened "
+                    #;;
                     'hardened')
                         # space at end limits selinux
-                        profile="17.1/hardened "
+                        _profile="17.1/hardened "
                     ;;
                     'openrc')
                         # space at end limits selinux
-                        profile="17.1/openrc"
+                        _profile="17.1/openrc"
                     ;;
                     'systemd')
-                        profile="17.1/systemd "
+                        _profile="17.1/systemd "
                     ;;
                     'plasma')
-                        profile="17.1/desktop/plasma "
+                        _profile="17.1/desktop/plasma "
                     ;;
                     'gnome')
-                        profile="17.1/desktop/gnome "
+                        _profile="17.1/desktop/gnome "
                     ;;
                     'selinux')
-                        profile="17.1/selinux "
+                        _profile="17.1/selinux "
                         echo "${x#*=} is not supported [selinux]"
                     ;;
                     'plasma/systemd')
-                        profile="17.1/desktop/plasma/systemd "
+                        _profile="17.1/desktop/plasma/systemd "
                     ;;
                     'gnome/systemd')
-                        profile="17.1/desktop/gnome/systemd "
+                        _profile="17.1/desktop/gnome/systemd "
                     ;;
                     'hardened/selinux')
-                        profile="17.1/hardened/selinux "
+                        _profile="17.1/hardened/selinux "
                         echo "${x#*=} is not supported [selinux]"
                     ;;
                     *)
-                        profile="invalid profile"
+                        _profile="invalid profile"
                     ;;
                 esac
             ;;
@@ -781,37 +753,52 @@ selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened 
         case "${x}" in
             deploy)
 
+				#sleep 10
+
+				#
+				#
+				# CHECK FOR ONLINE SERVICES BEFORE EXECUTING, REPORT SERVERS NOT ONLINE.
+				#
+				#
+
 				### NEED F/S CONTEXT SENSITIVE
+
+				echo $(getKVER)
 
 				clear_mounts ${directory}
 
-				buildup ${profile} ${directory} ${dataset}
+				buildup ${_profile} ${directory} ${dataset}
 				zfs_keys ${dataset}
 				# certificates ?	
 				##############################
-				patches ${directory}
-				pkgProcessor ${profile} ${directory}
-				chroot ${directory} /bin/bash -c "locales ${profile}"
+
+				pkgProcessor ${_profile} ${directory}
+				patches ${directory} ${_profile}
+				chroot ${directory} /bin/bash -c "locales ${_profile}"
+
+				# when building the kernel and boot files, make sure to tar from '/' as they are dumped in the root for extraction.ls
+				# zfs-kmod-9999 is currently 'masked' as it will not allow cross-env builds,  only singleton kernel builds it seems, reverting to latest stable
 				install_kernel ${directory}
 
-
-				chroot ${directory} /bin/bash -c "install_modules"
-				#	ZFS, VBOX, ... (wireguard and bpf should be in place)
 				#
 				#
 				chroot ${directory} /bin/bash -c "system"
-				chroot ${directory} /bin/bash -c "users ${profile}"
 
-				services_URL="$(echo "$(./mirror.sh ../config/package.mirrors * )/${profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
+				chroot ${directory} /bin/bash -c "install_modules"
+				#	ZFS, VBOX, ... (wireguard and bpf should be in place)
+
+				chroot ${directory} /bin/bash -c "users ${_profile}"
+
+				services_URL="$(echo "$(./mirror.sh ../config/package.mirrors * )/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
 				#echo "$services_URL"
 				
 				#sleep 30
 				chroot ${directory} /bin/bash -c "services ${services_URL}"
 				zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key ${dataset}
 
-				zfs snapshot ${dataset}@safe
-
 				clear_mounts ${directory}
+				ls ${offset}
+				zfs snapshot ${dataset}@safe
 
 			# potential cleanup items
 			#
@@ -825,17 +812,34 @@ selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened 
         esac
     done
 
-for x in $@
-do
-    case "${x}" in
-        boot=*)
-			if [[ -n "${dataset}" ]]
-			then
-				setup_boot ${dataset}	${x#*=}
+#
+#	NEED TO ADD this software to the deployment image, or a link to it through a shared f/s
+#	NEED TO ADD AUTOFS COMMON MOUNTS.	/etc/autofs/common.conf
+#
+#
+#
+#
+#
 
-			else
-				echo "work is undefined"
-			fi
-        ;;
-    esac
-done
+	for x in $@
+	do
+		case "${x}" in
+			boot=*)
+				if [[ -n "${dataset}" ]]
+				then
+
+
+
+					#echo "BOOT THIS MOTHER FUCKA !"
+					setup_boot ${dataset}	${x#*=}
+
+					# REBUILD INITRAMFS, for the ON DISK DATASET ONLY
+					# AFTER UPDATE SCRIPT, 
+
+
+				else
+					echo "work is undefined"
+				fi
+			;;
+		esac
+	done

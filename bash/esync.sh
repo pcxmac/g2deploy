@@ -22,8 +22,8 @@ URL="rsync://rsync.us.gentoo.org/gentoo-portage/"
 echo "############################### [ REPOS ] ###################################"
 #URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/repos.mirrors * )"
 echo -e "SYNCING w/ ***$URL*** [REPOS]"
-rsync -avPI --info=progress2 --no-perms --ignore-existing --no-owner --no-group ${URL} /var/lib/portage/repos/gentoo
-
+#rsync -avPI --info=progress2 --no-perms --ignore-existing --no-owner --no-group ${URL} /var/lib/portage/repos/gentoo
+emerge --sync
 
 echo "############################### [ SNAPSHOTS ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/snapshots.mirrors * )"
@@ -58,7 +58,7 @@ hostip="$(/bin/ip --brief address show dev $hostip | /usr/bin/awk '{print $3}')"
 
 #/bin/echo "sleeping till ... $(date --date='+2 minutes')"
 echo "sleeping..."
-/usr/bin/sleep 10
+#/usr/bin/sleep 10
 /bin/sync
 
 /sbin/rc-service rsyncd start

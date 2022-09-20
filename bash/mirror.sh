@@ -15,7 +15,7 @@
 	serversList="invalid"
 
 	case ${profile} in
-		musl*)			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}-hardened"		;;
+		musl*)			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}-hardened/"		;;
 		selinux)		release_base_string="releases/amd64/autobuilds/current-stage3-amd64-hardened-${profile}-openrc/";;
 		hardened|clang)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}-openrc/"			;;
 		gnome|plasma)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"			;;
@@ -46,6 +46,8 @@
 							# redefine urlBase for correct URL format, file:/// relative file reference is invalid
 							urlBase="${server}${locationStr}"
 							if [[ -n $urlCurrent_xz ]];	then
+								#echo "$urlBase"
+								#echo "$urlCurrent_xz"								
 								echo "${urlBase}${urlCurrent_xz}"
 								echo "${urlBase}${urlCurrent_asc}"
 								exit
