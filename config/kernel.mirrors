@@ -1,4 +1,4 @@
-#rsync://192.168.122.108/gentoo-kernels
+#rsync://10.1.0.1/gentoo-kernels
 #file:///var/lib/portage/kernels
-#http://192.168.122.108/gentoo/kernels/current/
-ftp://192.168.122.108/kernels/current/
+#http://10.1.0.1/gentoo/kernels/current/
+ftp://10.1.0.1/kernels/current/

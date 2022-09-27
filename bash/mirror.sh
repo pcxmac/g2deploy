@@ -25,8 +25,8 @@
 	esac
 
 	case "${type##*/}" in
-		bin*|pack*|kernel*|release*|snaps*|dist*|repos*)		serversList="$type"				;;
-		*)														echo "invalid input";exit		;;
+		bin*|pack*|kernel*|release*|snaps*|dist*|repos*|patch*)		serversList="$type"				;;
+		*)															echo "invalid input";exit		;;
 	esac
 
 	#FILE:///
@@ -60,7 +60,7 @@
 							esac
 						fi
 					;;
-					bin*|pack*|kernel*|dist*|repos*|snaps*)
+					bin*|pack*|kernel*|dist*|repos*|snaps*|patch*)
 						if [[ -d ${server#*://} ]];	then			echo ${server};		exit;	fi
 					;;
 				esac
@@ -77,7 +77,7 @@
             		release*)
 						if [[ -z $release_base_string ]];	then	echo "${server}";	exit;	fi
 					;;
-					bin*|pack*|kernel*|dist*|repos*|snaps*)
+					bin*|pack*|kernel*|dist*|repos*|snaps*|patch*)
 						echo "${server}"
 						exit
                 	;;
@@ -102,7 +102,7 @@
 							fi
 						fi
 					;;
-                	bin*|pack*|kernel*|dist*|repos*|snaps*)
+                	bin*|pack*|kernel*|dist*|repos*|snaps*|patch*)
 						echo "${server}"
 						exit
                 	;;

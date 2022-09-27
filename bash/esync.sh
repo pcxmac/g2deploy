@@ -23,12 +23,12 @@ echo "############################### [ REPOS ] ################################
 #URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/repos.mirrors * )"
 echo -e "SYNCING w/ ***$URL*** [REPOS]"
 #rsync -avPI --info=progress2 --no-perms --ignore-existing --no-owner --no-group ${URL} /var/lib/portage/repos/gentoo
-emerge --sync
+emerge --sync | tee /var/log/esync.log
 
 echo "############################### [ SNAPSHOTS ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/snapshots.mirrors * )"
 echo -e "SYNCING w/ $URL \e[25,42m[SNAPSHOTS]\e[0m";sleep 1
-rsync -avPI --info=progress2 --ignore-existing --no-perms --no-owner --no-group ${URL} /var/lib/portage/
+rsync -avPI --info=progress2 --timeout=300 --ignore-existing --no-perms --no-owner --no-group ${URL} /var/lib/portage/ | tee /var/log/esync.log
 
 
 echo "############################### [ RELEASES ] ###################################"
@@ -36,13 +36,13 @@ URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors * )"
 echo -e "SYNCING w/ $URL \e[25,42m[RELEASES]\e[0m";sleep 1
 
 # destination URL is extended due to 'amd64' being the only requested arch for releases, perhaps select for, in this script later ie x32, amd64, arm,...
-rsync -avPI --info=progress2 --ignore-existing --no-perms --no-owner --no-group ${URL} /var/lib/portage/releases
+rsync -avPI --info=progress2 --timeout=300 --ignore-existing --no-perms --no-owner --no-group ${URL} /var/lib/portage/releases | tee /var/log/esync.log
 
 
 echo "############################### [ DISTFILES ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/distfiles.mirrors * )"
 echo -e "SYNCING w/ $URL \e[25,42m[DISTFILES]\e[0m";sleep 1
-rsync -avPI --info=progress2 --ignore-existing --no-perms --no-owner --no-group ${URL} /var/lib/portage/
+rsync -avPI --info=progress2 --timeout=300 --ignore-existing --no-perms --no-owner --no-group ${URL} /var/lib/portage/ | tee /var/log/esync.log
 
 echo "updating mlocate-db"
 /usr/bin/updatedb
