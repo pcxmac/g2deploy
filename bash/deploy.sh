@@ -366,9 +366,11 @@ function install_modules()
 	emergeOpts=""
 	#emergeOpts="--binpkg-respect-use=y --verbose --tree --backtrack=99"
 	#emerge $emergeOpts --buildpkg=y --getbinpkg=y --binpkg-respect-use=y --onlydeps =zfs-kmod-9999 
-	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts zfs-kmod
+	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts =zfs-kmod-9999
+#	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts zfs-kmod
 	#emerge $emergeOpts --onlydeps --buildpkg=y --getbinpkg=y --binpkg-respect-use=y =zfs-9999
-	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts zfs
+	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts =zfs-9999
+#	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts zfs
 	#emerge $emergeOpts app-emulation/virtualbox-modules
 }
 

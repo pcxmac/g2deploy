@@ -101,19 +101,30 @@ function mget()
 	local destination=$2	# destination_FS
 
 	case ${url%://*} in
-		rsync)
+		# local rsync only
+		rsync)	
 			rsync -av ${url} ${destination} 
 		;;
+		# local websync only
 		http|ftp)
-			wget -r --no-verbose --no-parent ${url} -P ${destination}	--show-progress
+			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination}	--show-progress
 			mv ${destination}/${url#*://}* ${destination}/
 			url=${url#*://}
 			url=${url%%/*}
 			echo "${url}" 2>&1
 			rm ${destination}/${url} -R 
 		;;
+		# local download only
+		ssh)
+			host=${url#*://}
+			source=${host#*:/}
+			host=${host%:/*}
+			echo "${host}:/${source} ${destination}" 2>&1
+			scp -r ${host}:/${source} ${destination}
+		;;
+		# local file move only
 		file|*)
-			echo "WTF ${url#*://}" 2>&1
+			#echo "WTF ${url#*://}" 2>&1
 			if [[ ! -d "${url#*://}" ]] && [[ ! -f "${url#*://}" ]]; then exit; fi
 			if [[ ! -d "${destination}" ]]; then mkdir -p "${destination}"; fi
 			rsync -a ${url#*://}	${destination} --info=progress2 
@@ -121,37 +132,326 @@ function mget()
 	esac
 }
 
+#					$1=SRC_URL		$2=DST_URL
+function copy_user()
+{
+
+			source_url=$1				# can be local or remote pool
+			stype=${source_url%://*}	# example : zfs://root@localhost.com:/pool/dataset ; btrfs:///Label/subvolume ; ssh://root@localhost:/path/to/set
+			shost=${source_url#*://}	
+
+			# source parameterization
+			case ${stype} in
+				#	use zfs send if no connection string (local)
+				zfs)
+					source=${shost#*:/}
+					spool=${source%/*}
+					sdataset=${source##*/}
+					sdataset=${sdataset%@*}
+					ssnapshot="$(echo ${source} | grep '@')"
+					ssnapshot=${ssnapshot#*@}
+					shost=${shost%:*}
+					shost="$(echo $shost | grep -v '/' | grep "[[:alnum:]]\+@[[:alnum:]]\+")"
+					if [[ -n ${shost} ]]
+					then
+						spath="$(ssh ${shost} "zfs get mountpoint ${source}")"
+						spath="$(echo "${spath}" | grep 'mountpoint' | awk '{print $3}')"
+					else
+						spath="$(zfs get mountpoint ${source})"
+						spath="$(echo "${spath}" | grep 'mountpoint' | awk '{print $3}')"
+					fi
+				;;
+				#	use btrfs send if ... no connection string
+				btrfs)
+					source=${shost#*:/}
+					spool=${source%/*}			#LABEL
+					sdataset=${source##*/}		#SUBVOLUME
+					sdataset=${sdataset%@*}
+					shost=${shost%:*}
+					shost="$(echo $shost | grep -v '/' | grep "[[:alnum:]]\+@[[:alnum:]]\+")"
+					if [[ -n ${shost} ]]
+					then
+						spath="$(ssh ${shost} "mount | grep 'btrfs'")"
+						spath="$(echo "${spath}" | grep -i ${sdataset} | awk '{print $3}')"
+						sresult="$(ssh ${shost} "btrfs filesystem show ${spath} | grep 'uuid'")"
+					else
+						spath="$(mount | grep 'btrfs')"
+						spath="$(echo "${spath}" | grep -i ${sdataset} | awk '{print $3}')"
+						sresult="$(btrfs filesystem show ${spath} | grep 'uuid')"
+					fi
+				;;
+				#	use tar + compression & pv to move files between hosts
+				ssh)
+					source=${shost#*:}
+					spool=${source}
+					shost=${shost%:*}
+					shost="$(echo $shost | grep -v '/' | grep "[[:alnum:]]\+@[[:alnum:]]\+")"
+						spath="$(ssh ${shost} test ! -d ${source} || echo ${source})"
+				;;
+				#	use tar & pv to move files between paths
+				ext4|xfs|ntfs)
+					source=${shost#*:}
+					spool=${source}
+					shost=""
+					spath=${source}
+				;;
+			esac
+
+			#				
+			# zfs - 		zfs send ${dSet}@safe | pv --timer --rate | zfs recv ${safe_src%@*}
+			#				ssh user@host zfs send pool/dataset | pv --timer --rate | zfs recv -F pool/dataset
+			#				
+			#				create the destination btrfs subvolume
+			# btrfs - 		btrfs send /subvol/path | pv --timer --rate | btrfs recv /new/subvol/path
+			#				ssh user@host btrfs send /subvol/path | pv --timer --rate | btrfs recv /new/subvol/path
+
+			# ssh -			ssh user@host 'tar czf - ${path}' | pv --timer --rate | tar xvzf - -C ${new_path}
+
+			# * - 			tar czf - ${path} | pv --timer --rate | tar xvzf - -C ${new_path}
+
+			#				block transfers (send/recv) only occur when both strings are the same types { zfs or btrfs }
+
+
+			destination_url=$2				# DESTINATION
+			dtype=${destination_url%://*}	# example :	zfs:///dev/sda:/pool/dataset ; ntfs:///dev/sdX:/mnt/sdX ; config:///path/to/config
+			dhost=${destination_url#*://}	
+
+			# destination parameterization	:: TYPE://pool/dataset@snapshot
+			case ${dtype} in
+				config)
+					echo "config ..."
+				;;
+				zfs)
+					destination=${dhost#*:/}
+					dpool=${destination%/*}
+					ddataset=${destination##*/}
+					ddataset=${ddataset%@*}
+					dhost=""
+						dpath="$(zfs get mountpoint ${destination})"
+						dpath="$(echo "${dpath}" | grep 'mountpoint' | awk '{print $3}')"
+				;;
+				btrfs)
+					destination=${dhost#*:/}
+					dpool=${destination%/*}
+					ddataset=${destination##*/}
+					ddataset=${ddataset%@*}
+					dhost=""
+						dpath="$(mount | grep 'btrfs')"
+						dpath="$(echo "${dpath}" | grep -i ${ddataset} | awk '{print $3}')"
+						dresult="btrfs filesystem show ${dpath} | grep 'uuid')"
+				;;
+				ext4|xfs|ntfs)
+					destination=${dhost#*:}
+					dpool=${destination}
+					ddataset=""
+					dhost=""
+					dpath=${destination}
+				;;
+			esac
+
+			echo "SOURCE | type = ${stype} ; connect to $shost ; pool/dataset/snapshot = [$spool][$sdataset][$ssnapshot] :: source = ${source} | ${spath} | ${sresult}"
+			echo "DESTINATION | type = ${dtype} ; connect to $dhost ; pool/dataset/snapshot = [$dpool][$ddataset][] :: destination = ${destination} | ${dpath}"
+
+
+			# VERIFY SNAPSHOT - ZFS, VERIFY NO NEW RECV DATASET
+			#
+			#
+			#
+			#
+			#
+			
+
+			# block send, local to local or remote to local
+			if [[ ${dtype} == ${stype} ]] 
+			then
+				case ${stype} in
+					zfs)
+						if [[ -n ${shost} ]] then	ssh ${shost} zfs send ${source} | pv --timer --rate | zfs recv -F ${destination}
+						else 						zfs send ${source} | pv --timer --rate | zfs recv ${destination}
+						fi
+					;;
+					btrfs)
+						if [[ -n ${shost} ]] then	ssh ${shost} btrfs send ${source} | pv --timer --rate | btrfs recv ${destination}
+						else						btrfs send ${source} | pv --timer --rate | btrfs recv ${destination}
+						fi
+					;;
+				esac
+
+			# compression send
+			else 
+			# remote source to local destination
+				case ${shost} in
+				# local source to local destination
+					'')
+						tar czf - ${spath} | pv --timer --rate | tar xvzf - -C ${dpath}
+					;;
+					*)
+						ssh ${shost} 'tar czf - ${spath}' | pv --timer --rate | tar xvzf - -C ${dpath}
+					;;
+				esac
+			fi
+
+}
 
 function setup_boot()	
 {
+			local src_url=$1
+			local dst_url=$2
 
-			#	$1 = dataset or source
-			#	$2 = destination or disk
+			#copy_user ${src_url} ${dst_url}
 
-			#local dSet=$1			# SOURCE			
-			#	pool/dataset (btrfs/zfs)
-			#	path/.		 (ext4,xfs,*)
-			#	
+			ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
+			kver="$(getKVER)"
+			kver="${kver#*linux-}"
 
-			# 	Get F/S type from reference ... which should exist
-			# 	paths begin with ftp:// http:// rsync:// or file:/// or /
-			#	pools/dsets are POOL/SET
+			parts="$(ls -d /dev/* | grep "${disk}")"
+			options=""
+
+			echo "designate pool name/path:"
+			read POOL
+			#tobe="$POOL/${dataset}"
+			#offset="$(zfs get mountpoint ${POOL}/${dataset} 2>&1 | sed -n 2p | awk '{print $3}')"
+			echo "5 second delay"
+
+			#	[TYPE] :// [CONNECTION @ STRING] :/ [SOURCE]
+			# SWITCH CASE FOR DESTINATION TYPE ZFS:,BTRFS:,... example: zfs://dev/sda:/pool/dataset
+			#															type ://	connection	:/ pool/dataset
+			#	connection types for install are local only and ext4,xfs,btrfs,zfs,...
+			#					pool  :  dataset  : snapshot
+			#	zfs string		[POOL]/[DATASET]@[SNAPSHOT]
+			#					pool  :  dataset  
+			#	btrfs string	[LABEL]/[SUBVOLUME]
+			#				    pool
+			#	ext4 string		[FILE/SYSTEM]
+			#	connection url = /dev/sdX || config.file (commands list)
+
+
+			# FORMAT DISK(S)
+
+			clear_mounts ${disk}
+#			sgdisk --zap-all ${disk}
+			partprobe
+
+
+			echo "sgdisk --new 1:0:+32M -t 1:EF02 ${disk}" 
+#			sgdisk --new 1:0:+32M -t 1:EF02 ${disk}
+			echo ""
+#			sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
+			echo "sgdisk --new 2:0:+8G -t 2:EF00 ${disk}"
+#			sgdisk --new 3:0 -t 3:8300 ${disk}
+			echo "sgdisk --new 3:0 -t 3:8300 ${disk}"
+			mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
+
+
+			echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+			echo "disks =***${parts}***"
+			echo "############################"
+			echo "$(echo "${parts}" | grep '.2')"
+			echo "$(echo "${parts}" | grep '.3')"
+
+			# FORMAT USER SPACE
+
+			echo "designate pool/dataset = ${POOL}/${dataset}} :: ${offset}"
+			pdset="${safe_src%@*}"
+			#version="$(getKVER ${offset}))"
+			version="$(getKVER)"
+
+			# redefine offset if new pool created
+			offset="$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')"
+
+			fsType=$(blkid "$(echo "${parts}" | grep '.2')" | awk '{print $4}')
+			fsType=${fsType#=*}
+			fsType="$(echo $fsType | tr -d '"')"
+			fsType=${fsType#TYPE=*}
+			#echo "FSTYPE @ $fsType"
+			echo "fsType = $fsType" 2>&1
+
+			#if [ "$fsType" = 'vfat' ]
+			#then
+				echo "OFFSET ============ ${offset}"
+				mount -v "$(echo "${parts}" | grep '.2')" ${offset}/boot
+				echo "sending $source to ${offset}/boot"
+
+
+				ls ${offset}/boot/${dsrc}
+
+				rm ${offset}/boot/${dsrc} -R
+
+				echo "${source#*://}"
+
+
+
+			boot_src="$(./mirror.sh ../config/patchfiles.mirrors *)"
+			source="${boot_src}/boot/"
+			#source="rsync://192.168.122.108/gentoo-patchfiles/boot/"
+			#rsync -r -l -H -p -c --delete-before --info=progress2 $source ${offset}/boot
+
+			mget ${source} -P ${offset}/boot
+
+#			wget -r --no-verbose ${source} -P ${offset}/boot
+#			mv ${offset}/boot/${source#*://}* ${offset}/boot/
+#			dsrc="${source#*://}"
+#			dsrc="${dsrc%%/*}"
+
+
+
+
 			case ${1%//*} in
 				# 	rsync ... ex. rsync://dom0-hypokrites.net/templates/plasma/
-				'rsync:'|'ftp:'|'http:'|'file:/')
-					mget $1 $2
+				'rsync:'|'ftp:'|'http:'|'file:/'|'ssh:')
+					mget $1 ${disk_location}
 				;;
 				#	local path
 				*)
 					case ${1%%/*} in
 						# local path
 						''|'file:')
-							mget $1 $2
+							mget $1 ${disk_location}
 						;;
 						# POOL
 						*)
 						# determine if pool exists, and if so, determine type: btrfs or zfs
 
+
+
+
+							case ${disk_location##*/} in
+								# file reference
+								''|'*')
+									echo "this is a singular file reference ${disk_location##*/}"
+								;;
+								# folder reference
+								*)
+									echo "this is a reference to a folder ${disk_location##*/}"
+								;;
+							esac
+							case ${type} in
+								zfs)
+									case ${connection_string} in
+										#local to local
+										'')
+											echo "local to local transfer --zfs"
+
+										;;									
+										#remote to local
+										*)
+											echo "remote to local transfer --zfs"
+										;;
+									esac
+								;;
+								btrfs)
+									case ${connection_string} in
+										#local to local
+										'')
+											echo "local to local transfer --btrfs"
+										;;									
+										#remote to local
+										*)
+											echo "remote to local transfer --btrfs"
+										;;										
+									esac
+								;;
+							esac
 						;;
 					esac
 				;;
@@ -159,34 +459,6 @@ function setup_boot()
 
 			exit
 
-			local srcPool=
-			local srcDSet=
-			local srcOffset=
-
-
-			local disk=$2			# DESTINATION
-			#	existing pool/new dataset ? (implied type=pool origin)
-			#	existing pool existing dataset (format file space ?)
-			#	new pool / new dataset (needs disk or configuration ... list of bash commands)
-			#	existing directory (format file space ?)
-			#	new directory (verify 20GB is available)
-
-			local offset=""
-
-
-			ksrc="$(./mirror.sh ../config/kernel.mirrors *)"
-			kver="$(getKVER)"
-			kver="${kver#*linux-}"
-
-			# pool = pool/dataset
-			# path = /srv/btrfs/dataset
-
-			echo "designate pool name/path:"
-			read POOL
-			safe_src="$POOL/${dSet#*/}"
-			offset="$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')"
-
-			echo "designate pool/dataset = ${safe_src}} :: ${offset}"
 
 
 			sleep 30
@@ -217,20 +489,8 @@ function setup_boot()
 			#	PATH -> PATH
 			#	PATH -> <CONFIG>
 
-			#	
-			#	
-			#	
-			#	
-			#	
-			#	
-			#	
-			#	
-			#	
-			#	
-
 			# ID SRC_TYPE {  }
 			# ID DST_TYPE
-
 
 			echo "rpool :: $rpool"		#	-n pool exists w/ zfs
 			echo "ypool :: $ypool"		#	-n pool exists on blkid (label)						:: $POOL
@@ -309,27 +569,6 @@ function setup_boot()
 	#		sgdisk --zap-all ${disk}
 	#		partprobe
 
-			echo "sgdisk --new 1:0:+32M -t 1:EF02 ${disk}" 
-			sgdisk --new 1:0:+32M -t 1:EF02 ${disk}
-			echo ""
-			sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
-			echo "sgdisk --new 2:0:+8G -t 2:EF00 ${disk}"
-			sgdisk --new 3:0 -t 3:8300 ${disk}
-			echo "sgdisk --new 3:0 -t 3:8300 ${disk}"
-			
-			parts="$(ls -d /dev/* | grep "${disk}")"
-
-			echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-			echo "disks =***${parts}***"
-			echo "############################"
-			echo "$(echo "${parts}" | grep '.2')"
-
-			clear_mounts ${disk}
-			mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
-			options=""
-
-			echo "$(echo "${parts}" | grep '.3')"
-
 
 			zpool create ${options} \
 				-O acltype=posixacl \
@@ -366,14 +605,6 @@ function setup_boot()
 				mount -v "$(echo "${parts}" | grep '.2')" ${offset}/boot
 				echo "sending $source to ${offset}/boot"
 
-				boot_src="$(./mirror.sh ../config/patchfiles.mirrors *)"
-				source="${boot_src}/boot/"
-				#source="rsync://192.168.122.108/gentoo-patchfiles/boot/"
-				#rsync -r -l -H -p -c --delete-before --info=progress2 $source ${offset}/boot
-				wget -r --no-verbose ${source} -P ${offset}/boot
-				mv ${offset}/boot/${source#*://}* ${offset}/boot/
-				dsrc="${source#*://}"
-				dsrc="${dsrc%%/*}"
 
 				ls ${offset}/boot/${dsrc}
 
@@ -384,6 +615,7 @@ function setup_boot()
 
 				echo "${ksrc}${kver} --output $offset/boot/LINUX/"
 				echo "mv ${offset}/boot/LINUX/${ksrc#*://}${kver} ${offset}/boot/LINUX/"
+
 				wget -r --no-verbose ${ksrc}${kver} -P $offset/boot/LINUX/
 				mv ${offset}/boot/LINUX/${ksrc#*://}${kver} ${offset}/boot/LINUX/
 				tempdir=${ksrc#*://}

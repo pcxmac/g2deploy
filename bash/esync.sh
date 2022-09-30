@@ -30,7 +30,6 @@ URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/snapshots.mirrors * )"
 echo -e "SYNCING w/ $URL \e[25,42m[SNAPSHOTS]\e[0m";sleep 1
 rsync -avPI --info=progress2 --timeout=300 --ignore-existing --no-perms --no-owner --no-group ${URL} /var/lib/portage/ | tee /var/log/esync.log
 
-
 echo "############################### [ RELEASES ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors * )"
 echo -e "SYNCING w/ $URL \e[25,42m[RELEASES]\e[0m";sleep 1
