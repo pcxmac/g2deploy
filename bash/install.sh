@@ -298,6 +298,12 @@ function setup_boot()
 			local src_url=$1
 			local dst_url=$2
 
+			#	DISK CONFIGURATION, CONFIG, OR SIMPLE ...
+			#	BOOT INSTALL ?		-- mget ...
+			#	USER INSTALL ?		-- copy_user
+			#	BOOT CONFIG SETUP ?
+
+
 			#copy_user ${src_url} ${dst_url}
 
 			ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
@@ -381,7 +387,7 @@ function setup_boot()
 
 
 
-			boot_src="$(./mirror.sh ../config/patchfiles.mirrors *)"
+			boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors *)"
 			source="${boot_src}/boot/"
 			#source="rsync://192.168.122.108/gentoo-patchfiles/boot/"
 			#rsync -r -l -H -p -c --delete-before --info=progress2 $source ${offset}/boot

@@ -26,39 +26,11 @@ function getKVER()
 
 }
 
-function getG2Profile() {
-
-	# assumes that .../amd64/17.X/... ; X will be preceeded by a decimal
-
-	local mountpoint=$1
-	local result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
-	result="${result#*.[0-9]/}"
-	echo $result
-
-}
-
-function getHostZPool () {
-	local pool="$(mount | grep " / " | awk '{print $1}')"
-	pool="${pool%/*}"
-	echo ${pool}
-}
-
-function getZFSMountPoint (){
-	local dataset=$1
-	echo "$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
-}
-
 function decompress() {
 
 	local src=$1
 	local dst=$2
 
-	#echo "SRC = $src	;; DST = $dst"
-
-	# tar -J - bzip2
-	# tar -z - gzip
-	# tar -x - xz
-	
 	local compression_type="$(file $src | awk '{print $2}')"
 	
 	case $compression_type in
@@ -81,29 +53,6 @@ function decompress() {
 #		
 #
 #############################################################################
-
-function compress() {
-	local src=$1
-	local dst=$2
-	local ksize="$(du -sb $src | awk '{print $1}')"
-	echo "ksize = $ksize"
-	tar cfz - $src | pv -s $ksize  > ${dst}
-}
-
-function compress_list() {
-	local src=$1
-	local dst=$2
-	
-	#echo "compressing LIST @ $src $dst"
-	tar cfz - -T $src | (pv -p --timer --rate --bytes > $dst)
-}
-
-function rSync() {
-	local src=$1
-	local dst=$2
-	echo "rsync from $src to $dst"
-	rsync -c -a -r -l -H -p --delete-before --info=progress2 $src $dst
-}
 
 function zfs_keys() 
 {
@@ -188,11 +137,6 @@ function clear_mounts()
 {
 	local offset=$1
 
-	#procs="$(lsof ${mountpoint} | sed '1d' | awk '{print $2}' | uniq)" 
-	#echo "killing $(echo $procs | wc -l) process(s)"  2>&1
-	#for process in ${procs}; do kill -9 ${process}; done
-	#echo "umount $mountpoint"
-
     dir="$(echo "$offset" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
 	if [[ -n "$(echo $dir | grep '/dev/')" ]]
 	then
@@ -201,7 +145,6 @@ function clear_mounts()
 		dir="${dir}\/"
 	fi
 
-
 	output="$(cat /proc/mounts | grep "$dir" | wc -l)"
 	echo "$output mounts to be removed" 2>&1
 	while [[ "$output" != 0 ]]
@@ -209,12 +152,7 @@ function clear_mounts()
 		#cycle=0
 		while read -r mountpoint
 		do
-
-			#echo "umount $mountpoint"
-			#read
 			umount $mountpoint > /dev/null 2>&1
-		
-									# \/ ensures that the root reference is not unmounted
 		done < <(cat /proc/mounts | grep "$dir" | awk '{print $2}')
 		#echo "cycles = $cycle"
 		output="$(cat /proc/mounts | grep "$dir" | wc -l)"
@@ -243,7 +181,7 @@ function buildup()
 	fi
 	echo "finished clear_fs ... $offset"
 
-	files="$(./mirror.sh ../config/releases.mirrors ${selection})"
+	files="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/release.mirrors ${selection})"
 	filexz="$(echo "${files}" | grep '.xz$')"
 	fileasc="$(echo "${files}" | grep '.asc$')"
 	serverType="${filexz%//*}"
@@ -313,6 +251,9 @@ function system()
 	echo "EMERGE PROFILE PACKAGES !!!!"
 	pkgs="/package.list"
 	emerge $emergeOpts $(cat "$pkgs")
+
+	emergeOpts=""
+	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts =zfs-9999 --nodeps
 	
 	#echo "SETTING SERVICES"
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
@@ -333,45 +274,22 @@ function install_kernel()
 	local offset=$1
 	kver="$(getKVER)"
 	kver="${kver#*linux-}"
-	#kver="${kver%-gentoo*}"
-	ksrc="$(./mirror.sh ../config/kernel.mirrors *)"
+	ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
 
 	emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y "
-	chroot ${offset} /usr/bin/emerge $emergeOpts --getbinpkg=y =gentoo-sources-${kver%-gentoo*}
-
-	#bsrc="${kver}-gentoo"
-
-	echo "${ksrc}linux-${kver}.tar.gz --output $offset/linux-${kver}.tar.gz"
-	curl -L ${ksrc}linux-${kver}.tar.gz --output $offset/linux-${kver}.tar.gz
 
 	echo "${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz"
 	curl -L ${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz
-
-	echo "decompressing kernel... $offset/$archive <<<<<<<<<<"
-	pv ${offset}/linux-${kver}.tar.gz | tar xzf - -C ${offset}
-	rm ${offset}/linux-${kver}.tar.gz
 
 	echo "decompressing modules...  $offset/modules.tar.gz"
 	pv $offset/modules.tar.gz | tar xzf - -C ${offset}
 	rm ${offset}/modules.tar.gz
 
-	echo "selecting kernel... linux-${kver}"
-	chroot ${offset} /usr/bin/eselect kernel set linux-${kver}
-
-	#sleep 30
 }
 
 function install_modules()
 {
-	emergeOpts=""
-	#emergeOpts="--binpkg-respect-use=y --verbose --tree --backtrack=99"
-	#emerge $emergeOpts --buildpkg=y --getbinpkg=y --binpkg-respect-use=y --onlydeps =zfs-kmod-9999 
-	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts =zfs-kmod-9999
-#	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts zfs-kmod
-	#emerge $emergeOpts --onlydeps --buildpkg=y --getbinpkg=y --binpkg-respect-use=y =zfs-9999
-	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts =zfs-9999
-#	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts zfs
-	#emerge $emergeOpts app-emulation/virtualbox-modules
+	echo "empty"
 }
 
 
@@ -401,7 +319,7 @@ function patches()
 			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf
 		fi
 	# 																	remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
-	done < <(curl $(echo "$(./mirror.sh ../config/package.mirrors *)/common.conf" | sed 's/ //g' | sed "s/\"/'/g"))
+	done < <(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors *)/common.conf" | sed 's/ //g' | sed "s/\"/'/g"))
 
 	while read line; do
 		echo "LINE = $line"
@@ -415,13 +333,12 @@ function patches()
 			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf	
 		fi
 	# 																	    remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
-	done < <(curl $(echo "$(./mirror.sh ../config/package.mirrors *)/${_profile}.conf" | sed 's/ //g' | sed "s/\"/'/g"))
+	done < <(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors *)/${_profile}.conf" | sed 's/ //g' | sed "s/\"/'/g"))
 }
 
 function locales()
 {
 
-	#emergeOpts="--buildpkg=n --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"
     local key=$1
 	locale-gen -A
 	eselect locale set en_US.utf8
@@ -446,17 +363,14 @@ function pkgProcessor()
 	echo $profile 2>&1
 	echo $offset 2>&1
 
-	url="$(echo "$(./mirror.sh ../config/package.mirrors *)/common.pkgs" | sed 's/ //g')"
+	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors *)/common.pkgs" | sed 's/ //g')"
 	commonPkgs="$(curl $url)"
 	echo ":::: $url"
-	url="$(echo "$(./mirror.sh ../config/package.mirrors *)/${profile}.pkgs" | sed 's/ //g')"
+	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors *)/${profile}.pkgs" | sed 's/ //g')"
 	profilePkgs="$(curl $url)"
 	echo ":::: $url"
 
 	local allPkgs="$(echo -e "${commonPkgs}\n${profilePkgs}" | uniq | sort)"
-
-	#echo "***$commonPkgs***" 2>&1
-	#echo "***$profilePkgs***" 2>&1
 
 	local iBase="$(chroot ${offset} /usr/bin/qlist -I)"
 	iBase="$(echo "${iBase}" | uniq | sort)"
@@ -464,25 +378,23 @@ function pkgProcessor()
 	local diffPkgs="$(comm -1 -3 <(echo "${iBase}") <(echo "${allPkgs}"))"
 
 	echo "${diffPkgs}" > ${offset}/package.list
-
-	#sleep 60
 }
 
+###################################################################################################################################
 
+	# check mount, create new mount ?
+	export PYTHONPATH=""
 
-# check mount, create new mount ?
-export PYTHONPATH=""
+	export -f users
+	export -f locales
+	export -f system
+	export -f services
+	export -f install_modules
 
-export -f users
-export -f locales
-export -f system
-export -f services
-export -f install_modules
-
-dataset=""				#	the working dataset of the installation
-directory=""			# 	the working directory of the prescribed dataset
-profile=""				#	the build profile of the install
-selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
+	dataset=""				#	the working dataset of the installation
+	directory=""			# 	the working directory of the prescribed dataset
+	profile=""				#	the build profile of the install
+	selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
 
     for x in $@
     do
@@ -512,113 +424,69 @@ selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened 
                         # space at end limits selinux	...		NOT SUPPORTED
                     #    _profile="17.0/musl/hardened "
                     #;;
-                    'hardened')
-                        # space at end limits selinux
-                        _profile="17.1/hardened "
+                    'hardened')		    _profile="17.1/hardened "
                     ;;
-                    'openrc')
-                        # space at end limits selinux
-                        _profile="17.1/openrc"
+                    'openrc')			_profile="17.1/openrc"
                     ;;
-                    'systemd')
-                        _profile="17.1/systemd "
+                    'systemd')			_profile="17.1/systemd "
                     ;;
-                    'plasma')
-                        _profile="17.1/desktop/plasma "
+                    'plasma')           _profile="17.1/desktop/plasma "
                     ;;
-                    'gnome')
-                        _profile="17.1/desktop/gnome "
+                    'gnome')			_profile="17.1/desktop/gnome "
                     ;;
-                    'selinux')
-                        _profile="17.1/selinux "
-                        echo "${x#*=} is not supported [selinux]"
+                    'selinux')          _profile="17.1/selinux "
+                        				echo "${x#*=} is not supported [selinux]"
                     ;;
-                    'plasma/systemd')
-                        _profile="17.1/desktop/plasma/systemd "
+                    'plasma/systemd')   _profile="17.1/desktop/plasma/systemd "
                     ;;
-                    'gnome/systemd')
-                        _profile="17.1/desktop/gnome/systemd "
+                    'gnome/systemd')	_profile="17.1/desktop/gnome/systemd "
                     ;;
-                    'hardened/selinux')
-                        _profile="17.1/hardened/selinux "
-                        echo "${x#*=} is not supported [selinux]"
+                    'hardened/selinux') _profile="17.1/hardened/selinux "
+                        				echo "${x#*=} is not supported [selinux]"
                     ;;
-                    *)
-                        _profile="invalid profile"
+                    *)					_profile="invalid profile"
                     ;;
                 esac
             ;;
         esac
     done
 
-#	for x in $@
-#    do
-#        case "${x}" in
-#            deploy)
+	echo $(getKVER)
 
-				#sleep 10
+	clear_mounts ${directory}
 
-				#
-				#
-				# CHECK FOR ONLINE SERVICES BEFORE EXECUTING, REPORT SERVERS NOT ONLINE.
-				#
-				#
+	buildup ${_profile} ${directory} ${dataset}
+	zfs_keys ${dataset}
+	echo "certificates ?"
 
-				### NEED F/S CONTEXT SENSITIVE
+	echo "pkgprocessor :"
+	pkgProcessor ${_profile} ${directory}
+	echo "patches:"
 
-				echo $(getKVER)
+	patches ${directory} ${_profile}
+	chroot ${directory} /bin/bash -c "locales ${_profile}"
 
-				clear_mounts ${directory}
+	install_kernel ${directory}
 
-				buildup ${_profile} ${directory} ${dataset}
-				zfs_keys ${dataset}
-				echo "certificates ?"
-				# certificates ?	
-				##############################
+	chroot ${directory} /bin/bash -c "system"
 
-				echo "pkgprocessor :"
-				pkgProcessor ${_profile} ${directory}
-				echo "patches:"
+	chroot ${directory} /bin/bash -c "install_modules"
 
-				######## NEED TO MOVE PATCHES TILL  AFTER BUILD, REPLACE PKG VARS in MAKE.CONF
-				# IE, install patch_files / installer state, then install patches to customize per 
-				# profile, and then again to account for host-profile 
+	chroot ${directory} /bin/bash -c "users ${_profile}"
 
-				patches ${directory} ${_profile}
-				chroot ${directory} /bin/bash -c "locales ${_profile}"
+	services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors * )/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
 
-				# when building the kernel and boot files, make sure to tar from '/' as they are dumped in the root for extraction.ls
-				# zfs-kmod-9999 is currently 'masked' as it will not allow cross-env builds,  only singleton kernel builds it seems, reverting to latest stable
-				install_kernel ${directory}
+	chroot ${directory} /bin/bash -c "services ${services_URL}"
+	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key ${dataset}
 
-				#
-				#
-				chroot ${directory} /bin/bash -c "system"
+	clear_mounts ${directory}
+	ls ${offset}
+	zfs snapshot ${dataset}@safe
 
-				chroot ${directory} /bin/bash -c "install_modules"
-				#	ZFS, VBOX, ... (wireguard and bpf should be in place)
-
-				chroot ${directory} /bin/bash -c "users ${_profile}"
-
-				services_URL="$(echo "$(./mirror.sh ../config/package.mirrors * )/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
-				#echo "$services_URL"
-				
-				#sleep 30
-				chroot ${directory} /bin/bash -c "services ${services_URL}"
-				zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key ${dataset}
-
-				clear_mounts ${directory}
-				ls ${offset}
-				zfs snapshot ${dataset}@safe
-
-			# potential cleanup items
-			#
-			#	move binpkgs for client to /tmp as well, disable binpkg building
-			#	reflash modules, or separate modules and kernel out...
-			#	autofs integration w/ boot drive
-			#	clear mounts 
-			#
-
-#            ;;
-#        esac
-#    done
+	# potential cleanup items
+	#
+	#	move binpkgs for client to /tmp as well, disable binpkg building
+	#	reflash modules, or separate modules and kernel out...
+	#	autofs integration w/ boot drive
+	#	clear mounts 
+	#
