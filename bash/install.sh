@@ -120,7 +120,10 @@ function mget()
 			source=${host#*:/}
 			host=${host%:/*}
 			echo "${host}:/${source} ${destination}" 2>&1
-			scp -r ${host}:/${source} ${destination}
+			#scp -rq ${host}:/${source}/* ${destination}/
+			#ssh ${shost} 'tar czf - /${source}/' | pv --timer --rate | tar xzf - -C ${destination}/
+			ssh ${shost} 'tar cf - /${source}/' --use-compress-program="pigz -p 8" | pv --timer --rate | tar xzf - -C ${destination}/
+
 		;;
 		# local file move only
 		file|*)
@@ -132,9 +135,14 @@ function mget()
 	esac
 }
 
-#					$1=SRC_URL		$2=DST_URL
-function copy_user()
+
+
+function setup_boot()	
 {
+
+			ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
+			kver="$(getKVER)"
+			kver="${kver#*linux-}"
 
 			source_url=$1				# can be local or remote pool
 			stype=${source_url%://*}	# example : zfs://root@localhost.com:/pool/dataset ; btrfs:///Label/subvolume ; ssh://root@localhost:/path/to/set
@@ -154,11 +162,19 @@ function copy_user()
 					shost="$(echo $shost | grep -v '/' | grep "[[:alnum:]]\+@[[:alnum:]]\+")"
 					if [[ -n ${shost} ]]
 					then
-						spath="$(ssh ${shost} "zfs get mountpoint ${source}")"
+						spath="$(ssh ${shost} "zfs get mountpoint ${spool}/${sdataset}")"
 						spath="$(echo "${spath}" | grep 'mountpoint' | awk '{print $3}')"
-					else
-						spath="$(zfs get mountpoint ${source})"
+						root_path="$(ssh ${shost} "mount | grep ' / ' | grep ${spool}/${sdataset}")"
+						root_path="$(echo ${root_path} | awk '{print $1}')"
+						if [[ -n ${root_path} ]]; then spath=""; fi
+						spath="${spath}/.zfs/snapshot/${ssnapshot}"
+					else 
+						spath="$(zfs get mountpoint ${spool}/${sdataset})"
 						spath="$(echo "${spath}" | grep 'mountpoint' | awk '{print $3}')"
+						root_path="$(mount | grep ' / ' | grep ${spool}/${sdataset})"
+						root_path="$(echo ${root_path} | awk '{print $1}')"
+						if [[ -n ${root_path} ]]; then spath=""; fi
+						spath="${spath}/.zfs/snapshot/${ssnapshot}"
 					fi
 				;;
 				#	use btrfs send if ... no connection string
@@ -171,12 +187,20 @@ function copy_user()
 					shost="$(echo $shost | grep -v '/' | grep "[[:alnum:]]\+@[[:alnum:]]\+")"
 					if [[ -n ${shost} ]]
 					then
-						spath="$(ssh ${shost} "mount | grep 'btrfs'")"
-						spath="$(echo "${spath}" | grep -i ${sdataset} | awk '{print $3}')"
+						spath="$(ssh ${shost} "blkid | grep ${spool} | grep 'btrfs'")"
+						spath="$(echo ${spath} | awk '{print $1}' | tr -d ':')"
+						spath="$(ssh ${shost} "mount | grep ${spath}")"
+						spath_root="$(echo ${spath} | grep "subvol=/" | head -n 1 | awk '{print $3}')"
+						spath_subvol="$(echo ${spath} | grep "subvol=/${sdataset}" | head -n 1 | awk '{print $3}')"
+						if [[ -n ${spath_subvol} ]]; then spath=${spath_subvol}; else spath="${spath_root}/${sdataset}"; fi
 						sresult="$(ssh ${shost} "btrfs filesystem show ${spath} | grep 'uuid'")"
 					else
-						spath="$(mount | grep 'btrfs')"
-						spath="$(echo "${spath}" | grep -i ${sdataset} | awk '{print $3}')"
+						spath="$(blkid | grep ${spool} | grep 'btrfs')"
+						spath="$(echo ${spath} | awk '{print $1}' | tr -d ':')"
+						spath="$(mount | grep ${spath})"
+						spath_root="$(echo ${spath} | grep "subvol=/" | head -n 1 | awk '{print $3}')"
+						spath_subvol="$(echo ${spath} | grep "subvol=/${sdataset}" | head -n 1 | awk '{print $3}')"
+						if [[ -n ${spath_subvol} ]]; then spath=${spath_subvol}; else spath="${spath_root}/${sdataset}"; fi
 						sresult="$(btrfs filesystem show ${spath} | grep 'uuid')"
 					fi
 				;;
@@ -197,21 +221,6 @@ function copy_user()
 				;;
 			esac
 
-			#				
-			# zfs - 		zfs send ${dSet}@safe | pv --timer --rate | zfs recv ${safe_src%@*}
-			#				ssh user@host zfs send pool/dataset | pv --timer --rate | zfs recv -F pool/dataset
-			#				
-			#				create the destination btrfs subvolume
-			# btrfs - 		btrfs send /subvol/path | pv --timer --rate | btrfs recv /new/subvol/path
-			#				ssh user@host btrfs send /subvol/path | pv --timer --rate | btrfs recv /new/subvol/path
-
-			# ssh -			ssh user@host 'tar czf - ${path}' | pv --timer --rate | tar xvzf - -C ${new_path}
-
-			# * - 			tar czf - ${path} | pv --timer --rate | tar xvzf - -C ${new_path}
-
-			#				block transfers (send/recv) only occur when both strings are the same types { zfs or btrfs }
-
-
 			destination_url=$2				# DESTINATION
 			dtype=${destination_url%://*}	# example :	zfs:///dev/sda:/pool/dataset ; ntfs:///dev/sdX:/mnt/sdX ; config:///path/to/config
 			dhost=${destination_url#*://}	
@@ -226,53 +235,113 @@ function copy_user()
 					dpool=${destination%/*}
 					ddataset=${destination##*/}
 					ddataset=${ddataset%@*}
-					dhost=""
-						dpath="$(zfs get mountpoint ${destination})"
-						dpath="$(echo "${dpath}" | grep 'mountpoint' | awk '{print $3}')"
+					dhost="${dhost%:*}"
+						dpath="/srv/zfs/${dpool}"
+						#dpath="$(echo "${dpath}" | grep 'mountpoint' | awk '{print $3}')"
+						#dpath=getZFSMountPoint ${dpool}/${ddataset}
 				;;
 				btrfs)
 					destination=${dhost#*:/}
 					dpool=${destination%/*}
 					ddataset=${destination##*/}
 					ddataset=${ddataset%@*}
-					dhost=""
-						dpath="$(mount | grep 'btrfs')"
-						dpath="$(echo "${dpath}" | grep -i ${ddataset} | awk '{print $3}')"
-						dresult="btrfs filesystem show ${dpath} | grep 'uuid')"
+					dhost="${dhost%:*}"
+					dpath="/srv/btrfs/${dpool}"
+					if [[ ! -d ${dpath} ]]
+					then 
+						mkdir -p ${dpath}
+					fi
 				;;
 				ext4|xfs|ntfs)
 					destination=${dhost#*:}
-					dpool=${destination}
+					dpool=${destination#*/}
 					ddataset=""
-					dhost=""
+					dhost="${dhost%:*}"
 					dpath=${destination}
 				;;
 			esac
 
-			echo "SOURCE | type = ${stype} ; connect to $shost ; pool/dataset/snapshot = [$spool][$sdataset][$ssnapshot] :: source = ${source} | ${spath} | ${sresult}"
-			echo "DESTINATION | type = ${dtype} ; connect to $dhost ; pool/dataset/snapshot = [$dpool][$ddataset][] :: destination = ${destination} | ${dpath}"
+			echo "SOURCE | type = ${stype} ; connect to $shost ; pool/dataset/snapshot = [$spool][$sdataset][$ssnapshot] :: source = ${spath}"
+			echo "DESTINATION | type = ${dtype} ; target : $dhost ; pool/dataset/snapshot = [$dpool][$ddataset][$dsnapshot] :: destination =  ${dpath}"
+			echo "#########################################################################################################"
 
 
-			# VERIFY SNAPSHOT - ZFS, VERIFY NO NEW RECV DATASET
-			#
-			#
-			#
-			#
-			#
-			
+			disk=${dhost}
 
-			# block send, local to local or remote to local
+			clear_mounts ${disk}
+			sync
+			sgdisk -Z ${disk}
+			partprobe
+			sync
+
+			sgdisk --new 1:0:+32M -t 1:EF02 ${disk}
+			sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
+			sgdisk --new 3:0 -t 3:8300 ${disk}
+
+			clear_mounts ${disk}
+			partprobe
+			sync
+
+			parts="$(ls -d /dev/* | grep "${disk}")"
+			mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
+
+			options="-f"
+
+			mount | grep ${disk}
+			echo "format user partition { $parts }"
+
+			case ${dtype} in
+				zfs)
+					zpool create ${options} \
+						-O acltype=posixacl \
+						-O compression=lz4 \
+						-O dnodesize=auto \
+						-O normalization=formD \
+						-O relatime=on \
+						-O xattr=sa \
+						-O encryption=aes-256-gcm \
+						-O keyformat=hex \
+						-O keylocation=file:///srv/crypto/zfs.key \
+						-O mountpoint=${dpath} ${dpool} \
+						$(echo "${parts}" | grep '.3')
+				;;
+				btrfs)
+					mount | grep ${disk}
+					mkfs.btrfs $(echo "${parts}" | grep '.3') -L ${dpool} -f
+					mount $(echo "${parts}" | grep '.3') ${dpath}
+					btrfs subvolume create ${dpath}/${ddataset}
+				;;
+				xfs)
+					mkfs.xfs $(echo "${parts}" | grep '.3') -L ${dpool} -f
+				;;
+				ntfs)
+					mkfs.ntfs $(echo "${parts}" | grep '.3') -L ${dpool} -f
+				;;
+				ext4)
+					mkfs.ext4 $(echo "${parts}" | grep '.3') -L ${dpool} -F
+				;;
+			esac
+
+
+###################################################################
+#
+#	if no disk or config is issued for the boot ... boot=zfs://:/pool/set then DO NOT FORMAT A NEW DISK, ERROR OUT IF F/S is not present locally
+#	
+#	
+#
+#	mount and 
+
 			if [[ ${dtype} == ${stype} ]] 
 			then
 				case ${stype} in
 					zfs)
-						if [[ -n ${shost} ]] then	ssh ${shost} zfs send ${source} | pv --timer --rate | zfs recv -F ${destination}
-						else 						zfs send ${source} | pv --timer --rate | zfs recv ${destination}
+						if [[ -n ${shost} ]]; then	ssh ${shost} zfs send ${source} | pv --timer --rate | zfs recv -F ${destination}
+						else 									 zfs send ${source} | pv --timer --rate | zfs recv -F ${destination}
 						fi
 					;;
 					btrfs)
-						if [[ -n ${shost} ]] then	ssh ${shost} btrfs send ${source} | pv --timer --rate | btrfs recv ${destination}
-						else						btrfs send ${source} | pv --timer --rate | btrfs recv ${destination}
+						if [[ -n ${shost} ]]; then	ssh ${shost} btrfs send ${spath} | pv --timer --rate | btrfs receive ${dpath}
+						else									 btrfs send ${spath} | pv --timer --rate | btrfs receive ${dpath}
 						fi
 					;;
 				esac
@@ -280,188 +349,43 @@ function copy_user()
 			# compression send
 			else 
 			# remote source to local destination
+
+				#	precursors for 'rough'
+				if [[ ${dtype} == 'zfs' ]]; then zfs create ${dpool}/${ddataset}; fi
+
 				case ${shost} in
 				# local source to local destination
 					'')
-						tar czf - ${spath} | pv --timer --rate | tar xvzf - -C ${dpath}
+
+
+						#
+						mget ${spath}/ ${dpath%*/}/${ddataset}/
+
+						#mv ${dpath} ${dpath%*/}/${ddataset}
+						#tar czf - ${spath} | pv --timer --rate | tar xvzf - -C ${dpath}
 					;;
 					*)
-						ssh ${shost} 'tar czf - ${spath}' | pv --timer --rate | tar xvzf - -C ${dpath}
+						# btrfs - copies over the sdataset, so dpath/sdataset
+						# zfs - instantiates a new dataset, so dpath/ddataset
+						# other - ${src} >> goes to the root space of a disk, so ${dpath}=/dev/XXX mnt point
+						#echo "***********************************************************"
+						#echo "mget ssh://${shost}:${spath}/ ${dpath%*/}/${ddataset}/"
+						#echo "***********************************************************"
+						mget ssh://${shost}:${spath}/ ${dpath%*/}/${ddataset}/
+
+						#ssh ${shost} 'tar czf - ${spath}' | pv --timer --rate | tar xvzf - -C ${dpath}
 					;;
 				esac
 			fi
 
-}
 
-function setup_boot()	
-{
-			local src_url=$1
-			local dst_url=$2
+			boot_src="ftp://10.1.0.1/patchfiles/boot/*"
 
-			#	DISK CONFIGURATION, CONFIG, OR SIMPLE ...
-			#	BOOT INSTALL ?		-- mget ...
-			#	USER INSTALL ?		-- copy_user
-			#	BOOT CONFIG SETUP ?
+			echo "mget ${boot_src} /boot"
 
-
-			#copy_user ${src_url} ${dst_url}
-
-			ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
-			kver="$(getKVER)"
-			kver="${kver#*linux-}"
-
-			parts="$(ls -d /dev/* | grep "${disk}")"
-			options=""
-
-			echo "designate pool name/path:"
-			read POOL
-			#tobe="$POOL/${dataset}"
-			#offset="$(zfs get mountpoint ${POOL}/${dataset} 2>&1 | sed -n 2p | awk '{print $3}')"
-			echo "5 second delay"
-
-			#	[TYPE] :// [CONNECTION @ STRING] :/ [SOURCE]
-			# SWITCH CASE FOR DESTINATION TYPE ZFS:,BTRFS:,... example: zfs://dev/sda:/pool/dataset
-			#															type ://	connection	:/ pool/dataset
-			#	connection types for install are local only and ext4,xfs,btrfs,zfs,...
-			#					pool  :  dataset  : snapshot
-			#	zfs string		[POOL]/[DATASET]@[SNAPSHOT]
-			#					pool  :  dataset  
-			#	btrfs string	[LABEL]/[SUBVOLUME]
-			#				    pool
-			#	ext4 string		[FILE/SYSTEM]
-			#	connection url = /dev/sdX || config.file (commands list)
-
-
-			# FORMAT DISK(S)
-
-			clear_mounts ${disk}
-#			sgdisk --zap-all ${disk}
-			partprobe
-
-
-			echo "sgdisk --new 1:0:+32M -t 1:EF02 ${disk}" 
-#			sgdisk --new 1:0:+32M -t 1:EF02 ${disk}
-			echo ""
-#			sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
-			echo "sgdisk --new 2:0:+8G -t 2:EF00 ${disk}"
-#			sgdisk --new 3:0 -t 3:8300 ${disk}
-			echo "sgdisk --new 3:0 -t 3:8300 ${disk}"
-			mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
-
-
-			echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-			echo "disks =***${parts}***"
-			echo "############################"
-			echo "$(echo "${parts}" | grep '.2')"
-			echo "$(echo "${parts}" | grep '.3')"
-
-			# FORMAT USER SPACE
-
-			echo "designate pool/dataset = ${POOL}/${dataset}} :: ${offset}"
-			pdset="${safe_src%@*}"
-			#version="$(getKVER ${offset}))"
-			version="$(getKVER)"
-
-			# redefine offset if new pool created
-			offset="$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')"
-
-			fsType=$(blkid "$(echo "${parts}" | grep '.2')" | awk '{print $4}')
-			fsType=${fsType#=*}
-			fsType="$(echo $fsType | tr -d '"')"
-			fsType=${fsType#TYPE=*}
-			#echo "FSTYPE @ $fsType"
-			echo "fsType = $fsType" 2>&1
-
-			#if [ "$fsType" = 'vfat' ]
-			#then
-				echo "OFFSET ============ ${offset}"
-				mount -v "$(echo "${parts}" | grep '.2')" ${offset}/boot
-				echo "sending $source to ${offset}/boot"
-
-
-				ls ${offset}/boot/${dsrc}
-
-				rm ${offset}/boot/${dsrc} -R
-
-				echo "${source#*://}"
-
-
-
-			boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors *)"
-			source="${boot_src}/boot/"
-			#source="rsync://192.168.122.108/gentoo-patchfiles/boot/"
-			#rsync -r -l -H -p -c --delete-before --info=progress2 $source ${offset}/boot
-
-			mget ${source} -P ${offset}/boot
-
-#			wget -r --no-verbose ${source} -P ${offset}/boot
-#			mv ${offset}/boot/${source#*://}* ${offset}/boot/
-#			dsrc="${source#*://}"
-#			dsrc="${dsrc%%/*}"
-
-
-
-
-			case ${1%//*} in
-				# 	rsync ... ex. rsync://dom0-hypokrites.net/templates/plasma/
-				'rsync:'|'ftp:'|'http:'|'file:/'|'ssh:')
-					mget $1 ${disk_location}
-				;;
-				#	local path
-				*)
-					case ${1%%/*} in
-						# local path
-						''|'file:')
-							mget $1 ${disk_location}
-						;;
-						# POOL
-						*)
-						# determine if pool exists, and if so, determine type: btrfs or zfs
-
-
-
-
-							case ${disk_location##*/} in
-								# file reference
-								''|'*')
-									echo "this is a singular file reference ${disk_location##*/}"
-								;;
-								# folder reference
-								*)
-									echo "this is a reference to a folder ${disk_location##*/}"
-								;;
-							esac
-							case ${type} in
-								zfs)
-									case ${connection_string} in
-										#local to local
-										'')
-											echo "local to local transfer --zfs"
-
-										;;									
-										#remote to local
-										*)
-											echo "remote to local transfer --zfs"
-										;;
-									esac
-								;;
-								btrfs)
-									case ${connection_string} in
-										#local to local
-										'')
-											echo "local to local transfer --btrfs"
-										;;									
-										#remote to local
-										*)
-											echo "remote to local transfer --btrfs"
-										;;										
-									esac
-								;;
-							esac
-						;;
-					esac
-				;;
-			esac
+			mount "$(echo "${parts}" | grep '.2')" /boot
+			#mget ${boot_src} /boot
+			umount /boot
 
 			exit
 
@@ -472,18 +396,18 @@ function setup_boot()
 			$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')
 
 			# pool sees if the pool exists at all, if not, can create, if does, ask to destroy, identify
-			zpool import -a -f 2>/dev/null
-			rpool="$(zpool list $POOL | sed '1d' | awk '{print $1}')" 2>/dev/null						# prints pool, if exists
-			ypool="$(blkid | grep "$POOL" | grep 'zfs_member' | sed 's/.* LABEL=\([^ ]*\).*/\1/' | tr -d '"')"
-			rpart="$(blkid | grep $POOL | sed 's/.*\/dev\/\([^ ]*\).*/\1/' | tr -d ':')"	# prints partition associated with proposed pool
+			#zpool import -a -f 2>/dev/null
+			#rpool="$(zpool list $POOL | sed '1d' | awk '{print $1}')" 2>/dev/null						# prints pool, if exists
+			#ypool="$(blkid | grep "$POOL" | grep 'zfs_member' | sed 's/.* LABEL=\([^ ]*\).*/\1/' | tr -d '"')"
+			#rpart="$(blkid | grep $POOL | sed 's/.*\/dev\/\([^ ]*\).*/\1/' | tr -d ':')"	# prints partition associated with proposed pool
 
 			# part(ition) and label are associated with the proposed install, if they are present, that means the disk must be destroyed.
-			part="$(blkid | grep "${disk}" | grep 'zfs_member')"
-			plabel="$(echo "${part}" | sed 's/.* LABEL=\([^ ]*\).*/\1/' | tr -d '"')"
-			ppart="$(echo "${part}" | sed 's/.*\/dev\/\([^ ]*\).*/\1/' | tr -d ':')"
+			#part="$(blkid | grep "${disk}" | grep 'zfs_member')"
+			#plabel="$(echo "${part}" | sed 's/.* LABEL=\([^ ]*\).*/\1/' | tr -d '"')"
+			#ppart="$(echo "${part}" | sed 's/.*\/dev\/\([^ ]*\).*/\1/' | tr -d ':')"
 			#disky="$(blkid | grep ${disk})"
-			disky="$(fdisk -l | grep "${disk}" | awk '{print $2}' | tr -d ':')"
-			rootfs="$(mount | grep ' / ' | awk '{print $1}')"
+			#disky="$(fdisk -l | grep "${disk}" | awk '{print $2}' | tr -d ':')"
+			#rootfs="$(mount | grep ' / ' | awk '{print $1}')"
 
 			# 	boot = (DST) : { /dev/disk-to-write ; ../config.cfg ; $PATH } ... DOESN'T NEED TO EXIST
 			# 	work = (SRC) : { pool/dataset [btrfs/zfs] ; $PATH [ext4,...] } 
@@ -498,11 +422,11 @@ function setup_boot()
 			# ID SRC_TYPE {  }
 			# ID DST_TYPE
 
-			echo "rpool :: $rpool"		#	-n pool exists w/ zfs
-			echo "ypool :: $ypool"		#	-n pool exists on blkid (label)						:: $POOL
-			echo "rpart :: $rpart"		#	-n pool exists on blkid (disk)						:: $POOL
-			echo "ppart :: $ppart"		#	-n disk exists on blkid / has zfs member (disk)		:: boot=(disk)
-			echo "plabel :: $plabel"	#	-n label exists on blkid / has zfs member (label)	:: boot=(disk)	
+			#echo "rpool :: $rpool"		#	-n pool exists w/ zfs
+			#echo "ypool :: $ypool"		#	-n pool exists on blkid (label)						:: $POOL
+			#echo "rpart :: $rpart"		#	-n pool exists on blkid (disk)						:: $POOL
+			#echo "ppart :: $ppart"		#	-n disk exists on blkid / has zfs member (disk)		:: boot=(disk)
+			#echo "plabel :: $plabel"	#	-n label exists on blkid / has zfs member (label)	:: boot=(disk)	
 			
 			# logic - 
 
@@ -522,141 +446,122 @@ function setup_boot()
 			#	install zpool
 		
 
-			if [[ ${dSet%/*} == ${POOL} ]] && [[ ${rootfs#*/} == ${dSet#*/} ]]
-			then
+#			if [[ ${dSet%/*} == ${POOL} ]] && [[ ${rootfs#*/} == ${dSet#*/} ]]
+#			then
 				# the pool is able to be loaded, and must be destroyed
-				echo "$POOL/${dSet#*/} is the ${rootfs} [root file system] ... exiting"
-				exit
-			fi
-
-
-			echo "${ypool} == ${rpool} ]] && [[ -n ${ypool}"
-			if [[ ${ypool} == ${rpool} ]] && [[ -n ${ypool} ]]
-			then
-				# the pool is able to be loaded, and must be destroyed
-				echo "pool is already available, needs to be destroyed"
+#				echo "$POOL/${dSet#*/} is the ${rootfs} [root file system] ... exiting"
 #				exit
-			fi
+#			fi
 
-			echo "-z ${rpool} ]] && [[ -n ${ypool} ]] && [[ ${ypool} == ${POOL}"
-			if [[ -z ${rpool} ]] && [[ -n ${ypool} ]] && [[ ${ypool} == ${POOL} ]]
-			then
+
+#			echo "${ypool} == ${rpool} ]] && [[ -n ${ypool}"
+#			if [[ ${ypool} == ${rpool} ]] && [[ -n ${ypool} ]]
+#			then
+				# the pool is able to be loaded, and must be destroyed
+#				echo "pool is already available, needs to be destroyed"
+#				exit
+#			fi
+
+#			echo "-z ${rpool} ]] && [[ -n ${ypool} ]] && [[ ${ypool} == ${POOL}"
+#			if [[ -z ${rpool} ]] && [[ -n ${ypool} ]] && [[ ${ypool} == ${POOL} ]]
+#			then
 				# reminent of an old pool exists, but the disk remains unformatted afterwords
-				echo "${plabel} is a reminent..., reconfigure the disk"
-				clear_mounts ${disk}
-				sgdisk --zap-all ${disk}
-				partprobe
-				fdisk -l | grep ${disk}
+#				echo "${plabel} is a reminent..., reconfigure the disk"
+#				clear_mounts ${disk}
+#				sgdisk --zap-all ${disk}
+#				partprobe
+#				fdisk -l | grep ${disk}
 				#exit
-			fi
+#			fi
 
-			echo " -n ${ppart} ]] && [[ ${plabel} != ${POOL}"
-			if [[ -n ${ppart} ]] && [[ ${plabel} != ${POOL} ]] 
-			then
-				if [[ -z ${rpool} ]]
-				then
-					echo "${plabel} is reminent ... you can kill this."
-					exit
-				fi
+#			echo " -n ${ppart} ]] && [[ ${plabel} != ${POOL}"
+#			if [[ -n ${ppart} ]] && [[ ${plabel} != ${POOL} ]] 
+#			then
+#				if [[ -z ${rpool} ]]
+#				then
+#					echo "${plabel} is reminent ... you can kill this."
+#					exit
+#				fi
+#				# another pool exists on the claimed disk
+#				echo "${plabel} exists on ${ppart} ... not ${POOL}, invalid configuration, must exit."
+#				exit
+#			fi
+
+#			echo "-z ${disky}"
+#			if [[ -z ${disky} ]] 
+#			then
 				# another pool exists on the claimed disk
-				echo "${plabel} exists on ${ppart} ... not ${POOL}, invalid configuration, must exit."
-				exit
-			fi
-
-			echo "-z ${disky}"
-			if [[ -z ${disky} ]] 
-			then
-				# another pool exists on the claimed disk
-				echo "${disk} is not present"
-				exit
-			fi
-
-	#		clear_mounts ${disk}
-	#		sgdisk --zap-all ${disk}
-	#		partprobe
+#				echo "${disk} is not present"
+#				exit
+#			fi
 
 
-			zpool create ${options} \
-				-O acltype=posixacl \
-				-O compression=lz4 \
-				-O dnodesize=auto \
-				-O normalization=formD \
-				-O relatime=on \
-				-O xattr=sa \
-				-O encryption=aes-256-gcm \
-				-O keyformat=hex \
-				-O keylocation=file:///srv/crypto/zfs.key \
-				-O mountpoint=/srv/zfs/${POOL} ${POOL} \
-				$(echo "${parts}" | grep '.3')
-
-
-
-			pdset="${safe_src%@*}"
+			#pdset="${safe_src%@*}"
 			#version="$(getKVER ${offset}))"
-			version="$(getKVER)"
+			#version="$(getKVER)"
 
 			# redefine offset if new pool created
-			offset="$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')"
+			#offset="$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')"
 
-			fsType=$(blkid "$(echo "${parts}" | grep '.2')" | awk '{print $4}')
-			fsType=${fsType#=*}
-			fsType="$(echo $fsType | tr -d '"')"
-			fsType=${fsType#TYPE=*}
+			#fsType=$(blkid "$(echo "${parts}" | grep '.2')" | awk '{print $4}')
+			#fsType=${fsType#=*}
+			#fsType="$(echo $fsType | tr -d '"')"
+			#fsType=${fsType#TYPE=*}
 			#echo "FSTYPE @ $fsType"
-			echo "fsType = $fsType" 2>&1
+			#echo "fsType = $fsType" 2>&1
 
-			if [ "$fsType" = 'vfat' ]
-			then
-				echo "OFFSET ============ ${offset}"
-				mount -v "$(echo "${parts}" | grep '.2')" ${offset}/boot
-				echo "sending $source to ${offset}/boot"
+#			if [ "$fsType" = 'vfat' ]
+#			then
+#				echo "OFFSET ============ ${offset}"
+#				mount -v "$(echo "${parts}" | grep '.2')" ${offset}/boot
+#				echo "sending $source to ${offset}/boot"
 
+#
+#				ls ${offset}/boot/${dsrc}
 
-				ls ${offset}/boot/${dsrc}
+#				rm ${offset}/boot/${dsrc} -R
 
-				rm ${offset}/boot/${dsrc} -R
-
-				echo "${source#*://}"
+#				echo "${source#*://}"
 				#sleep 30
 
-				echo "${ksrc}${kver} --output $offset/boot/LINUX/"
-				echo "mv ${offset}/boot/LINUX/${ksrc#*://}${kver} ${offset}/boot/LINUX/"
+#				echo "${ksrc}${kver} --output $offset/boot/LINUX/"
+#				echo "mv ${offset}/boot/LINUX/${ksrc#*://}${kver} ${offset}/boot/LINUX/"
 
-				wget -r --no-verbose ${ksrc}${kver} -P $offset/boot/LINUX/
-				mv ${offset}/boot/LINUX/${ksrc#*://}${kver} ${offset}/boot/LINUX/
-				tempdir=${ksrc#*://}
-				echo "${tempdir} ... tempdir"
-				tempdir=${tempdir%/kernels*}					
-				echo "${tempdir} ... tempdir"
-				echo "rm ${offset}/boot/LINUX/${tempdir} -R"
-				rm ${offset}/boot/LINUX/${tempdir} -R
+#				wget -r --no-verbose ${ksrc}${kver} -P $offset/boot/LINUX/
+#				mv ${offset}/boot/LINUX/${ksrc#*://}${kver} ${offset}/boot/LINUX/
+#				tempdir=${ksrc#*://}
+#				echo "${tempdir} ... tempdir"
+#				tempdir=${tempdir%/kernels*}					
+#				echo "${tempdir} ... tempdir"
+#				echo "rm ${offset}/boot/LINUX/${tempdir} -R"
+#				rm ${offset}/boot/LINUX/${tempdir} -R
 
-				echo "${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz"
-				curl -L ${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz
+#				echo "${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz"
+#				curl -L ${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz
 
-				echo "decompressing modules...  $offset/modules.tar.gz"
-				pv $offset/modules.tar.gz | tar xzf - -C ${offset}
-				rm ${offset}/modules.tar.gz
+#				echo "decompressing modules...  $offset/modules.tar.gz"
+#				pv $offset/modules.tar.gz | tar xzf - -C ${offset}
+#				rm ${offset}/modules.tar.gz
 
 					# MODIFY FILES
-				echo "adding EFI ENTRY to template location $version ;; $pdset"
-				echo "version = $version, dset = $dset  pdset = $pdset" 2>&1
-					add_efi_entry ${version} ${pdset} ${offset}
+#				echo "adding EFI ENTRY to template location $version ;; $pdset"
+#				echo "version = $version, dset = $dset  pdset = $pdset" 2>&1
+#					add_efi_entry ${version} ${pdset} ${offset}
 			
-				echo "syncing write to boot drive..."
-				sync
-					umount -v ${offset}/boot
-			fi
+#				echo "syncing write to boot drive..."
+#				sync
+#					umount -v ${offset}/boot
+#			fi
 
-			if [ ! "$fsType" = 'vfat' ]
-			then
-				echo "invalid partition"
-			fi
+#			if [ ! "$fsType" = 'vfat' ]
+#			then
+#				echo "invalid partition"
+#			fi
 
-			if [ -z "$fsType" ]
-			then
-				echo "...no parition detected"
-			fi
+#			if [ -z "$fsType" ]
+#			then
+#				echo "...no parition detected"
+#			fi
 		
 
 		#zpool_partition="$(blkid | \grep ${disk} | \grep 'zfs_member')"
@@ -664,12 +569,12 @@ function setup_boot()
 		#zpool_label="$(blkid | grep "${zpool_partition}" | awk '{print $2}' | tr -d '"')"
 		#zpool_label="$(echo ${zpool_label#=*} | uniq)"
 
-		echo "sending over ${dSet}@safe to ${safe_src%@*}" 
-		echo "------------------------------------------------------"
+#		echo "sending over ${dSet}@safe to ${safe_src%@*}" 
+#		echo "------------------------------------------------------"
 			
-		zfs send ${dSet}@safe | pv | zfs recv ${safe_src%@*}
+#		zfs send ${dSet}@safe | pv | zfs recv ${safe_src%@*}
 
-		echo "///////////////////////////////////////////////////////"
+#		echo "///////////////////////////////////////////////////////"
  
  }
 
@@ -767,7 +672,7 @@ function zfs_keys()
 			then
 				# possible locations are : http/s, file:///, prompt, pkcs11:
 				# only concerned with file:///
-				location_type="${location%:///*}"
+     				location_type="${location%:///*}"
 				if [ $location_type == 'file' ]
 				then
 					# if not, then probably https:/// ....
@@ -802,6 +707,7 @@ function clear_mounts()
 	#echo "umount $mountpoint"
 
     dir="$(echo "$offset" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
+
 	if [[ -n "$(echo $dir | grep '/dev/')" ]]
 	then
 		dir="${dir}"
@@ -809,19 +715,19 @@ function clear_mounts()
 		dir="${dir}\/"
 	fi
 
-
 	output="$(cat /proc/mounts | grep "$dir" | wc -l)"
-	echo "$output mounts to be removed" 2>&1
+	echo "$output mounts to be removed" 
+
 	while [[ "$output" != 0 ]]
 	do
 		#cycle=0
 		while read -r mountpoint
 		do
-
 			#echo "umount $mountpoint"
 			#read
 			umount $mountpoint > /dev/null 2>&1
-		
+			#sleep 5
+
 									# \/ ensures that the root reference is not unmounted
 		done < <(cat /proc/mounts | grep "$dir" | awk '{print $2}')
 		#echo "cycles = $cycle"
@@ -830,62 +736,26 @@ function clear_mounts()
 }
 
 
+	echo "FUCK"
 
-
-
-# check mount, create new mount ?
-#export PYTHONPATH=""
-
-#export -f users
-#export -f locales
-#export -f system
-#export -f services
-#export -f install_modules
-
-dataset=""				#	the working dataset of the installation
-directory=""			# 	the working directory of the prescribed dataset
-profile=""				#	the build profile of the install
-selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
-
-    for x in $@
-    do
-        case "${x}" in
-            work=*)
-                #? zfs= btrfs= generic= tmpfs=
-            	directory="$(zfs get mountpoint ${x#*=} 2>&1 | sed -n 2p | awk '{print $3}')"
-                dataset="${x#*=}"
-            ;;
-        esac
-    done
-
-  
-#	NEED TO ADD this software to the deployment image, or a link to it through a shared f/s
-#	NEED TO ADD AUTOFS COMMON MOUNTS.	/etc/autofs/common.conf
-#
-#
-#
-#
-#
+	dataset=""				#	the working dataset of the installation
+	directory=""			# 	the working directory of the prescribed dataset
+	profile=""				#	the build profile of the install
+	selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
 
 	for x in $@
 	do
 		case "${x}" in
 			boot=*)
-				if [[ -n "${dataset}" ]]
-				then
-
-
-
-					#echo "BOOT THIS MOTHER FUCKA !"
-					setup_boot ${dataset}	${x#*=}
-
-					# REBUILD INITRAMFS, for the ON DISK DATASET ONLY
-					# AFTER UPDATE SCRIPT, 
-
-
-				else
-					echo "work is undefined"
-				fi
+				_destination=${x#*=}
+			;;
+			work=*)
+				_source=${x#*=}
 			;;
 		esac
 	done
+
+	if [[ -n ${_source} ]] && [[ -n ${_destination} ]]
+	then
+		setup_boot ${_source} ${_destination}
+	fi

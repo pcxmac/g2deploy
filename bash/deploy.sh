@@ -181,7 +181,7 @@ function buildup()
 	fi
 	echo "finished clear_fs ... $offset"
 
-	files="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/release.mirrors ${selection})"
+	files="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors ${selection})"
 	filexz="$(echo "${files}" | grep '.xz$')"
 	fileasc="$(echo "${files}" | grep '.asc$')"
 	serverType="${filexz%//*}"
