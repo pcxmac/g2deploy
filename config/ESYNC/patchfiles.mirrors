@@ -1,1 +1,1 @@
-ftp://10.1.0.1/patchfiles
+ssh://root@10.1.0.1:/var/lib/portage/patchfiles/

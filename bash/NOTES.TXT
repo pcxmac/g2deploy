@@ -12,8 +12,9 @@ fix the boot= so that it accounts for realized partition names, and not assumed 
 	
 	userflags for chromium and vscode are bunkem
 	
-	invalid transitions /dev, owned by portage, on boot (from deploy.sh)
+	invalid transitions /dev, owned by portage, on boot (from deploy.sh) (STILL, PORTAGE OWNS ROOT/)
 	
 	no networking devices like virbr0
 	
+	MODULES NOT BEING INSTALLED PROPERLY, OR AT ALL, MISSING IN FACT
 	

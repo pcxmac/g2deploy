@@ -83,7 +83,7 @@
                 	;;
 				esac
 			;;
-          	http | ftp)
+          	http | ftp )
 				case "${type##*/}" in
             		release*)
 						locationStr="$release_base_string"

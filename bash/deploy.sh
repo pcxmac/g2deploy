@@ -14,6 +14,87 @@
 	SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 	SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
+function mget() 
+{
+
+
+	echo "$1 | $2" >&2
+
+
+	local url="$(echo "$1" | tr -d '*')"			# source_URL 
+	local destination=$2	# destination_FS
+
+	echo "${url} | ${destination}" >&2
+
+	case ${url%://*} in
+		# local rsync only
+		rsync)	
+			rsync -av ${url} ${destination}
+		;;
+		# local websync only
+		http|ftp)
+			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination}	--show-progress
+			mv ${destination}/${url#*://}* ${destination}/
+			url=${url#*://}
+			url=${url%%/*}
+			echo "${url}" 2>&1
+			rm ${destination}/${url} -R 
+		;;
+
+		# local download only
+		ssh)
+			host=${url#*://}
+			source=${host#*:/}
+			host=${host%:/*}
+			offset=$(echo "$source" | cut -d "/" -f1)
+
+			# ssh://root@10.1.0.1:/var/lib/portage/patchfiles/
+
+			ssh ${host} "tar cf - /${source}/" | pv --timer --rate | tar xf - -C ${destination}/
+
+			#ssh root@10.1.0.1 "tar cf - /var/lib/portage/patchfiles/" | pv --timer --rate | tar xf - -C /srv/zfs/wSys/systemd/var/lib/portage/patchfiles/
+
+			#destination="/srv/zfs/wSys/systemd"
+			#source="/var/lib/portage/patchfiles"
+			#offset="/var"
+
+			mv ${destination}/${source} ${destination}/__temp
+
+			rm ${destination}/${offset} -R
+			mv ${destination}/__temp/* ${destination}
+			rm ${destination}/__temp -R
+
+			sleep 10
+		;;
+
+		# local file move only
+		file|*)
+			host=${url#*://}
+			source=${host#*:/}
+			host=${host%:/*}
+
+			#echo "WTF ${url#*://}" 2>&1
+			if [[ ! -d "${url#*://}" ]] && [[ ! -f "${url#*://}" ]]; then exit; fi
+			if [[ ! -d "${destination}" ]]; then mkdir -p "${destination}"; fi
+
+			tar cf - /${source} | pv --timer --rate | tar xf - -C ${destination}/
+			mv ${destination}/${source} ${destination}/__temp
+			
+			offset=$(echo "$source" | cut -d "/" -f2)
+
+			rm ${destination}/${offset} -R
+			mv ${destination}/__temp/* ${destination}
+			rm ${destination}/__temp -R
+		;;
+	esac
+	case ${url%://*} in
+		http|ftp|ssh|file|'')
+
+		;;
+	esac
+}
+
+
 function getKVER() 
 {
 
@@ -217,6 +298,13 @@ function buildup()
 	mkdir -p ${offset}/var/lib/portage/distfiles
 	mkdir -p ${offset}/srv/crypto/
 	mkdir -p ${offset}/var/lib/portage/repos/gentoo
+}
+
+
+function mounts()
+{
+    #echo "getting stage 3"
+	local offset=$1
 
 	mSize="$(cat /proc/meminfo | column -t | grep 'MemFree' | awk '{print $2}')"
 	mSize="${mSize}K"
@@ -240,9 +328,10 @@ function buildup()
 	ls ${offset}/var/lib/portage/binpkgs
 }
 
+
 function system()
 {
-	emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y"
+	emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y"
 	#emergeOpts="--buildpkg=n --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"
 
 	echo "BASIC TOOLS EMERGE !!!!!"
@@ -276,7 +365,7 @@ function install_kernel()
 	kver="${kver#*linux-}"
 	ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
 
-	emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y "
+	emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y binpkg-changed-deps"
 
 	echo "${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz"
 	curl -L ${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz
@@ -300,7 +389,11 @@ function patches()
 	local lineNum=0
 
     echo "patching system files..." 2>&1
-    rsync -a --info=progress2 /var/lib/portage/patchfiles/ ${offset}
+
+	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors *)"	
+	mget ${psrc} ${offset}
+	#rsync is owning the topmost directory (root of file system) w/ owner of remote, which is probably portage, so force own root.
+	chown root.root ${offset}
 
 	#
 	#	build profile musl throws this in to the trash, lots of HTML/XML are injected
@@ -451,11 +544,16 @@ function pkgProcessor()
         esac
     done
 
-	echo $(getKVER)
+#	echo $(getKVER)
 
 	clear_mounts ${directory}
 
+#	NEEDS A MOUNTS ONLY PORTION.
+
 	buildup ${_profile} ${directory} ${dataset}
+
+	mounts ${directory}
+
 	zfs_keys ${dataset}
 	echo "certificates ?"
 
@@ -478,6 +576,8 @@ function pkgProcessor()
 
 	chroot ${directory} /bin/bash -c "services ${services_URL}"
 	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key ${dataset}
+
+	patches ${directory} ${_profile}
 
 	clear_mounts ${directory}
 	ls ${offset}

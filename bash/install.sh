@@ -114,28 +114,47 @@ function mget()
 			echo "${url}" 2>&1
 			rm ${destination}/${url} -R 
 		;;
+
 		# local download only
 		ssh)
 			host=${url#*://}
 			source=${host#*:/}
 			host=${host%:/*}
-			echo "${host}:/${source} ${destination}" 2>&1
-			#scp -rq ${host}:/${source}/* ${destination}/
-			#ssh ${shost} 'tar czf - /${source}/' | pv --timer --rate | tar xzf - -C ${destination}/
-			ssh ${shost} 'tar cf - /${source}/' --use-compress-program="pigz -p 8" | pv --timer --rate | tar xzf - -C ${destination}/
 
+			ssh ${host} "tar cf - /${source}/" --use-compress-program="pigz -p $(nproc)" | pv --timer --rate |  pigz -d -p $(nproc) | tar xf - -C ${destination}/
+			mv ${destination}/${source} ${destination}/__temp
+			offset=$(echo "$source" | cut -d "/" -f1)
+			rm ${destination}/${offset} -R
+			mv ${destination}/__temp/* ${destination}
+			rm ${destination}/__temp -R
 		;;
+
 		# local file move only
 		file|*)
+			host=${url#*://}
+			source=${host#*:/}
+			host=${host%:/*}
+
 			#echo "WTF ${url#*://}" 2>&1
 			if [[ ! -d "${url#*://}" ]] && [[ ! -f "${url#*://}" ]]; then exit; fi
 			if [[ ! -d "${destination}" ]]; then mkdir -p "${destination}"; fi
-			rsync -a ${url#*://}	${destination} --info=progress2 
+
+			tar cf - /${source} | pv --timer --rate | tar xf - -C ${destination}/
+			mv ${destination}/${source} ${destination}/__temp
+			
+			offset=$(echo "$source" | cut -d "/" -f2)
+
+			rm ${destination}/${offset} -R
+			mv ${destination}/__temp/* ${destination}
+			rm ${destination}/__temp -R
+		;;
+	esac
+	case ${url%://*} in
+		http|ftp|ssh|file|'')
+
 		;;
 	esac
 }
-
-
 
 function setup_boot()	
 {
@@ -214,6 +233,9 @@ function setup_boot()
 				;;
 				#	use tar & pv to move files between paths
 				ext4|xfs|ntfs)
+
+					# NTFS DOES NOT SUPPORT PERMISSIONS/OWNERSHIP WELL, PLEASE SKIP
+
 					source=${shost#*:}
 					spool=${source}
 					shost=""
@@ -246,16 +268,14 @@ function setup_boot()
 					ddataset=${destination##*/}
 					ddataset=${ddataset%@*}
 					dhost="${dhost%:*}"
-					dpath="/srv/btrfs/${dpool}"
-					if [[ ! -d ${dpath} ]]
-					then 
-						mkdir -p ${dpath}
-					fi
+					dpath="/srv/btrfs/${dpool}/${ddataset}"
+
 				;;
 				ext4|xfs|ntfs)
 					destination=${dhost#*:}
-					dpool=${destination#*/}
-					ddataset=""
+					dpool=${destination%/*}
+					ddataset=${destination##*/}
+					ddataset=${ddataset%@*}
 					dhost="${dhost%:*}"
 					dpath=${destination}
 				;;
@@ -265,12 +285,12 @@ function setup_boot()
 			echo "DESTINATION | type = ${dtype} ; target : $dhost ; pool/dataset/snapshot = [$dpool][$ddataset][$dsnapshot] :: destination =  ${dpath}"
 			echo "#########################################################################################################"
 
-
 			disk=${dhost}
 
 			clear_mounts ${disk}
 			sync
 			sgdisk -Z ${disk}
+			wipefs -af ${disk}
 			partprobe
 			sync
 
@@ -278,17 +298,27 @@ function setup_boot()
 			sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
 			sgdisk --new 3:0 -t 3:8300 ${disk}
 
+
 			clear_mounts ${disk}
 			partprobe
 			sync
 
 			parts="$(ls -d /dev/* | grep "${disk}")"
+
+			wipefs -af "$(echo "${parts}" | grep '.2')"
+			wipefs -af "$(echo "${parts}" | grep '.3')"
+
 			mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
 
 			options="-f"
 
 			mount | grep ${disk}
 			echo "format user partition { $parts }"
+
+			if [[ ! -d ${dpath} ]]
+			then 
+				mkdir -p ${dpath}
+			fi
 
 			case ${dtype} in
 				zfs)
@@ -308,17 +338,20 @@ function setup_boot()
 				btrfs)
 					mount | grep ${disk}
 					mkfs.btrfs $(echo "${parts}" | grep '.3') -L ${dpool} -f
-					mount $(echo "${parts}" | grep '.3') ${dpath}
-					btrfs subvolume create ${dpath}/${ddataset}
+					btrfs subvolume create ${dpath}
+					mount -t ${dtype} $(echo "${parts}" | grep '.3') ${dpath}
 				;;
 				xfs)
-					mkfs.xfs $(echo "${parts}" | grep '.3') -L ${dpool} -f
+					mkfs.xfs $(echo "${parts}" | grep '.3') -L ${ddataset} -f
+					mount -t ${dtype} $(echo "${parts}" | grep '.3') ${dpath}
 				;;
 				ntfs)
-					mkfs.ntfs $(echo "${parts}" | grep '.3') -L ${dpool} -f
+					mkfs.ntfs $(echo "${parts}" | grep '.3') -L ${ddataset} -f
+					mount -t ${dtype} $(echo "${parts}" | grep '.3') ${dpath}
 				;;
 				ext4)
-					mkfs.ext4 $(echo "${parts}" | grep '.3') -L ${dpool} -F
+					mkfs.ext4 $(echo "${parts}" | grep '.3') -L ${ddataset} -F
+					mount -t ${dtype} $(echo "${parts}" | grep '.3') ${dpath}
 				;;
 			esac
 
@@ -348,46 +381,57 @@ function setup_boot()
 
 			# compression send
 			else 
-			# remote source to local destination
 
+			# remote source to local destination
 				#	precursors for 'rough'
-				if [[ ${dtype} == 'zfs' ]]; then zfs create ${dpool}/${ddataset}; fi
+				#if [[ ${dtype} == 'zfs' ]]; then zfs create ${dpool}/${ddataset}; fi
 
 				case ${shost} in
 				# local source to local destination
 					'')
+#						echo "mget ${spath}/ ${dpath%*/}"
+	
+						echo "mget : ${stype} | ${shost} | ${spath}<  >${dpath}<"
+						echo "path = ${dpath}${spath}/"
 
+						url="${stype}://${shost}:${spath}/"
+						echo "url(1) = ${url}"
+						url=${url#*://}
+						echo "url(2) = ${url}"
+						url=${url#*:/}
+						echo "url(3) = ${url}"
 
-						#
-						mget ${spath}/ ${dpath%*/}/${ddataset}/
-
-						#mv ${dpath} ${dpath%*/}/${ddataset}
-						#tar czf - ${spath} | pv --timer --rate | tar xvzf - -C ${dpath}
+						mget ${spath}/ ${dpath}
+	
 					;;
 					*)
-						# btrfs - copies over the sdataset, so dpath/sdataset
-						# zfs - instantiates a new dataset, so dpath/ddataset
-						# other - ${src} >> goes to the root space of a disk, so ${dpath}=/dev/XXX mnt point
-						#echo "***********************************************************"
-						#echo "mget ssh://${shost}:${spath}/ ${dpath%*/}/${ddataset}/"
-						#echo "***********************************************************"
-						mget ssh://${shost}:${spath}/ ${dpath%*/}/${ddataset}/
 
-						#ssh ${shost} 'tar czf - ${spath}' | pv --timer --rate | tar xvzf - -C ${dpath}
+						echo "mget ssh://${shost}:${spath}/ ${dpath}"
+						echo "path = ${dpath%*/}${spath}"
+
+						url="ssh://${shost}:${spath}/"
+						echo "url(1) = ${url}"
+						url=${url#*://}
+						echo "url(2) = ${url}"
+						url=${url#*:/}
+						echo "url(3) = ${url}"
+
+
+						mget ssh://${shost}:${spath}/ ${dpath}
 					;;
 				esac
+
 			fi
 
+			mount "$(echo "${parts}" | grep '.2')" /boot
 
 			boot_src="ftp://10.1.0.1/patchfiles/boot/*"
 
 			echo "mget ${boot_src} /boot"
 
-			mount "$(echo "${parts}" | grep '.2')" /boot
-			#mget ${boot_src} /boot
-			umount /boot
+			mget ${boot_src} /boot
 
-			exit
+			umount /boot
 
 
 
