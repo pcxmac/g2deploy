@@ -4,31 +4,31 @@
     #           WORK=chroot offset		- working directory for install, skip if exists (DEPLOY).
 	#			BOOT=/dev/sdX			- install to boot device, after generating image
 	#			RECV=XXX				- RECV from server remotely, requires the host to be booted through medium, and mounted (ALL F/S) BTRFS+ZFS are block sends
-	#			
+	#
 
-	#	future features : 	
+	#	future features :
 	#		test to see if pool exists, add new zfs datasets if no dataset, other partition types.
-	#		boot medium, 
-	#		
+	#		boot medium,
+	#
 
 	SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 	SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
-function mget() 
+function mget()
 {
 
 
 	echo "$1 | $2" >&2
 
 
-	local url="$(echo "$1" | tr -d '*')"			# source_URL 
+	local url="$(echo "$1" | tr -d '*')"			# source_URL
 	local destination=$2	# destination_FS
 
 	echo "${url} | ${destination}" >&2
 
 	case ${url%://*} in
 		# local rsync only
-		rsync)	
+		rsync)
 			rsync -av ${url} ${destination}
 		;;
 		# local websync only
@@ -38,7 +38,7 @@ function mget()
 			url=${url#*://}
 			url=${url%%/*}
 			echo "${url}" 2>&1
-			rm ${destination}/${url} -R 
+			rm ${destination}/${url} -R
 		;;
 
 		# local download only
@@ -568,19 +568,22 @@ function pkgProcessor()
 
 	chroot ${directory} /bin/bash -c "system"
 
-	chroot ${directory} /bin/bash -c "install_modules"
+	#chroot ${directory} /bin/bash -c "install_modules"
 
 	chroot ${directory} /bin/bash -c "users ${_profile}"
 
 	services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors * )/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
 
 	chroot ${directory} /bin/bash -c "services ${services_URL}"
+
 	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key ${dataset}
 
 	patches ${directory} ${_profile}
 
 	clear_mounts ${directory}
+
 	ls ${offset}
+
 	zfs snapshot ${dataset}@safe
 
 	# potential cleanup items
