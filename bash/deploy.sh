@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 
     # INPUTS    BUILD=(ex.)'hardened'  	- build profile
     #           WORK=chroot offset		- working directory for install, skip if exists (DEPLOY).
@@ -246,13 +246,14 @@ function buildup()
 	local profile=$1
 	local offset=$2
 	local dSet=$3
+	local selection=$4
 
-	setExists=
+	#setExists=
 	snapshot="$(zfs list -o name -t snapshot | sed '1d' | grep '${dset}')"
 
 	# VERIFY ZFS MOUNT IS in DF
-	echo "prepfs ~ $offset"
-	echo "deleting old files (calculating...)"
+	echo "prepfs ~ $offset" 2>&1
+	echo "deleting old files (calculating...)" 2>&1
 	count="$(find $offset/ | wc -l)"
 	if [[ $count > 1 ]]
 	then
@@ -260,14 +261,18 @@ function buildup()
 	else
 		echo -e "done "
 	fi
-	echo "finished clear_fs ... $offset"
+	echo "finished clear_fs ... $offset" 2>&1
+
+	echo ${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors ${selection} 2>&1
+	echo $(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors ${selection}) 2>&1
 
 	files="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors ${selection})"
 	filexz="$(echo "${files}" | grep '.xz$')"
 	fileasc="$(echo "${files}" | grep '.asc$')"
 	serverType="${filexz%//*}"
 
-	echo "X = ${serverType%//*} :: $files @ $profile"
+	echo "X = ${serverType%//*} :: $files @ $profile" 2>&1
+
 
 	case ${serverType%//*} in
 		"file:/")
@@ -511,6 +516,8 @@ function pkgProcessor()
 
                 selection="${x#*=}"
 
+				echo "ZDRAT + ${x#*=}"
+
                 case "${x#*=}" in
                     # special cases for strings ending in selinux, and systemd as they can be part of a combination
                     #'musl')
@@ -544,13 +551,12 @@ function pkgProcessor()
         esac
     done
 
-#	echo $(getKVER)
-
 	clear_mounts ${directory}
 
 #	NEEDS A MOUNTS ONLY PORTION.
 
-	buildup ${_profile} ${directory} ${dataset}
+
+	buildup ${_profile} ${directory} ${dataset} ${selection}
 
 	mounts ${directory}
 

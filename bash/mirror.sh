@@ -38,16 +38,14 @@
 					release*)
 						if [[ "$release_base_string" != "invalid" ]];	then
 							locationStr="$release_base_string"
+							echo $locationStr
 							urlBase="${server#*://}${locationStr}"
 							selectStr="${locationStr#*current-*}"
 							selectStr="${selectStr%*/}"
 							urlCurrent_xz="$(ls $urlBase | grep "$selectStr" | grep ".xz$")"
 							urlCurrent_asc="$(ls $urlBase | grep "$selectStr" | grep ".asc$")"
-							# redefine urlBase for correct URL format, file:/// relative file reference is invalid
 							urlBase="${server}${locationStr}"
 							if [[ -n $urlCurrent_xz ]];	then
-								#echo "$urlBase"
-								#echo "$urlCurrent_xz"								
 								echo "${urlBase}${urlCurrent_xz}"
 								echo "${urlBase}${urlCurrent_asc}"
 								exit
@@ -75,6 +73,7 @@
 			rsync)
 				case "${type##*/}" in
             		release*)
+						#echo "$release_base_string"
 						if [[ -z $release_base_string ]];	then	echo "${server}";	exit;	fi
 					;;
 					bin*|pack*|kernel*|dist*|repos*|snaps*|patch*)
@@ -83,7 +82,7 @@
                 	;;
 				esac
 			;;
-          	http | ftp )
+          	http*|ftp)
 				case "${type##*/}" in
             		release*)
 						locationStr="$release_base_string"
