@@ -1,7 +1,9 @@
 #!/bin/bash
-
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
+
+source ./include.sh
+
 
 /sbin/rc-service rsyncd stop
 /sbin/rc-service lighttpd stop

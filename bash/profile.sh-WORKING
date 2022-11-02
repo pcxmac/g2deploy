@@ -1,4 +1,6 @@
 #!/bin/bash
+SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
+SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 
 # ARGS = work=$
@@ -14,79 +16,7 @@
 	#		boot medium,
 	#
 
-SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
-SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
-
-function getKVER() 
-{
-	url_kernel="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
-	kver="$(curl ${url_kernel} | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep '.tar.gz$')"
-	kver=${kver%.tar.gz*}
-	echo ${kver}
-}
-
-function zfs_keys() 
-{
-	local dataset=$1
-    local offset=$2
-	local pools="$dataset"
-	
-	for i in $pools
-	do
-		listing="$(zfs list | grep "$i/" | awk '{print $1}')"
-
-		for j in $listing
-		do
-			dSet="$j"
-			if [ "$dSet" == '-' ]
-			then
-				format="N/A"
-				location="N/A"
-				else
-				format="$(zfs get keyformat $dSet | awk '{print $3}' | sed -n '2 p')"
-				location="$(zfs get keylocation $dSet | awk '{print $3}' | sed -n '2 p')"
-			fi
-
-			if [ $format == 'raw' ] || [ $format == 'hex' ]
-			then
-				location_type="${location%:///*}"
-				if [ $location_type == 'file' ]
-				then
-					source="${location#*//}"
-					destination="${source%/*}"
-					destination="$offset$destination"
-					if test -f "$source"; then
-						cp $source $destination
-					fi
-				fi
-			fi
-		done
-	done
-}
-
-function clear_mounts()
-{
-	local offset=$1
-    dir="$(echo "$offset" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
-	if [[ -n "$(echo $dir | grep '/dev/')" ]]
-	then
-		dir="${dir}"
-	else
-		dir="${dir}\/"
-	fi
-
-	output="$(cat /proc/mounts | grep "$dir" | wc -l)"
-	echo "$output mounts to be removed" 2>&1
-	while [[ "$output" != 0 ]]
-	do
-		#cycle=0
-		while read -r mountpoint
-		do
-			umount $mountpoint > /dev/null 2>&1
-		done < <(cat /proc/mounts | grep "$dir" | awk '{print $2}')
-		output="$(cat /proc/mounts | grep "$dir" | wc -l)"
-	done
-}
+source ./include.sh
 
 function mounts()
 {
@@ -140,12 +70,6 @@ function pkgProcessor()
 	echo "${diffPkgs}" > ${offset}/package.list
 }
 
-function getG2Profile() {
-	local mountpoint=$1
-	local result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
-	result="${result#*.[0-9]/}"
-	echo $result
-}
 
 ###################################################################################################################################
 

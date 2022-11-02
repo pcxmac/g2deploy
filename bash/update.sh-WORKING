@@ -1,5 +1,7 @@
 
 #!/bin/bash
+SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
+SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
     # INPUTS    
     #           WORK=chroot offset		- update working directory
@@ -13,27 +15,7 @@
 	#		
 	#		
 
-
-SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
-SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
-
-
-function getZFSMountPoint (){
-	local dataset=$1
-	echo "$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
-}
-
-function getG2Profile() {
-	local current="17.1"
-	#dataset=$1 
-	#mountpoint=getZFSMountPoint $dataset
-	local mountpoint=$1
-	local result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
-	result="${result#*/$current/}"
-	echo $result
-}
-
-
+source ./include.sh
 
 # DESIGNATE A WORKING DIRECTORY TO 
 for x in $@

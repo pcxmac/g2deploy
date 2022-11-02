@@ -8,6 +8,11 @@
 #			SNAPSHOTS	:	echo the URL for snapshot sync (system initialization) ... (file|rsync://)
 #			DISTFILES	:	echo the URL for distfile sync (file|rsync://)
 #			REPOS		:	echo the URL for repos sync (file|rsync://)
+SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
+SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
+
+source ./include.sh
+
 
 	profile="$2"
 	type="$1"
