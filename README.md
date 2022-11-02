@@ -43,7 +43,7 @@ portage/
 working on:
 
   btrfs+xfs+ext4 integration [ install.sh ]
-
+  UPDATE deploy script, modernize w/ mget() on some ops, like install_kernel
 
 
 needs:
