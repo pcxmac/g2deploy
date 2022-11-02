@@ -6,7 +6,8 @@ HOW TO USE:
 
 
   ./install.sh WORK=zfs://root@host:/ZPOOL/DATASET BOOT=zfs:///dev/sda:/srv/zfs/ZPOOL/DATASET_MNTPT
-
+  ./install.sh work=zfs://wSys/hardened@safe boot=zfs:///dev/sda:/usb/g1
+  
   ./mirror.sh ../config/[type].mirrors [PROFILE-releases.mirrors]
 
   ./update.sh WORK=[...]
@@ -19,10 +20,6 @@ HOW TO USE:
 issues / dependencies :
 
   install will assume the originating dataset's key and mount points, also install does not have a schema build system, where as multiple disks and custom properties cannot be asserted conveniently. 
-
-
-
-
 
 
 portage/

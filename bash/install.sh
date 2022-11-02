@@ -315,6 +315,8 @@ function setup_boot()
 			mount | grep ${disk}
 			echo "format user partition { $parts }"
 
+			echo "dpath = $dpath, dtype = $dtype"
+
 			if [[ ! -d ${dpath} ]]
 			then 
 				mkdir -p ${dpath}
@@ -431,6 +433,12 @@ function setup_boot()
 
 			mget ${boot_src} /boot
 
+			kversion=$(getKVER)
+			kversion=${kversion%-gentoo*}
+			kversion=${kversion#*linux-}
+
+			add_efi_entry ${kversion} ${dpool}/${ddataset} ${dpath}${ddataset}
+
 			umount /boot
 
 
@@ -439,187 +447,7 @@ function setup_boot()
 
 			$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')
 
-			# pool sees if the pool exists at all, if not, can create, if does, ask to destroy, identify
-			#zpool import -a -f 2>/dev/null
-			#rpool="$(zpool list $POOL | sed '1d' | awk '{print $1}')" 2>/dev/null						# prints pool, if exists
-			#ypool="$(blkid | grep "$POOL" | grep 'zfs_member' | sed 's/.* LABEL=\([^ ]*\).*/\1/' | tr -d '"')"
-			#rpart="$(blkid | grep $POOL | sed 's/.*\/dev\/\([^ ]*\).*/\1/' | tr -d ':')"	# prints partition associated with proposed pool
 
-			# part(ition) and label are associated with the proposed install, if they are present, that means the disk must be destroyed.
-			#part="$(blkid | grep "${disk}" | grep 'zfs_member')"
-			#plabel="$(echo "${part}" | sed 's/.* LABEL=\([^ ]*\).*/\1/' | tr -d '"')"
-			#ppart="$(echo "${part}" | sed 's/.*\/dev\/\([^ ]*\).*/\1/' | tr -d ':')"
-			#disky="$(blkid | grep ${disk})"
-			#disky="$(fdisk -l | grep "${disk}" | awk '{print $2}' | tr -d ':')"
-			#rootfs="$(mount | grep ' / ' | awk '{print $1}')"
-
-			# 	boot = (DST) : { /dev/disk-to-write ; ../config.cfg ; $PATH } ... DOESN'T NEED TO EXIST
-			# 	work = (SRC) : { pool/dataset [btrfs/zfs] ; $PATH [ext4,...] } 
-			# 	PATH = { ext4, ext3, xfs, fuseX, ... }
-			#	btrfs.send -> btrfs.recv | config
-			#	zfs.send -> zfs.recv | config
-			#	btrfs.snapshot (rsync) -> PATH
-			#	zfs.snapshot (rsync) -> PATH
-			#	PATH -> PATH
-			#	PATH -> <CONFIG>
-
-			# ID SRC_TYPE {  }
-			# ID DST_TYPE
-
-			#echo "rpool :: $rpool"		#	-n pool exists w/ zfs
-			#echo "ypool :: $ypool"		#	-n pool exists on blkid (label)						:: $POOL
-			#echo "rpart :: $rpart"		#	-n pool exists on blkid (disk)						:: $POOL
-			#echo "ppart :: $ppart"		#	-n disk exists on blkid / has zfs member (disk)		:: boot=(disk)
-			#echo "plabel :: $plabel"	#	-n label exists on blkid / has zfs member (label)	:: boot=(disk)	
-			
-			# logic - 
-
-			#	if $POOL exists in blkid (ypool), attempt to load it to see if it exists afterwords (rpool), otherwise pool is bunkem
-			#	if proposed pool ($POOL) exists, must destroy, before working on disk ...
-			#	if proposed disk has a pool (part;label) then ask to destroy it ...
-
-			# cases: 
-
-			#	pool is root, cannot be unhinged
-			#	pool is stale
-			#	pool exists
-			#	disk is already configured
-			#	disk is missing
-			#	
-			#	configure disk
-			#	install zpool
-		
-
-#			if [[ ${dSet%/*} == ${POOL} ]] && [[ ${rootfs#*/} == ${dSet#*/} ]]
-#			then
-				# the pool is able to be loaded, and must be destroyed
-#				echo "$POOL/${dSet#*/} is the ${rootfs} [root file system] ... exiting"
-#				exit
-#			fi
-
-
-#			echo "${ypool} == ${rpool} ]] && [[ -n ${ypool}"
-#			if [[ ${ypool} == ${rpool} ]] && [[ -n ${ypool} ]]
-#			then
-				# the pool is able to be loaded, and must be destroyed
-#				echo "pool is already available, needs to be destroyed"
-#				exit
-#			fi
-
-#			echo "-z ${rpool} ]] && [[ -n ${ypool} ]] && [[ ${ypool} == ${POOL}"
-#			if [[ -z ${rpool} ]] && [[ -n ${ypool} ]] && [[ ${ypool} == ${POOL} ]]
-#			then
-				# reminent of an old pool exists, but the disk remains unformatted afterwords
-#				echo "${plabel} is a reminent..., reconfigure the disk"
-#				clear_mounts ${disk}
-#				sgdisk --zap-all ${disk}
-#				partprobe
-#				fdisk -l | grep ${disk}
-				#exit
-#			fi
-
-#			echo " -n ${ppart} ]] && [[ ${plabel} != ${POOL}"
-#			if [[ -n ${ppart} ]] && [[ ${plabel} != ${POOL} ]] 
-#			then
-#				if [[ -z ${rpool} ]]
-#				then
-#					echo "${plabel} is reminent ... you can kill this."
-#					exit
-#				fi
-#				# another pool exists on the claimed disk
-#				echo "${plabel} exists on ${ppart} ... not ${POOL}, invalid configuration, must exit."
-#				exit
-#			fi
-
-#			echo "-z ${disky}"
-#			if [[ -z ${disky} ]] 
-#			then
-				# another pool exists on the claimed disk
-#				echo "${disk} is not present"
-#				exit
-#			fi
-
-
-			#pdset="${safe_src%@*}"
-			#version="$(getKVER ${offset}))"
-			#version="$(getKVER)"
-
-			# redefine offset if new pool created
-			#offset="$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')"
-
-			#fsType=$(blkid "$(echo "${parts}" | grep '.2')" | awk '{print $4}')
-			#fsType=${fsType#=*}
-			#fsType="$(echo $fsType | tr -d '"')"
-			#fsType=${fsType#TYPE=*}
-			#echo "FSTYPE @ $fsType"
-			#echo "fsType = $fsType" 2>&1
-
-#			if [ "$fsType" = 'vfat' ]
-#			then
-#				echo "OFFSET ============ ${offset}"
-#				mount -v "$(echo "${parts}" | grep '.2')" ${offset}/boot
-#				echo "sending $source to ${offset}/boot"
-
-#
-#				ls ${offset}/boot/${dsrc}
-
-#				rm ${offset}/boot/${dsrc} -R
-
-#				echo "${source#*://}"
-				#sleep 30
-
-#				echo "${ksrc}${kver} --output $offset/boot/LINUX/"
-#				echo "mv ${offset}/boot/LINUX/${ksrc#*://}${kver} ${offset}/boot/LINUX/"
-
-#				wget -r --no-verbose ${ksrc}${kver} -P $offset/boot/LINUX/
-#				mv ${offset}/boot/LINUX/${ksrc#*://}${kver} ${offset}/boot/LINUX/
-#				tempdir=${ksrc#*://}
-#				echo "${tempdir} ... tempdir"
-#				tempdir=${tempdir%/kernels*}					
-#				echo "${tempdir} ... tempdir"
-#				echo "rm ${offset}/boot/LINUX/${tempdir} -R"
-#				rm ${offset}/boot/LINUX/${tempdir} -R
-
-#				echo "${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz"
-#				curl -L ${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz
-
-#				echo "decompressing modules...  $offset/modules.tar.gz"
-#				pv $offset/modules.tar.gz | tar xzf - -C ${offset}
-#				rm ${offset}/modules.tar.gz
-
-					# MODIFY FILES
-#				echo "adding EFI ENTRY to template location $version ;; $pdset"
-#				echo "version = $version, dset = $dset  pdset = $pdset" 2>&1
-#					add_efi_entry ${version} ${pdset} ${offset}
-			
-#				echo "syncing write to boot drive..."
-#				sync
-#					umount -v ${offset}/boot
-#			fi
-
-#			if [ ! "$fsType" = 'vfat' ]
-#			then
-#				echo "invalid partition"
-#			fi
-
-#			if [ -z "$fsType" ]
-#			then
-#				echo "...no parition detected"
-#			fi
-		
-
-		#zpool_partition="$(blkid | \grep ${disk} | \grep 'zfs_member')"
-		#zpool_partition="${zpool_partition%*:}"
-		#zpool_label="$(blkid | grep "${zpool_partition}" | awk '{print $2}' | tr -d '"')"
-		#zpool_label="$(echo ${zpool_label#=*} | uniq)"
-
-#		echo "sending over ${dSet}@safe to ${safe_src%@*}" 
-#		echo "------------------------------------------------------"
-			
-#		zfs send ${dSet}@safe | pv | zfs recv ${safe_src%@*}
-
-#		echo "///////////////////////////////////////////////////////"
- 
  }
 
 function decompress() {
@@ -645,16 +473,6 @@ function decompress() {
 	esac
 
 }
-
-### NEED A UNIVERSAL TRANSPORT MECHANISM FOR SYNCING ALL FILES. SCP, RSYNC ?
-#
-#		SYNC() HOST w/ SOURCE
-#		SEND TO SOURCE DESTINATION
-#		RECV FROM SOURCE DESTINATION
-#		COMPRESSION AND ENCRYPTION ARE TRANSPARENT
-#		
-#
-#############################################################################
 
 function compress() {
 	local src=$1
@@ -767,20 +585,14 @@ function clear_mounts()
 		#cycle=0
 		while read -r mountpoint
 		do
-			#echo "umount $mountpoint"
-			#read
 			umount $mountpoint > /dev/null 2>&1
-			#sleep 5
-
 									# \/ ensures that the root reference is not unmounted
 		done < <(cat /proc/mounts | grep "$dir" | awk '{print $2}')
-		#echo "cycles = $cycle"
 		output="$(cat /proc/mounts | grep "$dir" | wc -l)"
 	done
 }
 
-
-	echo "FUCK"
+#########################################################################################################
 
 	dataset=""				#	the working dataset of the installation
 	directory=""			# 	the working directory of the prescribed dataset
@@ -803,3 +615,6 @@ function clear_mounts()
 	then
 		setup_boot ${_source} ${_destination}
 	fi
+
+	echo "synchronizing disks"
+	sync
