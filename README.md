@@ -4,6 +4,8 @@ HOW TO USE:
 
   ./deploy.sh BUILD={PROFILE} WORK=ZPOOL/DATASET DEPLOY
 
+  ./deploy.sh build=plasma work=zpool/plasma deploy
+
   ./install.sh WORK=zfs://root@host:/ZPOOL/DATASET BOOT=zfs:///dev/sda:/srv/zfs/ZPOOL/DATASET_MNTPT
   
   ./install.sh work=zfs://wSys/hardened@safe boot=zfs:///dev/sda:/usb/g1
