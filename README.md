@@ -5,12 +5,12 @@ HOW TO USE:
   ./deploy.sh BUILD={PROFILE} WORK=ZPOOL/DATASET DEPLOY
 
   ./deploy.sh build=plasma work=zpool/plasma deploy
- 
-  ./install.sh work=zfs://wSys/hardened@safe boot=zfs:///dev/sda:/usb/g1
-  
-  ./mirror.sh ../config/[type].mirrors [PROFILE-releases.mirrors]
 
-  ./update.sh WORK=[...]
+  ./update.sh work=pool/set boot=/dev/sdX update
+
+  ./install.sh work=zfs://wSys/hardened@safe boot=zfs:///dev/sda:/usb/g1
+
+  ./mirror.sh ../config/[type].mirrors [PROFILE-releases.mirrors]
 
   ./esync.sh // uses ../config/ESYNC/*.mirrors
 
