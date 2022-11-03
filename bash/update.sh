@@ -5,15 +5,22 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
     # INPUTS    
     #           WORK=chroot offset		- update working directory
-	#			BOOT=/dev/sdX			- up0date existing image
+	#			BOOT=
 	#		
-
-
-
+	#	mounts + binpkgs,
+	#	update patched files
+	#	update kernel (only modules installed, kernel source could be added later, optionally)
+	#	update modules
+	#	update boot spec
+	#	update run time
+	#	unmounts
+	#
+	#
 	#	future features : 	
 	#		test to see if pool exists, add new zfs datasets if no dataset, other partition types.
 	#		
 	#		
+	#	USE = ./update.sh work=pool/set boot=/dev/sdX update
 
 source ./include.sh
 
@@ -22,10 +29,18 @@ for x in $@
 do
 	case "${x}" in
 		work=*)
-			#? zfs= btrfs= generic= tmpfs=
 			directory="$(getZFSMountPoint ${x#*=})"
 			dataset="${x#*=}"
 			
+		;;
+	esac
+done
+
+for x in $@
+do
+	case "${x}" in
+		boot=*)
+			efi_partition="${x#*=}"		
 		;;
 	esac
 done
@@ -36,37 +51,16 @@ do
 	case "${x}" in
 		update)
 #-----------------------------------------------------
-			
+			clear_mounts ${directory}
+			mounts ${directory}
 
-			emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"
-		
+			emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"		
 			profile="$(getG2Profile ${directory})"
-			#profile="shit"
-
 			echo "PROFILE :: ${profile}"
-
-			check_mounts ${directory}
-
-			mount --bind /var/lib/portage/binpkgs ${directory}/var/lib/portage/binpkgs
-			mount --bind /var/lib/portage/distfiles ${directory}/var/lib/portage/distfiles
 
 			patch_files ${directory} ${profile}
 
-
-
-
-			#emerge --sync
-			# sync package masks/keywords/usecases etc... (kernel version is regulated through mask)
-			#emerge -uDn @world --ask=n --buildpkg=y
-
-			current_kernel="linux-$(uname --kernel-release)"
-			latest_kernel="$(eselect kernel list | tail -n 1 | awk '{print $2}')"
-
-			echo "current kernel = ${current_kernel}"
-			echo "latest kernel = ${latest_kernel}"
-
-			eselect kernel set ${latest_kernel}
-
+			install_kernel ${directory}
 
 			if [[ ! -f ./src/${latest_kernel}.tar.gz ]]
 			then

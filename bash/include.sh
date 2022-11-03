@@ -1,4 +1,39 @@
 
+function editboot() 
+{
+	# INPUTS : ${x#*=} - dataset
+	local VERSION=$1
+	local DATASET=$2
+	local offset="$(getZFSMountPoint $DATASET)/boot/EFI/boot/refind.conf"
+	local POOL="${DATASET%/*}"
+	local UUID="$(blkid | grep "$POOL" | awk '{print $3}' | tr -d '"')"
+
+	line_number=$(grep -n "${DATASET} " ${offset}  | cut -f1 -d:)
+	
+	sed -i "/default_selection/c default_selection $DATASET" ${offset}
+
+	# EDIT EXISTING RECORD
+	if [[ -n "${line_number}" ]]
+	then
+		menuL=$((line_number-5))
+		loadL=$((line_number-2))
+		initrdL=$((line_number-1))
+		sed -i "${menuL}s|menuentry.*|menuentry \"Gentoo Linux ${VERSION} ${DATASET}\" |" ${offset}
+		sed -i "${loadL}s|loader.*|loader \\/linux\\/${VERSION}\\/vmlinuz|" ${offset}
+		sed -i "${initrdL}s|initrd.*|initrd \\/linux\\/${VERSION}\\/initramfs|" ${offset}
+	# ADD TO BOOT SPEC
+	else
+		echo "menuentry \"Gentoo Linux $VERSION $DATASET\"" >> ${offset}
+		echo '{' >> ${offset}
+		echo '	icon /EFI/boot/icons/os_gentoo.png' >> ${offset}
+		echo "	loader /linux/${VERSION#*linux-}/vmlinuz" >> ${offset}
+		echo "	initrd /linux/${VERSION#*linux-}/initramfs" >> ${offset}
+		echo "	options \"$UUID dozfs root=ZFS=$DATASET default delayacct rw\"" >> ${offset}
+		echo '	#disabled' >> ${offset}
+		echo '}' >> ${offset}
+	fi
+}
+
 function clear_mounts()
 {
 	local offset=$1
@@ -30,6 +65,51 @@ function clear_mounts()
 		done < <(cat /proc/mounts | grep "$dir" | awk '{print $2}')
 		output="$(cat /proc/mounts | grep "$dir" | wc -l)"
 	done
+}
+
+function mounts()
+{
+    #echo "getting stage 3"
+	local offset=$1
+
+	mSize="$(cat /proc/meminfo | column -t | grep 'MemFree' | awk '{print $2}')"
+	mSize="${mSize}K"
+
+	# MOUNTS
+	echo "msize = $mSize"
+	mount -t proc proc ${offset}/proc
+	mount --rbind /sys ${offset}/sys
+	mount --make-rslave ${offset}/sys
+	mount --rbind /dev ${offset}/dev
+	mount --make-rslave ${offset}/dev
+	# because autofs doesn't work right in a chroot ...
+	mount -t tmpfs -o size=$mSize tmpfs ${offset}/tmp
+	mount -t tmpfs tmpfs ${offset}/var/tmp
+	mount -t tmpfs tmpfs ${offset}/run
+
+
+	echo "attempting to mount binpkgs..."  2>&1
+	# this is to build in new packages for future installs, not always present
+	mount --bind /var/lib/portage/binpkgs ${offset}/var/lib/portage/binpkgs 
+	ls ${offset}/var/lib/portage/binpkgs
+}
+
+function install_kernel()
+{
+	local offset=$1
+	kver="$(getKVER)"
+	kver="${kver#*linux-}"
+	ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
+
+	emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y binpkg-changed-deps"
+
+	echo "${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz"
+	curl -L ${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz
+
+	echo "decompressing modules...  $offset/modules.tar.gz"
+	pv $offset/modules.tar.gz | tar xzf - -C ${offset}
+	rm ${offset}/modules.tar.gz
+
 }
 
 function mget()

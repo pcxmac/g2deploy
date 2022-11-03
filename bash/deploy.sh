@@ -111,34 +111,6 @@ function buildup()
 }
 
 
-function mounts()
-{
-    #echo "getting stage 3"
-	local offset=$1
-
-	mSize="$(cat /proc/meminfo | column -t | grep 'MemFree' | awk '{print $2}')"
-	mSize="${mSize}K"
-
-	# MOUNTS
-	echo "msize = $mSize"
-	mount -t proc proc ${offset}/proc
-	mount --rbind /sys ${offset}/sys
-	mount --make-rslave ${offset}/sys
-	mount --rbind /dev ${offset}/dev
-	mount --make-rslave ${offset}/dev
-	# because autofs doesn't work right in a chroot ...
-	mount -t tmpfs -o size=$mSize tmpfs ${offset}/tmp
-	mount -t tmpfs tmpfs ${offset}/var/tmp
-	mount -t tmpfs tmpfs ${offset}/run
-
-
-	echo "attempting to mount binpkgs..."  2>&1
-	# this is to build in new packages for future installs, not always present
-	mount --bind /var/lib/portage/binpkgs ${offset}/var/lib/portage/binpkgs 
-	ls ${offset}/var/lib/portage/binpkgs
-}
-
-
 function system()
 {
 	emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y"
@@ -168,28 +140,6 @@ function services()
 	bash <(curl "${service_list}")
 }
 
-function install_kernel()
-{
-	local offset=$1
-	kver="$(getKVER)"
-	kver="${kver#*linux-}"
-	ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
-
-	emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y binpkg-changed-deps"
-
-	echo "${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz"
-	curl -L ${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz
-
-	echo "decompressing modules...  $offset/modules.tar.gz"
-	pv $offset/modules.tar.gz | tar xzf - -C ${offset}
-	rm ${offset}/modules.tar.gz
-
-}
-
-function install_modules()
-{
-	echo "empty"
-}
 
 
 function patches()

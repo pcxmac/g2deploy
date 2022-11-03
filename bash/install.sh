@@ -11,38 +11,6 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ./include.sh
 
-function add_efi_entry() 
-{
-	VERSION=$1
-	DATASET=$2
-	offset="${3}/boot/EFI/boot/refind.conf"
-
-	POOL="${DATASET%/*}"
-
-	echo "DATASET = $DATASET ;; POOL = $POOL"
-
-	UUID="$(blkid | grep "$POOL" | awk '{print $3}' | tr -d '"')"
-
-	echo "version = $VERSION"
-	echo "pool = $POOL"
-	echo "uuid = $UUID"
-	echo "offset for add_efi_entry = $offset"
-
-	sed -i "/default_selection/c default_selection $DATASET" ${offset}
-
-	echo "offset for add_efi_entry = $offset"
-
-	echo "menuentry \"Gentoo Linux $VERSION $DATASET\"" >> $offset
-	echo '{' >> $offset
-	echo '	icon /EFI/boot/icons/os_gentoo.png' >> $offset
-	echo "	loader /linux/${VERSION#*linux-}/vmlinuz" >> $offset
-	echo "	initrd /linux/${VERSION#*linux-}/initramfs" >> $offset
-	echo "	options \"$UUID dozfs root=ZFS=$DATASET default delayacct rw\"" >> $offset
-	echo '	#disabled' >> $offset
-	echo '}' >> $offset
-}
-
-
 function setup_boot()	
 {
 			ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
@@ -259,7 +227,7 @@ function setup_boot()
 			boot_src="ftp://10.1.0.1/patchfiles/boot/*"
 			mget ${boot_src} ${bootDir}
 			kversion=$(getKVER)
-			add_efi_entry ${kversion} "${dpool}/${ddataset}" "${dpath}/${ddataset}"
+			editboot ${kversion} "${dpool}/${ddataset}"
 			
 			umount ${bootDir}
 			
