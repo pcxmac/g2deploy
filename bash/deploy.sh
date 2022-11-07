@@ -234,6 +234,12 @@ function pkgProcessor()
 }
 
 ###################################################################################################################################
+#
+#	need to create pool/set or exit if pool/set does not exist
+#
+#
+#
+########################################################3
 
 	# check mount, create new mount ?
 	export PYTHONPATH=""
@@ -254,11 +260,13 @@ function pkgProcessor()
         case "${x}" in
             work=*)
                 #? zfs= btrfs= generic= tmpfs=
-            	directory="$(zfs get mountpoint ${x#*=} 2>&1 | sed -n 2p | awk '{print $3}')"
+				directory=$(getZFSMountPoint "${x#*=}")
                 dataset="${x#*=}"
             ;;
         esac
     done
+
+	if [[ -z "${directory}" ]];then echo "Non Existant Work Location for $dataset"; exit; fi
 
     for x in $@
     do
@@ -266,13 +274,9 @@ function pkgProcessor()
         case "${x}" in
             build=*)
                 echo "build..."
-                # DESIGNATE BUILD PROFILE
                 _profile="invalid profile"
-
                 selection="${x#*=}"
-
 				echo "ZDRAT + ${x#*=}"
-
                 case "${x#*=}" in
                     # special cases for strings ending in selinux, and systemd as they can be part of a combination
                     #'musl')
@@ -299,17 +303,18 @@ function pkgProcessor()
                     'hardened/selinux') _profile="17.1/hardened/selinux "
                         				echo "${x#*=} is not supported [selinux]"
                     ;;
-                    *)					_profile="invalid profile"
+                    *)					_profile=""
                     ;;
                 esac
             ;;
         esac
     done
 
+	if [[ -z "${_profile}" ]];then echo "profile does not exist for $selection"; exit; fi
+
 	clear_mounts ${directory}
 
 #	NEEDS A MOUNTS ONLY PORTION.
-
 
 	buildup ${_profile} ${directory} ${dataset} ${selection}
 

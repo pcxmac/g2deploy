@@ -40,6 +40,8 @@ function clear_mounts()
     local dir="$(echo "$offset" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
 	local output="$(cat /proc/mounts | grep "$dir" | wc -l)"
 
+	if [[ -z ${offset} ]];then exit; fi	# this will break the local machine if it attempts to unmount nothing.
+
 	#echo "killing $(echo $procs | wc -l) process(s)"  2>&1
 	for process in ${procs}; do kill -9 ${process}; done
 	#echo "umount $mountpoint"
