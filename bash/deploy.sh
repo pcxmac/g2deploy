@@ -43,8 +43,6 @@ function users()
 	echo "homedir"
 }
 
-
-
 function buildup()
 {
     #echo "getting stage 3"
@@ -78,15 +76,14 @@ function buildup()
 
 	echo "X = ${serverType%//*} :: $files @ $profile" 2>&1
 
-
 	case ${serverType%//*} in
 		"file:/")
-			echo "RSYNCING" 2>&1
+			echo "LOCAL FILE TRANSFER - RSYNCING" 2>&1
 			rsync -avP ${filexz#*//} ${offset}
 			rsync -avP ${fileasc#*//} ${offset}
 		;;
 		"http:")
-			echo "WGETTING" 2>&1
+			echo "REMOTE FILE TRANSFER - WGETTING" 2>&1
 			wget $filexz	--directory-prefix=${offset}
 			wget $fileasc	--directory-prefix=${offset}
 		;;
@@ -138,55 +135,6 @@ function services()
 	local service_list=$1
 
 	bash <(curl "${service_list}")
-}
-
-
-
-function patches()
-{
-    local offset=$1
-	local profile=$2
-	local lineNum=0
-
-    echo "patching system files..." 2>&1
-
-	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors *)"	
-	mget ${psrc} ${offset}
-	#rsync is owning the topmost directory (root of file system) w/ owner of remote, which is probably portage, so force own root.
-	chown root.root ${offset}
-
-	#
-	#	build profile musl throws this in to the trash, lots of HTML/XML are injected
-	#
-
-	echo "patching make.conf..." 2>&1
-	while read line; do
-		echo "LINE = $line"
-		((LineNum+=1))
-		PREFIX=${line%=*}
-		echo "PREFIX = $PREFIX"
-		SUFFIX=${line#*=}
-		if [[ -n $line ]]
-		then
-			echo "WHAT ?"
-			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf
-		fi
-	# 																	remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
-	done < <(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors *)/common.conf" | sed 's/ //g' | sed "s/\"/'/g"))
-
-	while read line; do
-		echo "LINE = $line"
-		((LineNum+=1))
-		PREFIX=${line%=*}
-		echo "PREFIX = $PREFIX"
-		SUFFIX=${line#*=}
-		if [[ -n $line ]]
-		then
-			echo "WHAT ?"
-			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf	
-		fi
-	# 																	    remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
-	done < <(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors *)/${_profile}.conf" | sed 's/ //g' | sed "s/\"/'/g"))
 }
 
 function locales()
@@ -268,6 +216,22 @@ function pkgProcessor()
 
 	if [[ -z "${directory}" ]];then echo "Non Existant Work Location for $dataset"; exit; fi
 
+	for x in $@
+	do
+		case "${x}" in
+			boot=*)
+				efi_partition="${x#*=}"		
+
+				#check for efi partition type
+
+				# bad part type, exit script
+				echo "invalid parition type ${ptype} for ${efi_partition}"
+
+
+			;;
+		esac
+	done
+
     for x in $@
     do
         #echo "before cases $x"
@@ -330,7 +294,7 @@ function pkgProcessor()
 	patches ${directory} ${_profile}
 	chroot ${directory} /bin/bash -c "locales ${_profile}"
 
-	install_kernel ${directory}
+	install_modules ${directory}
 
 	chroot ${directory} /bin/bash -c "system"
 

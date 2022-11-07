@@ -4,12 +4,18 @@ function editboot()
 	# INPUTS : ${x#*=} - dataset
 	local VERSION=$1
 	local DATASET=$2
-	local offset="$(getZFSMountPoint $DATASET)/boot/EFI/boot/refind.conf"
+	local offset="$(getZFSMountPoint $DATASET)/boot"
 	local POOL="${DATASET%/*}"
 	local UUID="$(blkid | grep "$POOL" | awk '{print $3}' | tr -d '"')"
-	local line_number=$(grep -n "${DATASET} " ${offset}  | cut -f1 -d:)
-	
-	sed -i "/default_selection/c default_selection $DATASET" ${offset}
+	local line_number=$(grep -n "ZFS=${DATASET} " ${offset}  | cut -f1 -d:)
+
+	# SYNC KERNEL BINARY SOURCES /LINUX/... *SELECT MIRROR SOURCE (KERNELS) TO RSYNC FOR SYNC, NOT D-L
+	local kver="$(getKVER)"
+	kver="${kver#*linux-}"
+	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"	
+	mget ${ksrc}${kver}/ $offset/LINUX/
+
+	sed -i "/default_selection/c default_selection $DATASET" ${offset}/EFI/boot/refind.conf
 
 	# EDIT EXISTING RECORD
 	if [[ -n "${line_number}" ]]
@@ -17,19 +23,19 @@ function editboot()
 		menuL=$((line_number-5))
 		loadL=$((line_number-2))
 		initrdL=$((line_number-1))
-		sed -i "${menuL}s|menuentry.*|menuentry \"Gentoo Linux ${VERSION} ${DATASET}\" |" ${offset}
-		sed -i "${loadL}s|loader.*|loader \\/linux\\/${VERSION}\\/vmlinuz|" ${offset}
-		sed -i "${initrdL}s|initrd.*|initrd \\/linux\\/${VERSION}\\/initramfs|" ${offset}
+		sed -i "${menuL}s|menuentry.*|menuentry \"Gentoo Linux ${VERSION} ${DATASET}\" |" ${offset}/EFI/boot/refind.conf
+		sed -i "${loadL}s|loader.*|loader \\/linux\\/${VERSION}\\/vmlinuz|" ${offset}/EFI/boot/refind.conf
+		sed -i "${initrdL}s|initrd.*|initrd \\/linux\\/${VERSION}\\/initramfs|" ${offset}/EFI/boot/refind.conf
 	# ADD TO BOOT SPEC
 	else
-		echo "menuentry \"Gentoo Linux $VERSION $DATASET\"" >> ${offset}
-		echo '{' >> ${offset}
-		echo '	icon /EFI/boot/icons/os_gentoo.png' >> ${offset}
-		echo "	loader /linux/${VERSION#*linux-}/vmlinuz" >> ${offset}
-		echo "	initrd /linux/${VERSION#*linux-}/initramfs" >> ${offset}
-		echo "	options \"$UUID dozfs root=ZFS=$DATASET default delayacct rw\"" >> ${offset}
-		echo '	#disabled' >> ${offset}
-		echo '}' >> ${offset}
+		echo "menuentry \"Gentoo Linux $VERSION $DATASET\"" >> ${offset}/EFI/boot/refind.conf
+		echo '{' >> ${offset}/EFI/boot/refind.conf
+		echo '	icon /EFI/boot/icons/os_gentoo.png' >> ${offset}/EFI/boot/refind.conf
+		echo "	loader /linux/${VERSION#*linux-}/vmlinuz" >> ${offset}/EFI/boot/refind.conf
+		echo "	initrd /linux/${VERSION#*linux-}/initramfs" >> ${offset}/EFI/boot/refind.conf
+		echo "	options \"$UUID dozfs root=ZFS=$DATASET default delayacct rw\"" >> ${offset}/EFI/boot/refind.conf
+		echo '	#disabled' >> ${offset}/EFI/boot/refind.conf
+		echo '}' >> ${offset}/EFI/boot/refind.conf
 	fi
 }
 
@@ -42,10 +48,7 @@ function clear_mounts()
 
 	if [[ -z ${offset} ]];then exit; fi	# this will break the local machine if it attempts to unmount nothing.
 
-	#echo "killing $(echo $procs | wc -l) process(s)"  2>&1
 	for process in ${procs}; do kill -9 ${process}; done
-	#echo "umount $mountpoint"
-
 
 	if [[ -n "$(echo $dir | grep '/dev/')" ]]
 	then
@@ -56,11 +59,9 @@ function clear_mounts()
 
 	while [[ "$output" != 0 ]]
 	do
-		#cycle=0
 		while read -r mountpoint
 		do
 			umount $mountpoint > /dev/null 2>&1
-									# \/ ensures that the root reference is not unmounted
 		done < <(cat /proc/mounts | grep "$dir" | awk '{print $2}')
 		output="$(cat /proc/mounts | grep "$dir" | wc -l)"
 	done
@@ -90,20 +91,19 @@ function mounts()
 	#ls ${offset}/var/lib/portage/binpkgs
 }
 
-function install_kernel()
+function install_modules()
 {
 	local offset=$1
 	local kver="$(getKVER)"
 	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
-	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y binpkg-changed-deps"
 
 	kver="${kver#*linux-}"
 
-	# DONT DUPLICATE OR REPLACE SAME VERSION / SIMPLE
+	# DEFUNCT ?
 	if [[ -d ${offset}/lib/modules/${kver} ]];then exit; fi
 
 	echo "${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz"
-	curl -L ${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz
+	mget ${ksrc}${kver}/modules.tar.gz ${offset}/modules.tar.gz
 
 	echo "decompressing modules...  $offset/modules.tar.gz"
 	pv $offset/modules.tar.gz | tar xzf - -C ${offset}
@@ -120,7 +120,8 @@ function patches()
     echo "patching system files..." 2>&1
 
 	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors *)"	
-	mget ${psrc} ${offset}
+	# the option appended below is contingent on the patchfiles.mirrors type as rsync, wget/http|curl would be -X 
+	mget ${psrc} "${offset} --exclude '/boot/'"
 	#rsync is owning the topmost directory (root of file system) w/ owner of remote, which is probably portage, so force own root.
 	chown root.root ${offset}
 
