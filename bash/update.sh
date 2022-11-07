@@ -67,8 +67,13 @@ do
 #
 #
 #-----------------------------------------------------
+			
+			echo ${directory}
 			clear_mounts ${directory}
+
 			mounts ${directory}
+
+
 
 			emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"		
 			profile="$(getG2Profile ${directory})"
@@ -76,7 +81,7 @@ do
 
 			mount ${efi_partition} ${directory}/boot
 
-			patch_files ${directory} ${profile}
+			#patches ${directory} ${profile}
 			install_kernel ${directory}
 			editboot $(getKVER) ${dataset}
 
