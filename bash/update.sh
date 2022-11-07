@@ -31,8 +31,10 @@ function update_runtime() {
 }
 
 export PYTHONPATH=""
+export -f update_runtime
 
-	export -f update_runtime
+profile="$(getG2Profile ${directory})"
+emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"		
 
 # DESIGNATE A WORKING DIRECTORY TO 
 for x in $@
@@ -46,11 +48,25 @@ do
 	esac
 done
 
+if [[ ! -d ${directory} ]];then exit; fi
+
+clear_mounts ${directory}
+mounts ${directory}
+
 for x in $@
 do
 	case "${x}" in
 		boot=*)
 			efi_partition="${x#*=}"		
+			type_part="$(blkid ${efi_partition})"
+			if [[ ${type_part} == *"TYPE=\"vfat\""* ]];
+			then
+				mount ${efi_partition} ${directory}/boot
+				editboot $(getKVER) ${dataset}
+				install_modules ${directory}
+			else
+				echo "no mas"
+			fi
 		;;
 	esac
 done
@@ -60,38 +76,13 @@ for x in $@
 do
 	case "${x}" in
 		update)
-#-----------------------------------------------------
-#
-#	only update modules if different
-#	
-#
-#
-#-----------------------------------------------------
-			
-			echo ${directory}
-			clear_mounts ${directory}
-
-			mounts ${directory}
-
-
-
-			emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"		
-			profile="$(getG2Profile ${directory})"
-			echo "PROFILE :: ${profile}"
-
-			mount ${efi_partition} ${directory}/boot
-
-			#patches ${directory} ${profile}
-			install_kernel ${directory}
-			editboot $(getKVER) ${dataset}
-
+			patches ${directory} ${profile}
 			chroot ${directory} /bin/bash -c "update_runtime"
-
-			clear_mounts ${directory}
-
-
 		;;
 	esac
 done
+
+clear_mounts ${directory}
+
 
 echo "THIS !!!"

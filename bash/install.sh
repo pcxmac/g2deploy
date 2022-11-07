@@ -11,6 +11,7 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ./include.sh
 
+# NEED TO BREAK THIS FUNCTION DOWN IN TO SMALLER PARTS
 function setup_boot()	
 {
 			ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
