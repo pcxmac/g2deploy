@@ -61,6 +61,12 @@ do
 	case "${x}" in
 		update)
 #-----------------------------------------------------
+#
+#	only update modules if different
+#	
+#
+#
+#-----------------------------------------------------
 			clear_mounts ${directory}
 			mounts ${directory}
 
