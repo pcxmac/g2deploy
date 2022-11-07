@@ -36,7 +36,7 @@ function editboot()
 function clear_mounts()
 {
 	local offset=$1
-	local procs="$(lsof ${mountpoint} | sed '1d' | awk '{print $2}' | uniq)" 
+	local procs="$(lsof ${offset} | sed '1d' | awk '{print $2}' | uniq)" 
     local dir="$(echo "$offset" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
 	local output="$(cat /proc/mounts | grep "$dir" | wc -l)"
 

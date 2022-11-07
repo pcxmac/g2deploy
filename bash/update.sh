@@ -68,9 +68,12 @@ do
 			profile="$(getG2Profile ${directory})"
 			echo "PROFILE :: ${profile}"
 
+			mount ${efi_partition} ${directory}/boot
+
 			patch_files ${directory} ${profile}
 			install_kernel ${directory}
 			editboot $(getKVER) ${dataset}
+
 			chroot ${directory} /bin/bash -c "update_runtime"
 
 			clear_mounts ${directory}
