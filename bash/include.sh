@@ -1,4 +1,61 @@
 
+
+function patches()
+{
+    local offset=$1
+	local profile=$2
+	local lineNum=0
+
+    echo "patching system files..." 2>&1
+
+	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
+	# the option appended below is contingent on the patchfiles.mirrors type as rsync, wget/http|curl would be -X 
+	mget ${psrc} "${offset} --exclude '/boot/'"
+	#rsync is owning the topmost directory (root of file system) w/ owner of remote, which is probably portage, so force own root.
+	chown root.root ${offset}
+
+	#
+	#	build profile musl throws this in to the trash, lots of HTML/XML are injected
+	#
+
+	#echo "patching make.conf...(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors ftp)/common.conf" | sed 's/ //g' | sed "s/\"/'/g"))" 2>&1
+
+	#sleep 5
+
+	#cat $(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.conf" | sed 's/ //g' | sed "s/\"/'/g"))
+
+	#sleep 10
+
+	while read line; do
+		echo "LINE = $line" 2>&1
+		((LineNum+=1))
+		PREFIX=${line%=*}
+		echo "PREFIX = $PREFIX" 2>&1
+		SUFFIX=${line#*=}
+		if [[ -n $line ]]
+		then
+			echo "WHAT ?"
+			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf
+		fi
+	# 																	remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
+	done < <(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.conf" | sed 's/ //g' | sed "s/\"/'/g"))
+
+
+	while read line; do
+		echo "LINE = $line" 2>&1
+		((LineNum+=1))
+		PREFIX=${line%=*}
+		echo "PREFIX = $PREFIX" 2>&1
+		SUFFIX=${line#*=}
+		if [[ -n $line ]]
+		then
+			echo "WHAT ?"
+			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf	
+		fi
+	# 																	    remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
+	done < <(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${_profile}.conf" | sed 's/ //g' | sed "s/\"/'/g"))
+}
+
 function editboot() 
 {
 	# INPUTS : ${x#*=} - dataset
@@ -103,7 +160,7 @@ function install_modules()
 {
 	local offset=$1
 	local kver="$(getKVER)"
-	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors fttp)"
+	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors http)"
 
 	kver="${kver#*linux-}"
 
@@ -117,54 +174,6 @@ function install_modules()
 	pv $offset/modules.tar.gz | tar xzf - -C ${offset}
 	rm ${offset}/modules.tar.gz
 
-}
-
-function patches()
-{
-    local offset=$1
-	local profile=$2
-	local lineNum=0
-
-    echo "patching system files..." 2>&1
-
-	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
-	# the option appended below is contingent on the patchfiles.mirrors type as rsync, wget/http|curl would be -X 
-	mget ${psrc} "${offset} --exclude '/boot/'"
-	#rsync is owning the topmost directory (root of file system) w/ owner of remote, which is probably portage, so force own root.
-	chown root.root ${offset}
-
-	#
-	#	build profile musl throws this in to the trash, lots of HTML/XML are injected
-	#
-
-	echo "patching make.conf..." 2>&1
-	while read line; do
-		echo "LINE = $line"
-		((LineNum+=1))
-		PREFIX=${line%=*}
-		echo "PREFIX = $PREFIX"
-		SUFFIX=${line#*=}
-		if [[ -n $line ]]
-		then
-			echo "WHAT ?"
-			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf
-		fi
-	# 																	remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
-	done < <(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors ftp)/common.conf" | sed 's/ //g' | sed "s/\"/'/g"))
-
-	while read line; do
-		echo "LINE = $line"
-		((LineNum+=1))
-		PREFIX=${line%=*}
-		echo "PREFIX = $PREFIX"
-		SUFFIX=${line#*=}
-		if [[ -n $line ]]
-		then
-			echo "WHAT ?"
-			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf	
-		fi
-	# 																	    remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
-	done < <(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors ftp)/${_profile}.conf" | sed 's/ //g' | sed "s/\"/'/g"))
 }
 
 function mget()

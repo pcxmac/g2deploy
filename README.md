@@ -6,11 +6,11 @@ HOW TO USE:
 
   ./deploy.sh build=plasma work=zpool/plasma deploy
 
-  ./update.sh work=pool/set boot=/dev/sdX update
+  ./update.sh work=pool/set bootpart=/dev/sdX# update
 
   ./install.sh work=zfs://wSys/hardened@safe boot=zfs:///dev/sda:/usb/g1
 
-  ./mirror.sh ../config/[type].mirrors [PROFILE-releases.mirrors]
+  ./mirror.sh ../config/[type]_[remote?].mirrors [PROFILE-releases.mirrors || protocol type {ftp,rsync,http*}]
 
   ./esync.sh // uses ../config/ESYNC/*.mirrors
 

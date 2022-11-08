@@ -155,7 +155,10 @@ function locales()
 		
 	#	{key%/openrc} :: is a for the edgecase 'openrc' where only that string is non existent with in eselect-profile
 	eselect profile set default/linux/amd64/${key%/openrc}
+	eselect profile show
 }
+
+
 
 function pkgProcessor()
 {
@@ -293,6 +296,7 @@ function pkgProcessor()
 	echo "patches:"
 
 	patches ${directory} ${_profile}
+
 	chroot ${directory} /bin/bash -c "locales ${_profile}"
 
 	install_modules ${directory}
