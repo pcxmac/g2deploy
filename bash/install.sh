@@ -14,7 +14,7 @@ source ./include.sh
 # NEED TO BREAK THIS FUNCTION DOWN IN TO SMALLER PARTS
 function setup_boot()	
 {
-			ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
+			#ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"
 			kver="$(getKVER)"
 			kver="${kver#*linux-}"
 

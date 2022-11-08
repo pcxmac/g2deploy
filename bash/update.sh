@@ -56,11 +56,13 @@ mounts ${directory}
 for x in $@
 do
 	case "${x}" in
-		boot=*)
-			efi_partition="${x#*=}"		
-			type_part="$(blkid ${efi_partition})"
+		bootpart=*)
+			efi_part="${x#*=}"
+			type_part="$(blkid ${efi_part})"
 			if [[ ${type_part} == *"TYPE=\"vfat\""* ]];
 			then
+				echo "update boot ! @ ${efi_part}}"
+				# IS THIS WORKING ?? NOT UPDATING BOOT RECORD ON DIFFERENT SETS
 				mount ${efi_partition} ${directory}/boot
 				editboot $(getKVER) ${dataset}
 				install_modules ${directory}
@@ -70,6 +72,8 @@ do
 		;;
 	esac
 done
+
+#sleep 30
 
 # update
 for x in $@

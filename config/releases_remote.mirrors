@@ -1,6 +1,3 @@
-#file:///var/lib/portage/
-#####rsync://192.168.122.108/gentoo-releases/amd64
-#http://10.1.0.1/gentoo
 
 #http://mirror.bytemark.co.uk/gentoo/
 #http://gentoo.mirrors.tera-byte.com/
@@ -10,9 +7,9 @@
 rsync://mirror.leaseweb.com/gentoo/releases/amd64
 #http://gentoo-mirror.flux.utah.edu/
 #https://mirrors.rit.edu/gentoo/
-#rsync://mirrors.rit.edu/gentoo/releases/amd64
+rsync://mirrors.rit.edu/gentoo/releases/amd64
 #https://mirror.rackspace.com/gentoo/
-#rsync://mirror.rackspace.com/gentoo/releases/amd64
+rsync://mirror.rackspace.com/gentoo/releases/amd64
 
 rsync://mirror.csclub.uwaterloo.ca/gentoo-distfiles/releases/amd64
 rsync://mirrors.tera-byte.com/gentoo/releases/amd64

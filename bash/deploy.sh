@@ -43,6 +43,7 @@ function users()
 	echo "homedir"
 }
 
+
 function buildup()
 {
     #echo "getting stage 3"
@@ -164,10 +165,10 @@ function pkgProcessor()
 	echo $profile 2>&1
 	echo $offset 2>&1
 
-	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors *)/common.pkgs" | sed 's/ //g')"
+	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.pkgs" | sed 's/ //g')"
 	commonPkgs="$(curl $url)"
 	echo ":::: $url"
-	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors *)/${profile}.pkgs" | sed 's/ //g')"
+	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.pkgs" | sed 's/ //g')"
 	profilePkgs="$(curl $url)"
 	echo ":::: $url"
 
@@ -302,7 +303,7 @@ function pkgProcessor()
 
 	chroot ${directory} /bin/bash -c "users ${_profile}"
 
-	services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors * )/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
+	services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
 
 	chroot ${directory} /bin/bash -c "services ${services_URL}"
 

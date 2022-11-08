@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#	ARGS: 	$TYPE{ release, snapshots, distfiles, repos } $PROFILE{ eselect* }
+#	ARGS: 	$TYPE{ release, snapshots, distfiles, repos } [ $PROFILE{ eselect* } | prefix_type (http/rsync...) ]
 #	OUTPUT: [SCORED] [RANDOMIZED] MIRROR URL (file)
 #
 #	TYPE:
@@ -9,9 +9,10 @@
 #			DISTFILES	:	echo the URL for distfile sync (file|rsync://)
 #			REPOS		:	echo the URL for repos sync (file|rsync://)
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
-SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
+#SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ./include.sh
+
 
 
 	profile="$2"
@@ -34,7 +35,7 @@ source ./include.sh
 		*)															echo "invalid input";exit		;;
 	esac
 
-	#FILE:///
+	
     while read -r server
     do
     	case ${server%://*} in
@@ -56,15 +57,11 @@ source ./include.sh
 								exit
 							fi
 						else
-							case ${server%://*} in
-								file)
-									if [[ -n ${server} ]];	then	echo "${server}";	exit;	fi
-								;;
-							esac
+							if [[ ${profile} == ${server%://*} ]]; then echo "${server}"; exit; fi
 						fi
 					;;
 					bin*|pack*|kernel*|dist*|repos*|snaps*|patch*)
-						if [[ -d ${server#*://} ]];	then			echo ${server};		exit;	fi
+						if [[ ${profile} == ${server%://*} ]]; then echo "${server}"; exit; fi
 					;;
 				esac
 			;;
@@ -82,9 +79,8 @@ source ./include.sh
 						if [[ -z $release_base_string ]];	then	echo "${server}";	exit;	fi
 					;;
 					bin*|pack*|kernel*|dist*|repos*|snaps*|patch*)
-						echo "${server}"
-						exit
-                	;;
+						if [[ ${profile} == ${server%://*} ]]; then echo "${server}"; exit; fi
+					;;
 				esac
 			;;
           	http*|ftp)
@@ -107,10 +103,8 @@ source ./include.sh
 						fi
 					;;
                 	bin*|pack*|kernel*|dist*|repos*|snaps*|patch*)
-						echo "${server}"
-						exit
+						if [[ ${profile} == ${server%://*} ]]; then echo "${server}"; exit; fi
                 	;;
-
 	            esac
 			;;
     	esac

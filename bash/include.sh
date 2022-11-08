@@ -10,10 +10,18 @@ function editboot()
 	local line_number=$(grep -n "ZFS=${DATASET} " ${offset}  | cut -f1 -d:)
 
 	# SYNC KERNEL BINARY SOURCES /LINUX/... *SELECT MIRROR SOURCE (KERNELS) TO RSYNC FOR SYNC, NOT D-L
-	local kver="$(getKVER)"
-	kver="${kver#*linux-}"
-	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"	
-	mget ${ksrc}${kver}/ $offset/LINUX/
+	local kver=$(getKVER)
+	#kver="${kver#*linux-}"
+	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"	
+	
+	echo "kver = ${kver} | $(getKVER)"
+	echo "mget ${ksrc}${kver}/ $offset/LINUX/" 2>&1	
+	
+	#sleep 30
+	mget ${ksrc}${kver} $offset/LINUX/
+
+
+
 
 	sed -i "/default_selection/c default_selection $DATASET" ${offset}/EFI/boot/refind.conf
 
@@ -95,7 +103,7 @@ function install_modules()
 {
 	local offset=$1
 	local kver="$(getKVER)"
-	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
+	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors fttp)"
 
 	kver="${kver#*linux-}"
 
@@ -119,7 +127,7 @@ function patches()
 
     echo "patching system files..." 2>&1
 
-	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors *)"	
+	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
 	# the option appended below is contingent on the patchfiles.mirrors type as rsync, wget/http|curl would be -X 
 	mget ${psrc} "${offset} --exclude '/boot/'"
 	#rsync is owning the topmost directory (root of file system) w/ owner of remote, which is probably portage, so force own root.
@@ -142,7 +150,7 @@ function patches()
 			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf
 		fi
 	# 																	remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
-	done < <(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors *)/common.conf" | sed 's/ //g' | sed "s/\"/'/g"))
+	done < <(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors ftp)/common.conf" | sed 's/ //g' | sed "s/\"/'/g"))
 
 	while read line; do
 		echo "LINE = $line"
@@ -156,7 +164,7 @@ function patches()
 			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf	
 		fi
 	# 																	    remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
-	done < <(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors *)/${_profile}.conf" | sed 's/ //g' | sed "s/\"/'/g"))
+	done < <(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors ftp)/${_profile}.conf" | sed 's/ //g' | sed "s/\"/'/g"))
 }
 
 function mget()
@@ -220,10 +228,13 @@ function mget()
 
 function getKVER() 
 {
-	local url_kernel="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors *)"
+	local url_kernel="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"
 	local kver="$(curl ${url_kernel} | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep '.tar.gz$')"
 	kver=${kver%.tar.gz*}
 	echo ${kver}
+
+	#sleep 40
+
 }
 
 function decompress() {

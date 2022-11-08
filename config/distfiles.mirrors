@@ -1,4 +1,5 @@
-#file:///var/lib/portage/distfiles
+file:///var/lib/portage/distfiles
+#rsync://10.1.0.1/gentoo-distfiles/
 #rsync://192.168.122.108/gentoo-distfiles/distfiles
 rsync://mirror.rackspace.com/gentoo/distfiles
 rsync://rsync31.us.gentoo.org/gentoo/distfiles
