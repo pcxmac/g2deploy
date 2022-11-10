@@ -221,22 +221,6 @@ function pkgProcessor()
 	if [[ -z "${directory}" ]];then echo "Non Existant Work Location for $dataset"; exit; fi
 
 	for x in $@
-	do
-		case "${x}" in
-			boot=*)
-				efi_partition="${x#*=}"		
-
-				#check for efi partition type
-
-				# bad part type, exit script
-				echo "invalid parition type ${ptype} for ${efi_partition}"
-
-
-			;;
-		esac
-	done
-
-    for x in $@
     do
         #echo "before cases $x"
         case "${x}" in
@@ -291,9 +275,7 @@ function pkgProcessor()
 	zfs_keys ${dataset}
 	echo "certificates ?"
 
-	echo "pkgprocessor :"
 	pkgProcessor ${_profile} ${directory}
-	echo "patches:"
 
 	patches ${directory} ${_profile}
 
@@ -320,11 +302,3 @@ function pkgProcessor()
 	ls ${offset}
 
 	zfs snapshot ${dataset}@safe
-
-	# potential cleanup items
-	#
-	#	move binpkgs for client to /tmp as well, disable binpkg building
-	#	reflash modules, or separate modules and kernel out...
-	#	autofs integration w/ boot drive
-	#	clear mounts 
-	#

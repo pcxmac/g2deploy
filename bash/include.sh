@@ -3,7 +3,7 @@
 function patches()
 {
     local offset=$1
-	local profile=$2
+	local _profile=$2
 	local lineNum=0
 
     echo "patching system files..." 2>&1
@@ -14,17 +14,20 @@ function patches()
 	#rsync is owning the topmost directory (root of file system) w/ owner of remote, which is probably portage, so force own root.
 	chown root.root ${offset}
 
-	#
-	#	build profile musl throws this in to the trash, lots of HTML/XML are injected
-	#
+	common_conf="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.conf" | sed 's/ //g' | sed "s/\"/'/g")"
+	spec_conf="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${_profile}" | sed 's/ //g' | sed "s/\"/'/g")"
 
-	#echo "patching make.conf...(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors ftp)/common.conf" | sed 's/ //g' | sed "s/\"/'/g"))" 2>&1
+	# PATCHUP *.use ; *.accept_keywords ; *.mask ; *.license 
 
-	#sleep 5
+	rm ${offset}/etc/portage/package.use -R
+	rm ${offset}/etc/portage/package.mask -R
+	rm ${offset}/etc/portage/package.license -R
+	rm ${offset}/etc/portage/package.accept_keywords -R
 
-	#cat $(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.conf" | sed 's/ //g' | sed "s/\"/'/g"))
-
-	#sleep 10
+	mget ${spec_conf}.uses ${offset}/etc/portage/package.use
+	mget ${spec_conf}.keys ${offset}/etc/portage/package.accept_keywords
+	mget ${spec_conf}.mask ${offset}/etc/portage/package.mask
+	mget ${spec_conf}.license ${offset}/etc/portage/package.license
 
 	while read line; do
 		echo "LINE = $line" 2>&1
@@ -38,7 +41,7 @@ function patches()
 			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf
 		fi
 	# 																	remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
-	done < <(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.conf" | sed 's/ //g' | sed "s/\"/'/g"))
+	done < <(curl ${common_conf})
 
 
 	while read line; do
@@ -53,7 +56,7 @@ function patches()
 			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf	
 		fi
 	# 																	    remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
-	done < <(curl $(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${_profile}.conf" | sed 's/ //g' | sed "s/\"/'/g"))
+	done < <(curl ${spec_conf}.conf)
 }
 
 function editboot() 
@@ -168,7 +171,7 @@ function install_modules()
 	if [[ -d ${offset}/lib/modules/${kver} ]];then exit; fi
 
 	echo "${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz"
-	mget ${ksrc}${kver}/modules.tar.gz ${offset}/modules.tar.gz
+	mget ${ksrc}${kver}/modules.tar.gz ${offset}/
 
 	echo "decompressing modules...  $offset/modules.tar.gz"
 	pv $offset/modules.tar.gz | tar xzf - -C ${offset}

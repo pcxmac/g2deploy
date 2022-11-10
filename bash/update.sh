@@ -87,6 +87,3 @@ do
 done
 
 clear_mounts ${directory}
-
-
-echo "THIS !!!"
