@@ -19,6 +19,8 @@ function patches()
 
 	# PATCHUP *.use ; *.accept_keywords ; *.mask ; *.license 
 
+	# eventually move to directory of, and bulk download instead of individual downloads, and renaming. 
+
 	rm ${offset}/etc/portage/package.use -R
 	rm ${offset}/etc/portage/package.mask -R
 	rm ${offset}/etc/portage/package.license -R
@@ -28,6 +30,11 @@ function patches()
 	mget ${spec_conf}.keys ${offset}/etc/portage/package.accept_keywords
 	mget ${spec_conf}.mask ${offset}/etc/portage/package.mask
 	mget ${spec_conf}.license ${offset}/etc/portage/package.license
+
+	mv ${offset}/etc/portage/${spec_conf##*/}.uses ${offset}/etc/portage/package.use
+	mv ${offset}/etc/portage/${spec_conf##*/}.keys ${offset}/etc/portage/package.accept_keywords
+	mv ${offset}/etc/portage/${spec_conf##*/}.mask ${offset}/etc/portage/package.mask
+	mv ${offset}/etc/portage/${spec_conf##*/}.license ${offset}/etc/portage/package.license
 
 	while read line; do
 		echo "LINE = $line" 2>&1
@@ -79,9 +86,6 @@ function editboot()
 	
 	#sleep 30
 	mget ${ksrc}${kver} $offset/LINUX/
-
-
-
 
 	sed -i "/default_selection/c default_selection $DATASET" ${offset}/EFI/boot/refind.conf
 
@@ -179,6 +183,8 @@ function install_modules()
 
 }
 
+# MGET ISSUE, on HTTP MIRRORING PACKAGE.MIRRORS, THE SOURCE FILE CONVERTS TO A FOLDER (desired to be name of destination), THEN SOURCE FILE, OG. Where as I want just desired ... 
+
 function mget()
 {
 
@@ -196,11 +202,10 @@ function mget()
 		;;
 		# local websync only
 		http|ftp)
-			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination}	--show-progress
-			mv ${destination}/${url#*://}* ${destination}/
+			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress
+			mv ${destination%/*}/${url#*://}* ${destination%/*}
 			url=${url#*://}
 			url=${url%%/*}
-			#echo "${url}" 2>&1
 			rm ${destination}/${url} -R
 		;;
 
