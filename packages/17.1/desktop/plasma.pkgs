@@ -1,8 +1,10 @@
-sys-auth/elogind
 kde-plasma/plasma-desktop
 kde-plasma/plasma-meta
-gnome-base/gdm
 kde-apps/konsole
 app-editors/gedit
 app-editors/gedit-plugins
+kde-plasma/plasma-nm
 app-editors/vscode
+net-im/telegram-desktop
+www-client/chromium
+sys-auth/elogind

@@ -1,3 +1,7 @@
+app-arch/pigz
+sys-fs/xfsprogs
+sys-apps/hdparm
+app-admin/logrotate
 sys-process/btop
 net-misc/scponly
 app-crypt/gentoo-keys
@@ -413,7 +417,6 @@ sys-devel/patch
 sys-fs/e2fsprogs
 sys-fs/udev-init-scripts
 sys-kernel/genkernel
-sys-kernel/gentoo-sources
 sys-kernel/installkernel-gentoo
 sys-kernel/linux-firmware
 sys-kernel/linux-headers

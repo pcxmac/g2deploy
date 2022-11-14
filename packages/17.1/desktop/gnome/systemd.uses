@@ -1,0 +1,4 @@
+sys-libs/zlib minizip
+media-video/ffmpeg opus
+media-libs/mesa xa
+media-libs/libsndfile minimal

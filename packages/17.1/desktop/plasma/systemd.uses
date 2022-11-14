@@ -1,0 +1,13 @@
+media-libs/mesa xa
+media-libs/libcanberra pulseaudio
+gnome-base/gnome-control-center networkmanager
+net-libs/nodejs inspector
+media-libs/libsdl2 gles2
+media-video/ffmpeg opus
+kde-frameworks/kconfig qml
+kde-plasma/kwin lock
+kde-frameworks/prison qml
+kde-frameworks/sonnet qml
+media-libs/libsndfile minimal
+media-plugins/alsa-plugins pulseaudio
+

@@ -1,0 +1,4 @@
+app-text/ghostscript-gpl cups
+net-wireless/wpa_supplicant dbus
+media-libs/libsndfile minimal
+media-libs/libglvnd X
