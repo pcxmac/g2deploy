@@ -156,6 +156,7 @@ function locales()
 	#	{key%/openrc} :: is a for the edgecase 'openrc' where only that string is non existent with in eselect-profile
 	eselect profile set default/linux/amd64/${key%/openrc}
 	eselect profile show
+	sleep 10
 }
 
 
@@ -295,10 +296,6 @@ function pkgProcessor()
 
 	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key ${dataset}
 
-	patches ${directory} ${_profile}
-
 	clear_mounts ${directory}
-
-	ls ${offset}
 
 	zfs snapshot ${dataset}@safe
