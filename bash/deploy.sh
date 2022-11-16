@@ -114,8 +114,21 @@ function system()
 	emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y"
 	#emergeOpts="--buildpkg=n --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"
 
+
+	#	PLEASE MOVE THIS IN TO PKGPROCESSOR
+	#	
+	#	
+	#	
+	#	
+	#	
+
 	echo "BASIC TOOLS EMERGE !!!!!"
 	emerge $emergeOpts gentoolkit eix mlocate genkernel sudo zsh pv tmux app-arch/lz4 elfutils --ask=n
+
+	#
+	#
+	#
+	#
 
 	echo "EMERGE PROFILE PACKAGES !!!!"
 	pkgs="/package.list"
@@ -182,6 +195,13 @@ function pkgProcessor()
 	iBase="$(echo "${iBase}" | uniq | sort)"
 
 	local diffPkgs="$(comm -1 -3 <(echo "${iBase}") <(echo "${allPkgs}"))"
+
+	#
+	#
+	#	CONVERT THIS TO AN OUTPUT STREAM, DO NOT SAVE TO OFFSET (SHOULD BE INVOKED LOCALLY)
+	#
+	#
+	#
 
 	echo "${diffPkgs}" > ${offset}/package.list
 }

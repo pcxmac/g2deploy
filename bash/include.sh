@@ -249,9 +249,7 @@ function getKVER()
 	local kver="$(curl ${url_kernel} | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep '.tar.gz$')"
 	kver=${kver%.tar.gz*}
 	echo ${kver}
-
 	#sleep 40
-
 }
 
 function decompress() {
