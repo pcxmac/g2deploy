@@ -27,6 +27,15 @@ source ./include.sh
 
 function users()
 {
+	#	Every 'INSTALL (not deployment) || PROFILE' must have a certificate of authenticity, which is used to pull in users
+	#	passwords, profile data, and network identity. CERTS must have a large degree of >difficulty<, and are time limited (7 days)
+	#	
+	#	Certs are maintained from ROOT-Dom-0 
+	#	
+	#	ROOT-DOM_0/CA --> DOM_0.N/CA (PKI)/signing certificates, ROOT-DOM_0 is air gapped/non-wireless and requires 
+	#	manual entries/and manual-hardware based data retention/transmission, ie, it can never touch a network. 
+	#	
+
 	usermod -s /bin/zsh root
 	sudo sh -c 'echo root:@PCXmacR00t | chpasswd' 2>/dev/null
 	# CYCLE THROUGH USERS ?
@@ -137,6 +146,16 @@ function system()
 	emergeOpts=""
 	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts =zfs-9999 --nodeps
 	
+	#
+	#
+	#
+	#
+	#	need an extras-packages install here, like chromium, vscode, etc...
+	#
+	#
+	#
+	#
+
 	#echo "SETTING SERVICES"
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 	eix-update
@@ -306,11 +325,17 @@ function pkgProcessor()
 
 	chroot ${directory} /bin/bash -c "system"
 
-	#chroot ${directory} /bin/bash -c "install_modules"
-
 	chroot ${directory} /bin/bash -c "users ${_profile}"
 
 	services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
+
+	echo "services URL = ${services_URL}"
+
+	#	
+	#	Given the Difference in time it takes to build a whole system, there can be inconsistencies with successfully
+	#	pulling in a services script. Perhaps a timeout or pre-fetcher is required...
+	#	
+	#	
 
 	chroot ${directory} /bin/bash -c "services ${services_URL}"
 

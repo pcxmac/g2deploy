@@ -11,6 +11,18 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ./include.sh
 
+#
+#	MODULARIZE SETUPBOOT, ATTEMPT TO FIND REUSABLE CODE AND REPOSIT IN TO INCLUDE.SH
+#
+#
+#
+#
+#
+#
+
+
+
+
 # NEED TO BREAK THIS FUNCTION DOWN IN TO SMALLER PARTS
 function setup_boot()	
 {
@@ -88,6 +100,14 @@ function setup_boot()
 					spath=${source}
 				;;
 			esac
+
+			#
+			#	ADD SUPPORT FOR CONFIGS, MORE XFS FEATUERS ... AND POSSIBLY DEPRICATE NTFS
+			#
+			#
+			#
+			#
+
 
 			destination_url=$2				# DESTINATION
 			dtype=${destination_url%://*}	# example :	zfs:///dev/sda:/pool/dataset ; ntfs:///dev/sdX:/mnt/sdX ; config:///path/to/config
