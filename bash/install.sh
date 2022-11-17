@@ -176,7 +176,8 @@ function setup_boot()
 			#	
 			#	
 
-			mount | grep ${disk}
+if [[ flase ]]
+then
 
 			if [[ ! -d ${dpath} ]]
 			then 
@@ -250,7 +251,7 @@ function setup_boot()
 				esac
 			fi
 
-
+fi
 
 			bootDir="${dpath}/${ddataset}/boot"
 			

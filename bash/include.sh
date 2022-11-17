@@ -208,6 +208,11 @@ function mget()
 			rsync -av ${url} ${destination}
 		;;
 		# local websync only
+		#
+		#	IF TIME, UNDERSTAND WHY FORMER AND LATER ftp/http mv structures need to be differentiated.
+		#
+		#
+		#
 		ftp)
 			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination}	--show-progress
 			mv ${destination}/${url#*://}* ${destination}/
