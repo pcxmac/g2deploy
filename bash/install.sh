@@ -14,7 +14,7 @@ source ./include.sh
 #
 #	MODULARIZE SETUPBOOT, ATTEMPT TO FIND REUSABLE CODE AND REPOSIT IN TO INCLUDE.SH
 #
-#
+#	ADD MAKE.CONF CUSTOMIZATION (NPROCS,etc...) as a >module<.
 #
 #
 #
@@ -104,9 +104,9 @@ function setup_boot()
 			#
 			#	ADD SUPPORT FOR CONFIGS, MORE XFS FEATUERS ... AND POSSIBLY DEPRICATE NTFS
 			#
+			#	ONLY SUPPORTS ZFS !!!
 			#
-			#
-			#
+			#	NEED TO TEAR AWAY the CONST /srv/... needs to be more dynamic/temporal and assignable.
 
 
 			destination_url=$2				# DESTINATION
@@ -167,7 +167,17 @@ function setup_boot()
 			wipefs -af "$(echo "${parts}" | grep '.3')"
 			mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
 			
+			#	
+			#	if a directory + contents exists @ mountpoint, this will fail, please check for potential collision and redress w/ user
+			#	
+			#	
+			#	
+			#	
+			#	
+			#	
+
 			mount | grep ${disk}
+
 			if [[ ! -d ${dpath} ]]
 			then 
 				mkdir -p ${dpath}
@@ -240,14 +250,24 @@ function setup_boot()
 				esac
 			fi
 
+
+
 			bootDir="${dpath}/${ddataset}/boot"
 			
 			if [[ ! -d ${bootDir} ]]; then mkdir -p ${bootDir}; fi
 			
 			mount "$(echo "${parts}" | grep '.2')" ${bootDir}
+
 			boot_src="ftp://10.1.0.1/patchfiles/boot/*"
+
+			echo "BOOT SRC = ${boot_src}"
+
 			mget ${boot_src} ${bootDir}
+
 			kversion=$(getKVER)
+
+			#install_modules ${dpool}/${ddataset}	# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
+
 			editboot ${kversion} "${dpool}/${ddataset}"
 			
 			umount ${bootDir}

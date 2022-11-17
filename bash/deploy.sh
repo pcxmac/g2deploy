@@ -321,7 +321,7 @@ function pkgProcessor()
 
 	chroot ${directory} /bin/bash -c "locales ${_profile}"
 
-	install_modules ${directory}
+	#install_modules ${directory}	--- THIS NEEDS TO BE INTEGRATED IN TO UPDATE & INSTALL, DEPLOY IS USR SPACE ONLY, NOT BOOTENV
 
 	chroot ${directory} /bin/bash -c "system"
 

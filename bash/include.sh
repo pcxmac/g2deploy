@@ -75,6 +75,7 @@ function editboot()
 	local POOL="${DATASET%/*}"
 	local UUID="$(blkid | grep "$POOL" | awk '{print $3}' | tr -d '"')"
 	local line_number=$(grep -n "ZFS=${DATASET} " ${offset}  | cut -f1 -d:)
+	local menuL,loadL,initrdL	# predeclarations / local
 
 	# SYNC KERNEL BINARY SOURCES /LINUX/... *SELECT MIRROR SOURCE (KERNELS) TO RSYNC FOR SYNC, NOT D-L
 	local kver=$(getKVER)
@@ -182,9 +183,15 @@ function install_modules()
 	rm ${offset}/modules.tar.gz
 
 }
-
+#
+#
 # MGET ISSUE, on HTTP MIRRORING PACKAGE.MIRRORS, THE SOURCE FILE CONVERTS TO A FOLDER (desired to be name of destination), THEN SOURCE FILE, OG. Where as I want just desired ... 
-
+#
+# ADD SUPPORT FOR STDOUT so as to PIPE to DECOMPRESSION ALGOs, etc...
+#
+#
+#
+#
 function mget()
 {
 
@@ -201,14 +208,20 @@ function mget()
 			rsync -av ${url} ${destination}
 		;;
 		# local websync only
-		http|ftp)
+		ftp)
+			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination}	--show-progress
+			mv ${destination}/${url#*://}* ${destination}/
+			url=${url#*://}
+			url=${url%%/*}
+			rm ${destination}/${url} -R
+		;;
+		http)
 			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress
 			mv ${destination%/*}/${url#*://}* ${destination%/*}
 			url=${url#*://}
 			url=${url%%/*}
 			rm ${destination}/${url} -R
 		;;
-
 		# local download only
 		ssh)
 			host=${url#*://}
@@ -221,7 +234,6 @@ function mget()
 			mv ${destination}/__temp/* ${destination}
 			rm ${destination}/__temp -R
 		;;
-
 		# local file move only
 		file|*)
 			host=${url#*://}
@@ -235,10 +247,6 @@ function mget()
 			rm ${destination}/${offset} -R
 			mv ${destination}/__temp/* ${destination}
 			rm ${destination}/__temp -R
-		;;
-	esac
-	case ${url%://*} in
-		http|ftp|ssh|file|'')
 		;;
 	esac
 }

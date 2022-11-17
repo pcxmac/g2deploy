@@ -36,6 +36,14 @@ export -f update_runtime
 profile="$(getG2Profile ${directory})"
 emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"		
 
+#
+#	ONLY SUPPORTS ZFS
+#
+#
+#
+#
+#
+
 # DESIGNATE A WORKING DIRECTORY TO 
 for x in $@
 do
