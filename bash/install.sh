@@ -16,9 +16,9 @@ source ./include.sh
 #
 #	ADD MAKE.CONF CUSTOMIZATION (NPROCS,etc...) as a >module<.
 #
-#
-#
-#
+#	
+#	
+#	
 
 
 
@@ -166,18 +166,16 @@ function setup_boot()
 			wipefs -af "$(echo "${parts}" | grep '.2')"
 			wipefs -af "$(echo "${parts}" | grep '.3')"
 			mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
-			
+
+
 			#	
 			#	if a directory + contents exists @ mountpoint, this will fail, please check for potential collision and redress w/ user
 			#	
+			#	IP ADDRESSES NEED A UNIVERSAL N.DOMAIN PTR
+			#	
+			#	AUTOFS MODULE FOR VFAT, (BOOT DISK -- /boot)
 			#	
 			#	
-			#	
-			#	
-			#	
-
-if [[ flase ]]
-then
 
 			if [[ ! -d ${dpath} ]]
 			then 
@@ -220,6 +218,7 @@ then
 					mount -t ${dtype} $(echo "${parts}" | grep '.3') ${dpath}
 				;;
 			esac
+
 			if [[ ${dtype} == ${stype} ]] 
 			then
 				case ${stype} in
@@ -251,29 +250,22 @@ then
 				esac
 			fi
 
-fi
-
-			bootDir="${dpath}/${ddataset}/boot"
-			
-			if [[ ! -d ${bootDir} ]]; then mkdir -p ${bootDir}; fi
-			
-			mount "$(echo "${parts}" | grep '.2')" ${bootDir}
-
+			dstDir="$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')/${ddataset}"
 			boot_src="ftp://10.1.0.1/patchfiles/boot/*"
+			
+			if [[ ! -d ${dstDir} ]]; then mkdir -p ${dstDir}; fi
+			mount "$(echo "${parts}" | grep '.2')" ${dstDir}/boot
 
-			echo "BOOT SRC = ${boot_src}"
-
-			mget ${boot_src} ${bootDir}
+			mget ${boot_src} ${dstDir}/boot
 
 			kversion=$(getKVER)
 
-			#install_modules ${dpool}/${ddataset}	# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
+			install_modules ${dstDir}			# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
 
 			editboot ${kversion} "${dpool}/${ddataset}"
-			
+
 			umount ${bootDir}
 			
-			$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')
  }
 
 #########################################################################################################

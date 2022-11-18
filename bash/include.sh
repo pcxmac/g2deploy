@@ -1,3 +1,13 @@
+#
+#	Eventually mirrors will be invoked through http / passed two args, and yielded a return text / curl
+#
+#	
+#
+#
+
+
+
+
 
 
 function patches()
@@ -36,6 +46,13 @@ function patches()
 	mv ${offset}/etc/portage/${spec_conf##*/}.mask ${offset}/etc/portage/package.mask
 	mv ${offset}/etc/portage/${spec_conf##*/}.license ${offset}/etc/portage/package.license
 
+
+	# THESE CAN BE MODULARIZED ... RAW EDITS FOR NOW
+	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf
+	# need a switch-case for kernel modules/pci peeks
+	#sed -i "/VIDEO_CARDS/c VIDEO_CARDS=\"${cards}\"" ${offset}/etc/portage/make.conf
+	# module for BOOT SYSTEM { EFI/emu/pc}
+
 	while read line; do
 		echo "LINE = $line" 2>&1
 		((LineNum+=1))
@@ -49,7 +66,6 @@ function patches()
 		fi
 	# 																	remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
 	done < <(curl ${common_conf})
-
 
 	while read line; do
 		echo "LINE = $line" 2>&1
@@ -75,18 +91,18 @@ function editboot()
 	local POOL="${DATASET%/*}"
 	local UUID="$(blkid | grep "$POOL" | awk '{print $3}' | tr -d '"')"
 	local line_number=$(grep -n "ZFS=${DATASET} " ${offset}  | cut -f1 -d:)
-	local menuL,loadL,initrdL	# predeclarations / local
+	#local menuL,loadL,initrdL	# predeclarations / local
 
 	# SYNC KERNEL BINARY SOURCES /LINUX/... *SELECT MIRROR SOURCE (KERNELS) TO RSYNC FOR SYNC, NOT D-L
-	local kver=$(getKVER)
+	#local kver=$(getKVER)
 	#kver="${kver#*linux-}"
-	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"	
+	#local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"	
 	
-	echo "kver = ${kver} | $(getKVER)"
-	echo "mget ${ksrc}${kver}/ $offset/LINUX/" 2>&1	
+	#echo "kver = ${kver} | $(getKVER)"
+	#echo "mget ${ksrc}${kver}/ $offset/LINUX/" 2>&1	
 	
 	#sleep 30
-	mget ${ksrc}${kver} $offset/LINUX/
+	#mget ${ksrc}${kver} $offset/LINUX/
 
 	sed -i "/default_selection/c default_selection $DATASET" ${offset}/EFI/boot/refind.conf
 
@@ -175,10 +191,11 @@ function install_modules()
 	# DEFUNCT ?
 	if [[ -d ${offset}/lib/modules/${kver} ]];then exit; fi
 
-	echo "${ksrc}${kver}/modules.tar.gz --output $offset/modules.tar.gz"
-	mget ${ksrc}${kver}/modules.tar.gz ${offset}/
+	# INSTALL BOOT ENV
+	mget ${ksrc}${kver} ${offset}/boot/LINUX/
 
-	echo "decompressing modules...  $offset/modules.tar.gz"
+	# INSTALL KERNEL MODULES
+	mget ${ksrc}${kver}/modules.tar.gz ${offset}/
 	pv $offset/modules.tar.gz | tar xzf - -C ${offset}
 	rm ${offset}/modules.tar.gz
 
