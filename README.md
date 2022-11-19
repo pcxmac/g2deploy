@@ -10,6 +10,8 @@ HOW TO USE:
 
   ./install.sh work=zfs://wSys/hardened@safe boot=zfs:///dev/sda:/usb/g1
 
+  ./install.sh work=zfs://root@10.1.0.1:/wSys/gnome@safe boot=zfs:///dev/nvme0n1:/saturn/g2
+
   ./mirror.sh ../config/[type]_[remote?].mirrors [PROFILE-releases.mirrors || protocol type {ftp,rsync,http*}]
 
   ./esync.sh // uses ../config/ESYNC/*.mirrors

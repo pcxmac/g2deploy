@@ -20,9 +20,6 @@ source ./include.sh
 #	
 #	
 
-
-
-
 # NEED TO BREAK THIS FUNCTION DOWN IN TO SMALLER PARTS
 function setup_boot()	
 {
@@ -123,7 +120,7 @@ function setup_boot()
 					ddataset=${destination##*/}
 					ddataset=${ddataset%@*}
 					dhost="${dhost%:*}"
-						dpath="/srv/zfs/${dpool}"
+					dpath="/srv/zfs/${dpool}"
 				;;
 				btrfs)
 					destination=${dhost#*:/}
@@ -166,7 +163,6 @@ function setup_boot()
 			wipefs -af "$(echo "${parts}" | grep '.2')"
 			wipefs -af "$(echo "${parts}" | grep '.3')"
 			mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
-
 
 			#	
 			#	if a directory + contents exists @ mountpoint, this will fail, please check for potential collision and redress w/ user
@@ -223,13 +219,13 @@ function setup_boot()
 			then
 				case ${stype} in
 					zfs)
-						if [[ -n ${shost} ]]; then	ssh ${shost} zfs send ${source} | pv --timer --rate | zfs recv -F ${destination}
-						else 									 zfs send ${source} | pv --timer --rate | zfs recv -F ${destination}
+						if [[ -n ${shost} ]]; then	ssh ${shost} zfs send ${source} | pv | zfs recv -F ${destination}
+						else 									 zfs send ${source} | pv | zfs recv -F ${destination}
 						fi
 					;;
 					btrfs)
-						if [[ -n ${shost} ]]; then	ssh ${shost} btrfs send ${spath} | pv --timer --rate | btrfs receive ${dpath}
-						else									 btrfs send ${spath} | pv --timer --rate | btrfs receive ${dpath}
+						if [[ -n ${shost} ]]; then	ssh ${shost} btrfs send ${spath} | pv | btrfs receive ${dpath}
+						else									 btrfs send ${spath} | pv | btrfs receive ${dpath}
 						fi
 					;;
 				esac
@@ -252,20 +248,14 @@ function setup_boot()
 
 			dstDir="$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')/${ddataset}"
 			boot_src="ftp://10.1.0.1/patchfiles/boot/*"
-			
 			if [[ ! -d ${dstDir} ]]; then mkdir -p ${dstDir}; fi
 			mount "$(echo "${parts}" | grep '.2')" ${dstDir}/boot
-
 			mget ${boot_src} ${dstDir}/boot
-
 			kversion=$(getKVER)
-
 			install_modules ${dstDir}			# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
-
 			editboot ${kversion} "${dpool}/${ddataset}"
 
-			umount ${bootDir}
-			
+			umount ${dstDir}/boot
  }
 
 #########################################################################################################
@@ -289,6 +279,7 @@ function setup_boot()
 
 	if [[ -n ${_source} ]] && [[ -n ${_destination} ]]
 	then
+#		echo "shit"
 		setup_boot ${_source} ${_destination}
 	fi
 
