@@ -117,7 +117,7 @@ function editboot()
 		echo '	icon /EFI/boot/icons/os_gentoo.png' >> ${offset}/EFI/boot/refind.conf
 		echo "	loader /linux/${VERSION#*linux-}/vmlinuz" >> ${offset}/EFI/boot/refind.conf
 		echo "	initrd /linux/${VERSION#*linux-}/initramfs" >> ${offset}/EFI/boot/refind.conf
-		echo "	options \"$UUID dozfs root=ZFS=$DATASET default scandelay=3 rw\"" >> ${offset}/EFI/boot/refind.conf
+		echo "	options \"$UUID dozfs real_root=ZFS=$DATASET default scandelay=3 rw\"" >> ${offset}/EFI/boot/refind.conf
 		echo '	#disabled' >> ${offset}/EFI/boot/refind.conf
 		echo '}' >> ${offset}/EFI/boot/refind.conf
 	fi
