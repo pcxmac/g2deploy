@@ -192,7 +192,7 @@ function install_modules()
 	if [[ -d ${offset}/lib/modules/${kver} ]];then exit; fi
 
 	# INSTALL BOOT ENV
-	mget ${ksrc}/${kver}/ ${offset}/boot/LINUX/
+	mget ${ksrc}${kver} ${offset}/boot/LINUX/
 
 	# INSTALL KERNEL MODULES
 	mget ${ksrc}${kver}/modules.tar.gz ${offset}/
