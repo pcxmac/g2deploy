@@ -11,25 +11,32 @@ function patches()
 	local _profile=$2
 	local lineNum=0
 
-    echo "patching system files..." 2>&1
+ #   echo "patching system files..." 2>&1
 
 	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
 	# the option appended below is contingent on the patchfiles.mirrors type as rsync, wget/http|curl would be -X 
-	mget ${psrc} "${offset} --exclude '/boot/'"
-	#rsync is owning the topmost directory (root of file system) w/ owner of remote, which is probably portage, so force own root.
-	chown root.root ${offset}
+
+	mget ${psrc}etc/ ${offset}/etc/ "--progress=info2"
+
+	#chown root.root ${offset}
 
 	common_conf="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.conf" | sed 's/ //g' | sed "s/\"/'/g")"
 	spec_conf="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${_profile}" | sed 's/ //g' | sed "s/\"/'/g")"
+	#
+	#	machine.conf - chroot in, pull out states/create a dynamic machine configuration. # This justifies running an update on the runtime after a hardware change... 
+	#	to include nprocs, kernel module utilization, network adapter configuration, adaptive firewall ???
+	#	
+	#	
 
 	# PATCHUP *.use ; *.accept_keywords ; *.mask ; *.license 
 
 	# eventually move to directory of, and bulk download instead of individual downloads, and renaming. 
-
-	rm ${offset}/etc/portage/package.use -R
-	rm ${offset}/etc/portage/package.mask -R
-	rm ${offset}/etc/portage/package.license -R
-	rm ${offset}/etc/portage/package.accept_keywords -R
+	#	depricated -- mv supercedes the need to delete these files.
+	
+	if [[ -d ${offset}/etc/portage/package.license ]];then rm ${offset}/etc/portage/package.license -R; fi
+	if [[ -d ${offset}/etc/portage/package.use ]];then rm ${offset}/etc/portage/package.use -R; fi
+	if [[ -d ${offset}/etc/portage/package.mask ]];then rm  ${offset}/etc/portage/package.mask -R;fi
+	if [[ -d ${offset}/etc/portage/package.accept_keywords ]];then rm ${offset}/etc/portage/package.accept_keywords -R;fi
 
 	mget ${spec_conf}.uses ${offset}/etc/portage/package.use
 	mget ${spec_conf}.keys ${offset}/etc/portage/package.accept_keywords
@@ -40,7 +47,6 @@ function patches()
 	mv ${offset}/etc/portage/${spec_conf##*/}.keys ${offset}/etc/portage/package.accept_keywords
 	mv ${offset}/etc/portage/${spec_conf##*/}.mask ${offset}/etc/portage/package.mask
 	mv ${offset}/etc/portage/${spec_conf##*/}.license ${offset}/etc/portage/package.license
-
 
 	# THESE CAN BE MODULARIZED ... RAW EDITS FOR NOW
 	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf
@@ -209,6 +215,7 @@ function mget()
 
 	local url="$(echo "$1" | tr -d '*')"			# source_URL
 	local destination=$2	# destination_FS
+	local args=$3
 	local offset
 	local host
 	local _source
@@ -217,7 +224,7 @@ function mget()
 	case ${url%://*} in
 		# local rsync only
 		rsync)
-			rsync -av ${url} ${destination}
+			rsync -av ${args} ${url} ${destination}
 		;;
 		# local websync only
 		#
@@ -225,19 +232,28 @@ function mget()
 		#
 		#
 		#
-		ftp)
-			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination}	--show-progress
-			mv ${destination}/${url#*://}* ${destination}/
+		ftp*)
+			wget $args -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination}	--show-progress
+			mv ${destination}/${url#*://}XXX ${destination}/
 			url=${url#*://}
 			url=${url%%/*}
 			rm ${destination}/${url} -R
 		;;
-		http)
-			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress
-			mv ${destination%/*}/${url#*://}* ${destination%/*}
+		http*)
+			echo "${destination}" 2>&1
+			wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress
+			echo "wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress" 2>&1
+			mv ${destination%/*}/${url#*://} ${destination%/*}
+			echo "mv ${destination%/*}/${url#*://} ${destination%/*}" 2>&1
 			url=${url#*://}
+			echo "url=${url#*://}" 2>&1
 			url=${url%%/*}
-			rm ${destination}/${url} -R
+			echo "url=${url%%/*}" 2>&1
+			rm ${destination%/*}/${url} -R 
+			echo "rm ${destination%/*}/${url} -R" 2>&1
+			#echo "${destination%/*}/|/${url}" 2>&1
+			sleep 3
+
 		;;
 		# local download only
 		ssh)
@@ -289,6 +305,17 @@ function decompress() {
 		pv $src | tar xzf - -C $dst
 		;;
 	esac
+}
+
+function getG2Version() {
+	local mountpoint=$1
+	local result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
+	result="${result%/*}"	#peek
+	result="${result%/*}"	#peek
+	result="${result#*/}"	#poke
+	result="${result#*/}"	#poke
+	result="${result#*/}"	#poke
+	echo $result
 }
 
 function getG2Profile() {

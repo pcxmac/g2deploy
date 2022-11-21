@@ -33,25 +33,16 @@ function update_runtime() {
 	#
 	#
 
-	exclude_atoms="sys-fs/zfs-kmod sys-kernel/gentoo-sources app-emulation/virtualbox-modules"
+	exclude_atoms="-X sys-fs/zfs-kmod -X sys-fs/zfs"
 
 	sudo emerge --sync --verbose --backtrack=99 --ask=n;sudo eix-update
-	sudo emerge -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y --exclude ${exclude_atoms}
+	sudo emerge -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y ${exclude_atoms}
+
+	eselect news read new
 }
 
 export PYTHONPATH=""
 export -f update_runtime
-
-profile="$(getG2Profile ${directory})"
-emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"		
-
-#
-#	ONLY SUPPORTS ZFS
-#
-#
-#
-#
-#
 
 # DESIGNATE A WORKING DIRECTORY TO 
 for x in $@
@@ -64,6 +55,21 @@ do
 		;;
 	esac
 done
+
+profile="$(getG2Version ${directory})/$(getG2Profile ${directory})"
+emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"		
+
+echo "$profile"
+
+#
+#	ONLY SUPPORTS ZFS
+#
+#
+#
+#
+#
+
+echo ${directory}
 
 if [[ ! -d ${directory} ]];then exit; fi
 
