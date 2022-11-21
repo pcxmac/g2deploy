@@ -242,17 +242,17 @@ function mget()
 		http*)
 			echo "${destination}" 2>&1
 			wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress
-			echo "wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress" 2>&1
+			#echo "wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress" 2>&1
 			mv ${destination%/*}/${url#*://} ${destination%/*}
-			echo "mv ${destination%/*}/${url#*://} ${destination%/*}" 2>&1
+			#echo "mv ${destination%/*}/${url#*://} ${destination%/*}" 2>&1
 			url=${url#*://}
-			echo "url=${url#*://}" 2>&1
+			#echo "url=${url#*://}" 2>&1
 			url=${url%%/*}
-			echo "url=${url%%/*}" 2>&1
+			#echo "url=${url%%/*}" 2>&1
 			rm ${destination%/*}/${url} -R 
-			echo "rm ${destination%/*}/${url} -R" 2>&1
+			#echo "rm ${destination%/*}/${url} -R" 2>&1
 			#echo "${destination%/*}/|/${url}" 2>&1
-			sleep 3
+			#sleep 3
 
 		;;
 		# local download only
@@ -315,7 +315,8 @@ function getG2Version() {
 	result="${result#*/}"	#poke
 	result="${result#*/}"	#poke
 	result="${result#*/}"	#poke
-	echo $result
+	#echo $result
+	echo "17.1"
 }
 
 function getG2Profile() {

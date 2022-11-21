@@ -31,6 +31,7 @@ HOW TO USE:
   ./esync.sh            # uses ../config/ESYNC/*.mirrors
 
 
+  # BIGGEST ISSUE : ZFS ONLY.
 
 
 issues / dependencies :
@@ -52,6 +53,12 @@ issues / dependencies :
   NetworkManager not starting on boot w/ GNOME profile
 
   need to start using signed packages !
+
+  sequencing snapshots, versioning and updates.
+
+  patch for roaming profiles ... also zsh.history_db integration.
+
+  
 
 
 Supplimental infrastructure
