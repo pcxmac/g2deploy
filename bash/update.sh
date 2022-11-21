@@ -26,8 +26,17 @@ source ./include.sh
 
 function update_runtime() {
 
+	# Consider using a file for package exclusions, for upgrade, deploy
+	#
+	#
+	#
+	#
+	#
+
+	exclude_atoms="sys-fs/zfs-kmod sys-kernel/gentoo-sources app-emulation/virtualbox-modules"
+
 	sudo emerge --sync --verbose --backtrack=99 --ask=n;sudo eix-update
-	sudo emerge -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y
+	sudo emerge -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y --exclude ${exclude_atoms}
 }
 
 export PYTHONPATH=""
