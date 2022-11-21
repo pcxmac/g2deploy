@@ -251,7 +251,8 @@ function setup_boot()
 			fi
 
 			dstDir="$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')/${ddataset}"
-			boot_src="ftp://10.1.0.1/patchfiles/boot/*"
+			boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
+			#boot_src="ftp://10.1.0.1/patchfiles/boot/*"
 			if [[ ! -d ${dstDir} ]]; then mkdir -p ${dstDir}; fi
 			mount "$(echo "${parts}" | grep '.2')" ${dstDir}/boot
 			mget ${boot_src} ${dstDir}/boot
@@ -287,10 +288,6 @@ function setup_boot()
 	then
 #		echo "shit"
 		setup_boot ${_source} ${_destination}
-
-
-
-
 
 	fi
 

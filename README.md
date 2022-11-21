@@ -28,22 +28,7 @@ HOW TO USE:
 
   # SYNCHRONIZE BACKEND
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  ./esync.sh // uses ../config/ESYNC/*.mirrors
+  ./esync.sh            # uses ../config/ESYNC/*.mirrors
 
 
 
@@ -65,6 +50,9 @@ issues / dependencies :
   not mounting BOOT folder w/ nvme on saturn, not storing boot spec accordingly, BOOTEDIT works.
 
   NetworkManager not starting on boot w/ GNOME profile
+
+  need to start using signed packages !
+
 
 Supplimental infrastructure
 

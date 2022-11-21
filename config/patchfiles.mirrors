@@ -1,1 +1,3 @@
-rsync://10.1.0.1:/gentoo-patchfiles/*
+rsync://10.1.0.1:/gentoo-patchfiles/
+ftp://10.1.0.1:/patchfiles/
+http://10.1.0.1:/gentoo/patchfiles/
