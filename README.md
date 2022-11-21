@@ -30,9 +30,7 @@ HOW TO USE:
 
   ./esync.sh            # uses ../config/ESYNC/*.mirrors
 
-
   # BIGGEST ISSUE : ZFS ONLY.
-
 
 issues / dependencies :
 
@@ -56,9 +54,39 @@ issues / dependencies :
 
   sequencing snapshots, versioning and updates.
 
-  patch for roaming profiles ... also zsh.history_db integration.
+  need to auto configure zfs-loop for swap_memory+autofs.
 
   
+
+
+
+
+
+
+
+  patch for roaming profiles ... also zsh.history_db integration.
+  -user roaming (sync -OLDAP, ... ?)
+  -machine roaming (snapshot w/ customization)
+
+
+
+
+
+
+  pkg-mx :
+
+    use cases: REBUILD_MISSING_PKGS ; DELETE_REDUNDANT_PACKAGES ; MULTI_VARIATE_USE_BUILD ; LOGGING_FACILITY
+
+    need utility for examining imposed uses flags, and list of packages against binpkg repo Packages file.
+    this utility can be used to filter out already built packages satisfying use/version for missing bin package use case.
+
+    need a filter for sweeping through Packages in order to find redundant entries and their associated bin pkg, delete if not 'pretend'.
+
+    utility for rebuilding any package, with all combinations of use flags
+    
+    logging facility for catching broken package builds during audit.
+
+
 
 
 Supplimental infrastructure
@@ -101,3 +129,13 @@ needs:
   further updates per f/s and schema added
 
   network adapter mapping
+
+
+CONCEPT:
+
+  DOM-0 / 
+
+    plug in to any machine, auto associates, connects to cloud VPN, auto updates/syncs.
+    requirement - decent machine which can host a DOM-0 VM. 
+    SIZE ... needs to be at least 8TB
+
