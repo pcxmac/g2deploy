@@ -141,6 +141,10 @@ function setup_boot()
 				;;
 			esac
 
+			echo "dhost = ${dhost}" 2>&1
+			exit
+
+
 			disk=${dhost}
 
 			clear_mounts ${disk}
@@ -252,7 +256,9 @@ function setup_boot()
 			mount "$(echo "${parts}" | grep '.2')" ${dstDir}/boot
 			mget ${boot_src} ${dstDir}/boot
 			kversion=$(getKVER)
+
 			install_modules ${dstDir}			# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
+
 			editboot ${kversion} "${dpool}/${ddataset}"
 
 			umount ${dstDir}/boot
@@ -281,6 +287,11 @@ function setup_boot()
 	then
 #		echo "shit"
 		setup_boot ${_source} ${_destination}
+
+
+
+
+
 	fi
 
 	echo "synchronizing disks"
