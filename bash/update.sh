@@ -103,7 +103,8 @@ for x in $@
 do
 	case "${x}" in
 		update)
-			patches ${directory} ${profile}
+			patch_portage ${directory} ${profile}
+			patch_sys ${directory} ${profile}
 			chroot ${directory} /bin/bash -c "update_runtime"
 		;;
 	esac

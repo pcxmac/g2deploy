@@ -312,12 +312,16 @@ function pkgProcessor()
 
 	mounts ${directory}
 
+	patch_user ${directory} ${_profile}
+
 	zfs_keys ${dataset}
 	echo "certificates ?"
 
+	patch_portage ${directory} ${_profile}
+
 	pkgProcessor ${_profile} ${directory}
 
-	patches ${directory} ${_profile}
+	patch_sys ${directory} ${_profile}
 
 	chroot ${directory} /bin/bash -c "locales ${_profile}"
 

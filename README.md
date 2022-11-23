@@ -18,7 +18,7 @@ HOW TO USE:
 
   ./install.sh work=zfs://root@10.1.0.1:/wSys/gnome@safe boot=zfs:///dev/nvme0n1:/saturn/g2
 
-  # EXISTING ZFS/DISK
+  # EXISTING ZFS/DISK (TEST AND MAKE WORK, $DHOST)
 
   ./install.sh work=zfs://pluto/plasma@safe boot=zfs://wSys/plasma
 
@@ -56,37 +56,43 @@ issues / dependencies :
 
   need to auto configure zfs-loop for swap_memory+autofs.
 
-  
+  patches needs to be slective for a particular folder, / ; /root /home /etc ...
 
+  I believe that the kernel source was being pulled in with the kernel boot env, during bootedit.
 
+  pkg signing keys + kernel_source (signing_module_key) needs to reside on Dom0
 
+  EFI_signing , from safe_image, ... custom_key + appropriated_HW + procedure + thumb drive it seems ...
+  try to find a way to assign keys from live environment (automated) 
 
+  consider FUSE-encrypted file systems for cloud or publicly facing appliances. per process/user
 
-
+  conversion script for pkg to signed package format : GPKG
 
   patch for roaming profiles ... also zsh.history_db integration.
+
   -user roaming (sync -OLDAP, ... ?)
-  -machine roaming (snapshot w/ customization)
 
+  -machine roaming (snapshot w/ customization) .. think crypto_ignition_key<>
 
+  -need a suplimentary dataset || subvol || partition setup for things like home. ... supplimentary configs ? (probably best for after GUI)
 
+  :: perhaps a SSO - CIK, w/ an initramfs which overlays the roaming machine over a default, then snaps from r-o to rw g3 dataset (single boot)
 
+ - dom0 needs to run on UTC
 
+pkg-mx :
 
-  pkg-mx :
+  use cases: REBUILD_MISSING_PKGS ; DELETE_REDUNDANT_PACKAGES ; MULTI_VARIATE_USE_BUILD ; LOGGING_FACILITY
 
-    use cases: REBUILD_MISSING_PKGS ; DELETE_REDUNDANT_PACKAGES ; MULTI_VARIATE_USE_BUILD ; LOGGING_FACILITY
+  need utility for examining imposed uses flags, and list of packages against binpkg repo Packages file.
+  this utility can be used to filter out already built packages satisfying use/version for missing bin package use case.
 
-    need utility for examining imposed uses flags, and list of packages against binpkg repo Packages file.
-    this utility can be used to filter out already built packages satisfying use/version for missing bin package use case.
+  need a filter for sweeping through Packages in order to find redundant entries and their associated bin pkg, delete if not 'pretend'.
 
-    need a filter for sweeping through Packages in order to find redundant entries and their associated bin pkg, delete if not 'pretend'.
-
-    utility for rebuilding any package, with all combinations of use flags
+  utility for rebuilding any package, with all combinations of use flags
     
-    logging facility for catching broken package builds during audit.
-
-
+  logging facility for catching broken package builds during audit.
 
 
 Supplimental infrastructure
