@@ -57,6 +57,11 @@ patch_portage() {
 		fi
 	done < <(curl ${spec_conf}.conf)
 
+	#cat /${offset}/etc/portage/make.conf 
+
+	#sleep 30
+
+
 }
 
 patch_user() {
@@ -76,83 +81,6 @@ patch_sys() {
 	mget ${psrc}usr/ ${offset}/usr/ "--progress=info2"
 }
 
-#function patches()
-#{
-#    local offset=$1
-#	local _profile=$2
-#	local lineNum=0
-
- #   echo "patching system files..." 2>&1
-
-#	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
-	# the option appended below is contingent on the patchfiles.mirrors type as rsync, wget/http|curl would be -X 
-
-#	mget ${psrc}etc/ ${offset}/etc/ "--progress=info2"
-
-	#chown root.root ${offset}
-
-#	common_conf="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.conf" | sed 's/ //g' | sed "s/\"/'/g")"
-#	spec_conf="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${_profile}" | sed 's/ //g' | sed "s/\"/'/g")"
-	#
-	#	machine.conf - chroot in, pull out states/create a dynamic machine configuration. # This justifies running an update on the runtime after a hardware change... 
-	#	to include nprocs, kernel module utilization, network adapter configuration, adaptive firewall ???
-	#	
-	#	
-
-	# PATCHUP *.use ; *.accept_keywords ; *.mask ; *.license 
-
-	# eventually move to directory of, and bulk download instead of individual downloads, and renaming. 
-	#	depricated -- mv supercedes the need to delete these files.
-	
-#	if [[ -d ${offset}/etc/portage/package.license ]];then rm ${offset}/etc/portage/package.license -R; fi
-#	if [[ -d ${offset}/etc/portage/package.use ]];then rm ${offset}/etc/portage/package.use -R; fi
-#	if [[ -d ${offset}/etc/portage/package.mask ]];then rm  ${offset}/etc/portage/package.mask -R;fi
-#	if [[ -d ${offset}/etc/portage/package.accept_keywords ]];then rm ${offset}/etc/portage/package.accept_keywords -R;fi
-
-#	mget ${spec_conf}.uses ${offset}/etc/portage/package.use
-#	mget ${spec_conf}.keys ${offset}/etc/portage/package.accept_keywords
-#	mget ${spec_conf}.mask ${offset}/etc/portage/package.mask
-#	mget ${spec_conf}.license ${offset}/etc/portage/package.license
-
-#	mv ${offset}/etc/portage/${spec_conf##*/}.uses ${offset}/etc/portage/package.use
-#	mv ${offset}/etc/portage/${spec_conf##*/}.keys ${offset}/etc/portage/package.accept_keywords
-#	mv ${offset}/etc/portage/${spec_conf##*/}.mask ${offset}/etc/portage/package.mask
-#	mv ${offset}/etc/portage/${spec_conf##*/}.license ${offset}/etc/portage/package.license
-
-	# THESE CAN BE MODULARIZED ... RAW EDITS FOR NOW
-#	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf
-	# need a switch-case for kernel modules/pci peeks
-	#sed -i "/VIDEO_CARDS/c VIDEO_CARDS=\"${cards}\"" ${offset}/etc/portage/make.conf
-	# module for BOOT SYSTEM { EFI/emu/pc}
-
-#	while read line; do
-#		echo "LINE = $line" 2>&1
-#		((LineNum+=1))
-#		PREFIX=${line%=*}
-#		echo "PREFIX = $PREFIX" 2>&1
-#		SUFFIX=${line#*=}
-#		if [[ -n $line ]]
-#		then
-#			echo "WHAT ?"
-#			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf
-#		fi
-	# 																	remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
-#	done < <(curl ${common_conf})
-
-#	while read line; do
-#		echo "LINE = $line" 2>&1
-#		((LineNum+=1))
-#		PREFIX=${line%=*}
-#		echo "PREFIX = $PREFIX" 2>&1
-#		SUFFIX=${line#*=}
-#		if [[ -n $line ]]
-#		then
-#			echo "WHAT ?"
-#			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf	
-#		fi
-	# 																	    remove :    WHITE SPACE    DOUBLE->SINGLE QUOTES
-#	done < <(curl ${spec_conf}.conf)
-#}
 
 function editboot() 
 {

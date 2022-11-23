@@ -32,7 +32,9 @@ HOW TO USE:
 
   # BIGGEST ISSUE : ZFS ONLY.
 
-issues / dependencies :
+issues / dependencies : <review>
+
+  all ip address scheme - dom.zero 10.0.0.1 (dns resolve pt) .: universal naming convention for the distribution hub, prod.dom.zero and dev.dom.zero
 
   install will assume the originating dataset's key and mount points, also install does not have a schema build system, where as multiple disks and custom properties cannot be asserted conveniently. 
 
