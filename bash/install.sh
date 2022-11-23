@@ -129,7 +129,6 @@ function setup_boot()
 					ddataset=${ddataset%@*}
 					dhost="${dhost%:*}"
 					dpath="/srv/btrfs/${dpool}/${ddataset}"
-
 				;;
 				ext4|xfs|ntfs)
 					destination=${dhost#*:}
@@ -142,6 +141,7 @@ function setup_boot()
 			esac
 
 			echo "dhost = ${dhost}" 2>&1
+			echo "dpath = ${dpath}" 2>&1
 			exit
 
 
