@@ -34,7 +34,33 @@ HOW TO USE:
 
 issues / dependencies : <review>
 
+  deploy , news items are not read
+
+  deploy, kernel modules not installed
+
+  Network Manager not loaded for gdm
+
+  deploy is accruing packages in /var/lib/portage ...
+
+  need option for kernel source ... in deploy
+
+  /var/db/pkg & /var/db/repos still exist, pkg was filled ....
+
+  a system update might be getting rid of the spi-... issues
+
+  chromium still has the spi issues
+
+  libvirt is not patched. ....
+
+  world file, will be over written by portage map, need to rethink ...
+
+  no network profiling ....
+
+  missing completion for gentoo-zsh
+
+
   all ip address scheme - dom.zero 10.0.0.1 (dns resolve pt) .: universal naming convention for the distribution hub, prod.dom.zero and dev.dom.zero
+  all other resolve points will be, if neccessary captured by a patch_sys -> /etc/hosts, for which the rest of the system can elate across the network through name services.
 
   install will assume the originating dataset's key and mount points, also install does not have a schema build system, where as multiple disks and custom properties cannot be asserted conveniently. 
 

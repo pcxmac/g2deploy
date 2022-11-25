@@ -120,8 +120,9 @@ function buildup()
 
 function system()
 {
-	emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree"
-	#emergeOpts="--buildpkg=n --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"
+	local patch_script="/patches.sh"
+	local pkgs="/package.list"
+	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
 
 	#	PLEASE MOVE THIS IN TO PKGPROCESSOR
@@ -139,11 +140,17 @@ function system()
 	#
 	#
 
+
+	echo "ISSUING WORK AROUNDS"
+	sh ${patch_script}
+
 	echo "EMERGE PROFILE PACKAGES !!!!"
-	pkgs="/package.list"
 	emerge $emergeOpts $(cat "$pkgs")
 
-	emergeOpts=""
+	#rm ${patch_script}
+	#rm ${pkgs}
+
+	emergeOpts="--verbose-conflicts"
 	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts =zfs-9999 --nodeps
 	
 	#
@@ -224,6 +231,28 @@ function pkgProcessor()
 
 	echo "${diffPkgs}" > ${offset}/package.list
 }
+
+function patchProcessor()
+{
+    local profile=$1
+	local offset=$2
+
+	echo $profile 2>&1
+	echo $offset 2>&1
+
+	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.patches" | sed 's/ //g')"
+	local patch_script="$(curl $url)"
+
+	#
+	#
+	#	CONVERT THIS TO AN OUTPUT STREAM, DO NOT SAVE TO OFFSET (SHOULD BE INVOKED LOCALLY)
+	#
+	#
+	#
+
+	echo "${patch_script}" > ${offset}/patches.sh
+}
+
 
 ###################################################################################################################################
 #
@@ -320,6 +349,7 @@ function pkgProcessor()
 	echo "certificates ?"
 
 	pkgProcessor ${_profile} ${directory}
+	patchProcessor ${_profile} ${directory}
 
 	chroot ${directory} /bin/bash -c "locales ${_profile}"
 
