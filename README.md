@@ -50,13 +50,19 @@ issues / dependencies : <review>
 
   chromium still has the spi issues
 
-  libvirt is not patched. ....
+  libvirt is not patched. .... PROFILE ASSERT
 
   world file, will be over written by portage map, need to rethink ...
 
   no network profiling ....
 
+  move plasma back over to sddm
+
   missing completion for gentoo-zsh
+
+  qemu missing : swtpm + usermod-utilities, ssh enabled thru profile ... profile+services capture ... profile+key mngmt/capture
+
+  distfiles not accessible remotely w/out sshfs-autofs
 
 
   all ip address scheme - dom.zero 10.0.0.1 (dns resolve pt) .: universal naming convention for the distribution hub, prod.dom.zero and dev.dom.zero
