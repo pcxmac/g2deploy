@@ -142,8 +142,6 @@ function setup_boot()
 
 			echo "dhost = ${dhost}" 2>&1
 			echo "dpath = ${dpath}" 2>&1
-			exit
-
 
 			disk=${dhost}
 
