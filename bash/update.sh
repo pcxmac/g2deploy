@@ -35,6 +35,9 @@ function update_runtime() {
 
 	exclude_atoms="-X sys-fs/zfs-kmod -X sys-fs/zfs"
 
+	eselect profile show
+	sleep 10
+
 	sudo emerge --sync --verbose --backtrack=99 --ask=n;sudo eix-update
 	sudo emerge -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y ${exclude_atoms}
 
@@ -57,17 +60,22 @@ do
 done
 
 profile="$(getG2Version ${directory})/$(getG2Profile ${directory})"
+
+echo ${profile}
+
 emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"		
 
 echo "$profile"
-
+#sleep 10
 #
 #	ONLY SUPPORTS ZFS
 #
-#
-#
-#
-#
+#	PROFILE TRANSLATION ISSUES
+#	issues with profile derivation ...
+
+#	openrc = default/linux/amd64/17.1
+#	selinux = ???
+#	
 
 echo ${directory}
 
@@ -96,13 +104,12 @@ do
 	esac
 done
 
-#sleep 30
-
 # update
 for x in $@
 do
 	case "${x}" in
 		update)
+			echo "patch_portage ${directory} ${profile} "
 			patch_portage ${directory} ${profile}
 			patch_sys ${directory} ${profile}
 			chroot ${directory} /bin/bash -c "update_runtime"

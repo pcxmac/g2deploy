@@ -14,6 +14,11 @@ patch_portage() {
 	common_conf="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.conf" | sed 's/ //g' | sed "s/\"/'/g")"
 	spec_conf="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${_profile}" | sed 's/ //g' | sed "s/\"/'/g")"
 
+	echo "common_conf = ${common_conf}" 2>&1
+	echo "spec_conf = ${spec_conf}" 2>&1
+
+	#sleep 30
+
 	if [[ -d ${offset}/etc/portage/package.license ]];then rm ${offset}/etc/portage/package.license -R; fi
 	if [[ -d ${offset}/etc/portage/package.use ]];then rm ${offset}/etc/portage/package.use -R; fi
 	if [[ -d ${offset}/etc/portage/package.mask ]];then rm  ${offset}/etc/portage/package.mask -R;fi
@@ -33,35 +38,33 @@ patch_portage() {
 
 	while read line; do
 		echo "LINE = $line" 2>&1
+		#sleep 5
 		((LineNum+=1))
 		PREFIX=${line%=*}
 		echo "PREFIX = $PREFIX" 2>&1
+		#sleep 5
 		SUFFIX=${line#*=}
 		if [[ -n $line ]]
 		then
-			echo "WHAT ?"
+			echo "WHAT ? sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf"
 			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf
 		fi
 	done < <(curl ${common_conf})
 
 	while read line; do
 		echo "LINE = $line" 2>&1
+		#sleep 5
 		((LineNum+=1))
 		PREFIX=${line%=*}
 		echo "PREFIX = $PREFIX" 2>&1
+		#sleep 5
 		SUFFIX=${line#*=}
 		if [[ -n $line ]]
 		then
-			echo "WHAT ?"
+			echo "WHAT ? sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf"
 			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf	
 		fi
 	done < <(curl ${spec_conf}.conf)
-
-	#cat /${offset}/etc/portage/make.conf 
-
-	#sleep 30
-
-
 }
 
 patch_user() {
@@ -79,6 +82,7 @@ patch_sys() {
 	mget ${psrc}etc/ ${offset}/etc/ "--progress=info2"
 	mget ${psrc}var/ ${offset}/var/ "--progress=info2"
 	mget ${psrc}usr/ ${offset}/usr/ "--progress=info2"
+	mget ${psrc}/ ${offset}/ "--exclude '*' --progress=info2"
 }
 
 
@@ -92,17 +96,6 @@ function editboot()
 	local UUID="$(blkid | grep "$POOL" | awk '{print $3}' | tr -d '"')"
 	local line_number=$(grep -n "ZFS=${DATASET} " ${offset}  | cut -f1 -d:)
 	#local menuL,loadL,initrdL	# predeclarations / local
-
-	# SYNC KERNEL BINARY SOURCES /LINUX/... *SELECT MIRROR SOURCE (KERNELS) TO RSYNC FOR SYNC, NOT D-L
-	#local kver=$(getKVER)
-	#kver="${kver#*linux-}"
-	#local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"	
-	
-	#echo "kver = ${kver} | $(getKVER)"
-	#echo "mget ${ksrc}${kver}/ $offset/LINUX/" 2>&1	
-	
-	#sleep 30
-	#mget ${ksrc}${kver} $offset/LINUX/
 
 	sed -i "/default_selection/c default_selection $DATASET" ${offset}/EFI/boot/refind.conf
 

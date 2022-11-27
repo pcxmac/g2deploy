@@ -34,6 +34,8 @@ HOW TO USE:
 
 issues / dependencies : <review>
 
+  find a way to check if patches files exists, if not, disregard, right now it throws error during script execution.
+
   find a way to hash patched server directories, log output, and report differences
 
   bundles : need meta packages for things like libvirt, to include patches for /etc ... bundles can be placed in /bundle/call/*.pkgs;*.patches/rootdir/...

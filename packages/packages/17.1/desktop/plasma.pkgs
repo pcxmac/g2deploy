@@ -1,0 +1,11 @@
+kde-plasma/plasma-desktop
+kde-plasma/plasma-meta
+kde-apps/konsole
+app-editors/gedit
+app-editors/gedit-plugins
+kde-plasma/plasma-nm
+sys-auth/elogind
+x11-misc/sddm
+kde-plasma/plasma-pa
+media-sound/pavucontrol-qt
+
