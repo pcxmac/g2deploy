@@ -195,7 +195,6 @@ function locales()
 	#	{key%/openrc} :: is a for the edgecase 'openrc' where only that string is non existent with in eselect-profile
 	eselect profile set default/linux/amd64/${key%/openrc}
 	eselect profile show
-	sleep 10
 }
 
 
@@ -330,6 +329,8 @@ function patchProcessor()
             ;;
         esac
     done
+
+	echo ${_profile}
 
 	if [[ -z "${_profile}" ]];then echo "profile does not exist for $selection"; exit; fi
 
