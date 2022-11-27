@@ -34,13 +34,15 @@ HOW TO USE:
 
 issues / dependencies : <review>
 
-  put in a timer for waiting for the server should it be offline, post a warning to check the source location.
+  find a way to hash patched server directories, log output, and report differences
+
+  bundles : need meta packages for things like libvirt, to include patches for /etc ... bundles can be placed in /bundle/call/*.pkgs;*.patches/rootdir/...
+
+  put in a timer for waiting for the server should it be offline, post a warning to check the source location. (MGET)
 
   deploy , news items are not read
 
   deploy, kernel modules not installed
-
-  Network Manager not loaded for gdm
 
   deploy is accruing packages in /var/lib/portage ...
 
@@ -68,6 +70,7 @@ issues / dependencies : <review>
 
   network addressing / configuration can take place using auto negotiation, utilizing certs, vpn-tun/tap's and dhcp. vpn's require a general client certificate + a private key/auth mechanism
 
+  get rid of @safe snapshot prior to deployment, deployment assumes initialization ...
 
   all ip address scheme - dom.zero 10.0.0.1 (dns resolve pt) .: universal naming convention for the distribution hub, prod.dom.zero and dev.dom.zero
   all other resolve points will be, if neccessary captured by a patch_sys -> /etc/hosts, for which the rest of the system can elate across the network through name services.
