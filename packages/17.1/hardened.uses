@@ -4,3 +4,4 @@ net-wireless/wpa_supplicant dbus
 media-libs/libglvnd X
 virtual/libusb udev
 dev-libs/libusb udev
+dev-libs/libbpf static-libs

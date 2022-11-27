@@ -1,10 +1,8 @@
-www-client/chromium
-net-im/telegram-desktop
 gnome-base/gnome-light
 gnome-base/gnome-desktop
 gnome-base/gnome-control-center
 gnome-extra/gnome-shell-extensions
 app-editors/gedit
 app-editors/gedit-plugins
-app-editors/vscode
 gnome-extra/gnome-weather
+media-sound/pavucontrol

@@ -4,7 +4,8 @@ kde-apps/konsole
 app-editors/gedit
 app-editors/gedit-plugins
 kde-plasma/plasma-nm
-app-editors/vscode
-net-im/telegram-desktop
-www-client/chromium
 sys-auth/elogind
+x11-misc/sddm
+kde-plasma/plasma-pa
+media-sound/pavucontrol-qt
+

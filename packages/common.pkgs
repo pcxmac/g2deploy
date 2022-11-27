@@ -1,3 +1,7 @@
+dev-haskell/alsa-mixer
+dev-haskell/alsa-core
+dev-haskell/alsa-utils
+net-dialup/minicom
 app-arch/pigz
 sys-fs/xfsprogs
 sys-apps/hdparm
@@ -508,3 +512,4 @@ virtual/w3m
 virtual/yacc
 www-client/links
 www-client/w3m
+app-shells/gentoo-zsh-completions

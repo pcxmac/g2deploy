@@ -7,10 +7,13 @@ systemctl enable zfs-import.target
 systemctl enable cronie
 systemctl enable autofs
 systemctl enable ntpd
+
 ln -sf /dev/null /etc/systemd/system/systemd-resolved.service
 ln -sf /dev/null /etc/systemd/system/rpcbind.service
-systemctl enable gdm.service
+
+systemctl enable sddm.service
 dir="/var/lib/AccountsService/users"
+
 mkdir -p $dir
 printf "[User]\nSession=plasmawayland\nIcon=/home/sysop/.face\nSystemAccount=false\n " >  $dir/sysop
 printf "[User]\nSession=plasmawayland\nIcon=/home/root/.face\nSystemAccount=false\n " > $dir/root

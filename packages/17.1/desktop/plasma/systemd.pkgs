@@ -1,11 +1,9 @@
-www-client/chromium
-net-im/telegram-desktop
 kde-plasma/plasma-desktop
 x11-misc/sddm
 kde-plasma/plasma-meta
-gnome-base/gdm
 kde-apps/konsole
 app-editors/gedit
 app-editors/gedit-plugins
-app-editors/vscode
 kde-plasma/plasma-nm
+kde-plasma/plasma-pa
+media-sound/pavucontrol-qt

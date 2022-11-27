@@ -1,3 +1,5 @@
+# SELINUX LICENSE
+
 sys-kernel/linux-firmware linux-fw-redistributable no-source-code
 games-board/crafty crafty license(s)
 sys-firmware/intel-microcode intel-ucode

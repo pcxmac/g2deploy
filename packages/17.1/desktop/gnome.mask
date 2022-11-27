@@ -1,2 +1,0 @@
->dev-libs/glib-2.74-1
-dev-util/bpftrace
