@@ -34,6 +34,8 @@ HOW TO USE:
 
 issues / dependencies : <review>
 
+  put in a timer for waiting for the server should it be offline, post a warning to check the source location.
+
   deploy , news items are not read
 
   deploy, kernel modules not installed
@@ -63,6 +65,8 @@ issues / dependencies : <review>
   qemu missing : swtpm + usermod-utilities, ssh enabled thru profile ... profile+services capture ... profile+key mngmt/capture
 
   distfiles not accessible remotely w/out sshfs-autofs
+
+  network addressing / configuration can take place using auto negotiation, utilizing certs, vpn-tun/tap's and dhcp. vpn's require a general client certificate + a private key/auth mechanism
 
 
   all ip address scheme - dom.zero 10.0.0.1 (dns resolve pt) .: universal naming convention for the distribution hub, prod.dom.zero and dev.dom.zero
