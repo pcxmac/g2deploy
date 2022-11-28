@@ -265,6 +265,7 @@ function setup_boot()
 			mget ${boot_src} ${dstDir}/boot
 			sleep 5
 			kversion=$(getKVER)
+			kversion=${kversion#*linux-}
 
 			echo "KVERSION = ${kversion}" 2>&1
 

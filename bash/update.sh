@@ -86,6 +86,9 @@ if [[ ! -d ${directory} ]];then exit; fi
 clear_mounts ${directory}
 mounts ${directory}
 
+kversion=$(getKVER)
+kversion=${kversion#*linux-}
+
 for x in $@
 do
 	case "${x}" in
@@ -94,10 +97,10 @@ do
 			type_part="$(blkid ${efi_part})"
 			if [[ ${type_part} == *"TYPE=\"vfat\""* ]];
 			then
-				echo "update boot ! @ ${efi_part}} @ ${dataset} + $(getKVER)"
+				echo "update boot ! @ ${efi_part} @ ${dataset} :: ${directory} >> + $(getKVER)"
 				# IS THIS WORKING ?? NOT UPDATING BOOT RECORD ON DIFFERENT SETS
 				mount ${efi_partition} ${directory}/boot
-				editboot $(getKVER) "${dataset}"
+				editboot ${kversion} "${dataset}"
 				install_modules ${directory}
 			else
 				echo "no mas"
