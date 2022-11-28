@@ -33,6 +33,8 @@ function update_runtime() {
 	#
 	#
 
+	echo "executing RUNTIME_UPDATE !"
+
 	exclude_atoms="-X sys-fs/zfs-kmod -X sys-fs/zfs"
 
 	eselect profile show
@@ -110,8 +112,8 @@ do
 	case "${x}" in
 		update)
 			echo "patch_portage ${directory} ${profile} "
-			patch_portage ${directory} ${profile}
 			patch_sys ${directory} ${profile}
+			patch_portage ${directory} ${profile}
 			chroot ${directory} /bin/bash -c "update_runtime"
 		;;
 	esac

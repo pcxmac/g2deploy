@@ -34,6 +34,8 @@ HOW TO USE:
 
 issues / dependencies : <review>
 
+  glibc versioning, alongside kernel versioning
+
   find a way to check if patches files exists, if not, disregard, right now it throws error during script execution.
 
   find a way to hash patched server directories, log output, and report differences
