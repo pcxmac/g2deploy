@@ -3,10 +3,10 @@
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
-    # INPUTS    
+    # INPUTS
     #           WORK=chroot offset		- update working directory
 	#			BOOT=
-	#		
+	#
 	#	mounts + binpkgs,
 	#	update patched files
 	#	update kernel (only modules installed, kernel source could be added later, optionally)
@@ -16,10 +16,10 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 	#	unmounts
 	#
 	#
-	#	future features : 	
+	#	future features :
 	#		test to see if pool exists, add new zfs datasets if no dataset, other partition types.
 	#		NEED A STRUCTURE TO CHECK CURRENT BOOT SETTING/VERIFY MODULE INSTALL, THEN RETROFIT TO NEW KERNEL IF APPLICABLE, IF NOT, DONT DO SHIT TO THE KERNEL
-	#		
+	#
 	#	USE = ./update.sh work=pool/set boot=/dev/sdX update
 
 source ./include.sh
@@ -38,7 +38,6 @@ function update_runtime() {
 	exclude_atoms="-X sys-fs/zfs-kmod -X sys-fs/zfs"
 
 	eselect profile show
-	sleep 10
 
 	sudo emerge --sync --verbose --backtrack=99 --ask=n;sudo eix-update
 	sudo emerge -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y ${exclude_atoms}
@@ -49,45 +48,69 @@ function update_runtime() {
 export PYTHONPATH=""
 export -f update_runtime
 
-# DESIGNATE A WORKING DIRECTORY TO 
+# DESIGNATE A WORKING DIRECTORY TO
+
 for x in $@
 do
 	case "${x}" in
 		work=*)
 			directory="$(getZFSMountPoint ${x#*=})"
-			dataset="${x#*=}"
-			
+			rootDS="$(df / | tail -n 1 | awk '{print $1}')"
+			target="$(getZFSMountPoint ${rootDS})"
+
+			if [[ ${directory} == ${target} ]]
+			then
+				echo "cannot update mounted root file system (ZFS) !"
+				echo "${directory} ?? ${target}"
+				exit
+			else
+				dataset="${x#*=}"
+				profile="$(getG2Version ${directory})/$(getG2Profile ${directory})"
+			fi
 		;;
 	esac
 done
 
-profile="$(getG2Version ${directory})/$(getG2Profile ${directory})"
-
-echo ${profile}
-
 emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"		
 
 echo "$profile"
-#sleep 10
 #
 #	ONLY SUPPORTS ZFS
 #
 #	PROFILE TRANSLATION ISSUES
 #	issues with profile derivation ...
-
 #	openrc = default/linux/amd64/17.1
 #	selinux = ???
-#	
+#
 
 echo ${directory}
 
 if [[ ! -d ${directory} ]];then exit; fi
 
 clear_mounts ${directory}
-mounts ${directory}
 
 kversion=$(getKVER)
 kversion=${kversion#*linux-}
+
+mounts ${directory}
+
+# update
+for x in $@
+do
+	case "${x}" in
+		update)
+			echo "patch_portage ${directory} ${profile} "
+
+			# zfs only
+			rootDS="$(df / | tail -n 1 | awk '{print $1}')"
+			target="$(getZFSMountPoint ${rootDS})"
+
+			patch_sys ${directory} ${profile}
+			patch_portage ${directory} ${profile}
+			chroot ${directory} /bin/bash -c "update_runtime"
+	;;
+	esac
+done
 
 for x in $@
 do
@@ -99,25 +122,15 @@ do
 			then
 				echo "update boot ! @ ${efi_part} @ ${dataset} :: ${directory} >> + $(getKVER)"
 				# IS THIS WORKING ?? NOT UPDATING BOOT RECORD ON DIFFERENT SETS
-				mount ${efi_partition} ${directory}/boot
+
+				echo "mount ${efi_part} ${directory}/boot"
+				mount ${efi_part} ${directory}/boot
+				echo "....."
 				editboot ${kversion} "${dataset}"
 				install_modules ${directory}
 			else
 				echo "no mas"
 			fi
-		;;
-	esac
-done
-
-# update
-for x in $@
-do
-	case "${x}" in
-		update)
-			echo "patch_portage ${directory} ${profile} "
-			patch_sys ${directory} ${profile}
-			patch_portage ${directory} ${profile}
-			chroot ${directory} /bin/bash -c "update_runtime"
 		;;
 	esac
 done

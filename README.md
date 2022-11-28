@@ -34,6 +34,9 @@ HOW TO USE:
 
 issues / dependencies : <review>
 
+  add workarounds to update, use checking to verify if upgrade required ... add check for portage 
+itself.
+
   create build services, to serve as an alternative for distfiles complete sync, where only relavent packages will be installed in to distfiles over sshfs/bind mounts. Build service to feature, binpkg versioning, per kernel, per glibc, ... use the local zfs on VM to snapshot per versioning, client versioning to use this as a basis, for it's own.
 
   g3 clones from g2 snapshot_versioning, from g1@safe.
