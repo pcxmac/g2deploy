@@ -1,0 +1,16 @@
+
+#/tmp	-fstype=tmpfs,rw,size=50% tmpfs
+
+/tmp	-fstype=tmpfs,mode=1777,size=75%,nosuid	tmpfs	
+
+
+#strict
+##/tmp	-fstype=tmpfs,mode=1777,size=50%,noexec,nosuid,rootcontext=system_u:object_r:tmp_t	tmpfs	
+#mls
+#/tmp	-fstype=tmpfs,mode=1777,size=50%,noexec,nosuid,rootcontext=system_u:object_r:tmp_t:s0	tmpfs	
+
+
+#strict
+##/run	-fstype=tmpfs,mode=0755,size=50%,noexec,nosuid,rootcontext=system_u:object_r:var_run_t		tmpfs	
+#mls
+#/run	-fstype=tmpfs,mode=0755,size=50%,noexec,nosuid,rootcontext=system_u:object_r:var_run_t:s0	tmpfs	

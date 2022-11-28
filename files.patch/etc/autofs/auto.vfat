@@ -1,0 +1,4 @@
+/boot      -fstype=vfat,rw,uid=root,gid=root     UUID=A5CE-8821
+
+
+

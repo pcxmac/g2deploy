@@ -1,0 +1,1 @@
+#servername -fstype=curl,rw,allow_other,nodev,nonempty,noatime :ftp\://myuser\:mypassword\@remoteserver
