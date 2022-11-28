@@ -97,7 +97,7 @@ function editboot()
 	local offset="$(getZFSMountPoint $DATASET)/boot"
 	local POOL="${DATASET%/*}"
 	local UUID="$(blkid | grep "$POOL" | awk '{print $3}' | tr -d '"')"
-	local line_number=$(grep -n "ZFS=${DATASET} " ${offset}  | cut -f1 -d:)
+	local line_number=$(grep -n "ZFS=${DATASET} " ${offset}/EFI/boot/refind.conf | cut -f1 -d:)
 	local menuL
 	local loadL
 	local initrdL
