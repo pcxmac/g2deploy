@@ -124,6 +124,7 @@ function system()
 	local pkgs="/package.list"
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
+	export emergeOpts
 
 	#	PLEASE MOVE THIS IN TO PKGPROCESSOR
 	#	
