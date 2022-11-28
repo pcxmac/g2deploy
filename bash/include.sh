@@ -78,6 +78,9 @@ patch_user() {
 patch_sys() {
     local offset=$1
 	local _profile=$2
+
+	echo "PATCH SYS - ${_profile}"
+
 	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
 	mget ${psrc}etc/ ${offset}/etc/ "--progress=info2"
 	mget ${psrc}var/ ${offset}/var/ "--progress=info2"
