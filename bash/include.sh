@@ -102,6 +102,9 @@ function editboot()
 	local loadL
 	local initrdL
 
+	echo "line number = ${line_number}" 2>&1
+	sleep 10
+
 	sed -i "/default_selection/c default_selection $DATASET" ${offset}/EFI/boot/refind.conf
 
 	# EDIT EXISTING RECORD
