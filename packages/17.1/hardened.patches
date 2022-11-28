@@ -1,1 +1,2 @@
 # HARDENED PATCH SCRIPT
+emerge glibc

@@ -1,1 +1,2 @@
 # OPENRC PATCH SCRIPT
+emerge glibc

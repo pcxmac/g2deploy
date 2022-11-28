@@ -34,6 +34,8 @@ HOW TO USE:
 
 issues / dependencies : <review>
 
+  break before profile-show, portage rsync addy gentoo-portage reference on backend-server, python Err. 
+
   glibc versioning, alongside kernel versioning
 
   find a way to check if patches files exists, if not, disregard, right now it throws error during script execution.

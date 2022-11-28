@@ -1,1 +1,2 @@
 # SYSTEMD MASK
+<=sys-libs/glibc-2.35
