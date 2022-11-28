@@ -37,31 +37,31 @@ patch_portage() {
 	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf
 
 	while read line; do
-		echo "LINE = $line" 2>&1
+		#echo "LINE = $line" 2>&1
 		#sleep 5
 		((LineNum+=1))
 		PREFIX=${line%=*}
-		echo "PREFIX = $PREFIX" 2>&1
+		#echo "PREFIX = $PREFIX" 2>&1
 		#sleep 5
 		SUFFIX=${line#*=}
 		if [[ -n $line ]]
 		then
-			echo "WHAT ? sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf"
+			#echo "WHAT ? sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf"
 			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf
 		fi
 	done < <(curl ${common_conf})
 
 	while read line; do
-		echo "LINE = $line" 2>&1
+		#echo "LINE = $line" 2>&1
 		#sleep 5
 		((LineNum+=1))
 		PREFIX=${line%=*}
-		echo "PREFIX = $PREFIX" 2>&1
+		#echo "PREFIX = $PREFIX" 2>&1
 		#sleep 5
 		SUFFIX=${line#*=}
 		if [[ -n $line ]]
 		then
-			echo "WHAT ? sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf"
+			#echo "WHAT ? sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf"
 			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf	
 		fi
 	done < <(curl ${spec_conf}.conf)
@@ -70,7 +70,7 @@ patch_portage() {
 patch_user() {
     local offset=$1
 	local _profile=$2
-	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
+	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
 	mget ${psrc}root/ ${offset}/root/ "--progress=info2"
 	mget ${psrc}home/ ${offset}/home/ "--progress=info2"
 }
@@ -81,14 +81,14 @@ patch_sys() {
 
 	echo "PATCH SYS - ${_profile}"
 
-	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
+	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
 	mget ${psrc}etc/ ${offset}/etc/ "--progress=info2"
 	mget ${psrc}var/ ${offset}/var/ "--progress=info2"
 	mget ${psrc}usr/ ${offset}/usr/ "--progress=info2"
 	mget ${psrc}/ ${offset}/ "--exclude '*' --progress=info2"
 }
 
-
+#zfs only
 function editboot() 
 {
 	# INPUTS : ${x#*=} - dataset
@@ -98,7 +98,9 @@ function editboot()
 	local POOL="${DATASET%/*}"
 	local UUID="$(blkid | grep "$POOL" | awk '{print $3}' | tr -d '"')"
 	local line_number=$(grep -n "ZFS=${DATASET} " ${offset}  | cut -f1 -d:)
-	#local menuL,loadL,initrdL	# predeclarations / local
+	local menuL
+	local loadL
+	local initrdL
 
 	sed -i "/default_selection/c default_selection $DATASET" ${offset}/EFI/boot/refind.conf
 
@@ -191,9 +193,16 @@ function install_modules()
 	mget ${ksrc}${kver} ${offset}/boot/LINUX/
 
 	# INSTALL KERNEL MODULES
+	
+	ls ${offset} 2>&1
 	mget ${ksrc}${kver}/modules.tar.gz ${offset}/
+	echo "mget ${ksrc}${kver}/modules.tar.gz ${offset}/" 2>&1
+	ls ${offset} 2>&1
+
 	pv $offset/modules.tar.gz | tar xzf - -C ${offset}
-	rm ${offset}/modules.tar.gz
+	#rm ${offset}/modules.tar.gz	
+
+	sleep 30
 
 }
 #
@@ -208,12 +217,13 @@ function install_modules()
 function mget()
 {
 
-	local url="$(echo "$1" | tr -d '*')"			# source_URL
+	#local url="$(echo "$1" | tr -d '*')"			# source_URL
 	local destination=$2	# destination_FS
 	local args=$3
 	local offset
 	local host
 	local _source
+	local url=$1 # source_URL
 
 
 	case ${url%://*} in
@@ -229,7 +239,8 @@ function mget()
 		#
 		ftp*)
 			wget $args -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination}	--show-progress
-			mv ${destination}/${url#*://}XXX ${destination}/
+			mv ${destination}/${url#*://} ${destination}/
+			echo "mv ${destination}/${url#*://} ${destination}/"
 			url=${url#*://}
 			url=${url%%/*}
 			rm ${destination}/${url} -R
@@ -237,18 +248,10 @@ function mget()
 		http*)
 			echo "${destination}" 2>&1
 			wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress
-			#echo "wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress" 2>&1
 			mv ${destination%/*}/${url#*://} ${destination%/*}
-			#echo "mv ${destination%/*}/${url#*://} ${destination%/*}" 2>&1
 			url=${url#*://}
-			#echo "url=${url#*://}" 2>&1
 			url=${url%%/*}
-			#echo "url=${url%%/*}" 2>&1
 			rm ${destination%/*}/${url} -R 
-			#echo "rm ${destination%/*}/${url} -R" 2>&1
-			#echo "${destination%/*}/|/${url}" 2>&1
-			#sleep 3
-
 		;;
 		# local download only
 		ssh)
@@ -281,11 +284,14 @@ function mget()
 
 function getKVER() 
 {
+	# used when kernel source is alongside kernel boot spec folder
+	#local kver="$(curl ${url_kernel} | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep '.tar.gz$')"
+	#kver=${kver%.tar.gz*}
+	# used for kernel boot spec folder
 	local url_kernel="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"
-	local kver="$(curl ${url_kernel} | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep '.tar.gz$')"
-	kver=${kver%.tar.gz*}
+	local kver="$(curl "$url_kernel" | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep "\-gentoo")"
+	kver="linux-${kver}"
 	echo ${kver}
-	#sleep 40
 }
 
 function decompress() {
