@@ -30,7 +30,7 @@ function update_runtime() {
 	#
 	#
 	#
-	#
+	# commit
 	#
 
 	echo "executing RUNTIME_UPDATE !"
