@@ -166,6 +166,9 @@ function system()
 
 	#echo "SETTING SERVICES"
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
+
+	eselect news read new
+
 	eix-update
 	updatedb
 }

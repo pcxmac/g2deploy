@@ -34,6 +34,8 @@ HOW TO USE:
 
 issues / dependencies : <review>
 
+  update w/ openrc broken 
+
   break before profile-show, portage rsync addy gentoo-portage reference on backend-server, python Err. 
 
   glibc versioning, alongside kernel versioning
@@ -46,7 +48,7 @@ issues / dependencies : <review>
 
   put in a timer for waiting for the server should it be offline, post a warning to check the source location. (MGET)
 
-  deploy , news items are not read
+  x
 
   deploy, kernel modules not installed
 
@@ -66,7 +68,7 @@ issues / dependencies : <review>
 
   no network profiling ....
 
-  move plasma back over to sddm
+  x
 
   missing completion for gentoo-zsh
 
@@ -91,21 +93,21 @@ issues / dependencies : <review>
 
   Needs dynamic keylocation assertion @ end of deploy.sh ... eventually tie in to CA/PKI/OLDAP w/ custom prebuilt initramfs 
 
-  install is still downloading everything in the kernels/current, need to isolate, to only the X.X.X-gentoo folder.
+  x
 
-  not mounting BOOT folder w/ nvme on saturn, not storing boot spec accordingly, BOOTEDIT works.
+  ....................not mounting BOOT folder w/ nvme on saturn, not storing boot spec accordingly, BOOTEDIT works.
 
-  NetworkManager not starting on boot w/ GNOME profile
+  x
 
   need to start using signed packages !
 
   sequencing snapshots, versioning and updates.
 
-  need to auto configure zfs-loop for swap_memory+autofs.
+  ....................need to auto configure zfs-loop for swap_memory+autofs.
 
   patches needs to be slective for a particular folder, / ; /root /home /etc ...
 
-  I believe that the kernel source was being pulled in with the kernel boot env, during bootedit.
+  x
 
   pkg signing keys + kernel_source (signing_module_key) needs to reside on Dom0
 
