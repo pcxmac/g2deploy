@@ -11,20 +11,18 @@
 
 function getSSH()
 {
+	echo "getSSH"
 }
 
 
 function getRSYNC()
 {
-	local args=$3
-	local destination=$2
-	local url=$1
+	local host=$@
 	local waiting=1
 	local rCode=""
 	local pause=60
-    local host=""
 
-	host=${url#*://}
+	host=${host#*://}
 	host=${host%%/*}
 
 	while [[ ${waiting} == 1 ]]
@@ -32,7 +30,10 @@ function getRSYNC()
 		rCode="$(rsync -n ${host}:: 2>&1 | \grep 'Connection refused')"
         if [[ -z "${rCode}" ]]
 		then
-			rsync -av ${args} ${url} ${destination}
+
+			echo "rsync -av $@ || >${host}<" 2>&1
+			#sleep 5
+			rsync -av $@
 			waiting=0
 		else
 			waiting=1
@@ -56,8 +57,10 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 
 	while [[ ${waiting} == 1 ]]
 	do
-
 		httpCode="$(wget -NS --spider ${url} 2>&1 | \grep "HTTP/" | awk '{print $2}' | \grep '200' | uniq)"
+		echo "$(wget -NS --spider ${url} 2>&1)" 2>&1
+		echo ${httpCode} 2>1&
+
 		if [[ "${httpCode}" == "200" ]]
 		then
 			#echo ${httpCode}	# returns 200
@@ -123,7 +126,7 @@ function mget()
 	case ${url%://*} in
 		# local rsync only
 		rsync)
-            getRSYNC ${url} ${destination} ${args}
+            getRSYNC $@  # ${url} ${destination} ${args}
 			#rsync -av ${args} ${url} ${destination}
 		;;
 		ftp*)

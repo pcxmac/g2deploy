@@ -61,19 +61,21 @@ do
 			if [[ ${directory} == ${target} ]]
 			then
 				echo "cannot update mounted root file system (ZFS) !"
-				echo "${directory} ?? ${target}"
+				echo "**${directory}** ?? **${target}**"
 				exit
 			else
 				dataset="${x#*=}"
-				profile="$(getG2Version ${directory})/$(getG2Profile ${directory})"
+				profile="$(getG2Profile ${directory})"
 			fi
 		;;
 	esac
 done
 
+echo "***$(getG2Profile ${directory})***"
+
 emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"		
 
-echo "$profile"
+echo "PROFILE -- $profile"
 
 #exit
 #

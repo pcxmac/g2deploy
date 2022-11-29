@@ -84,9 +84,9 @@ patch_sys() {
 	echo "PATCH SYS - ${_profile}"
 
 	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
-	mget ${psrc}etc/ ${offset}/etc/ "--progress=info2"
-	mget ${psrc}var/ ${offset}/var/ "--progress=info2"
-	mget ${psrc}usr/ ${offset}/usr/ "--progress=info2"
+	mget ${psrc}/etc/ ${offset}/etc/ "--progress=info2"
+	mget ${psrc}/var/ ${offset}/var/ "--progress=info2"
+	mget ${psrc}/usr/ ${offset}/usr/ "--progress=info2"
 	mget ${psrc}/ ${offset}/ "--exclude '*' --progress=info2"
 }
 
@@ -105,7 +105,7 @@ function editboot()
 	local initrdL
 
 	echo "line number = ${line_number}" 2>&1
-	sleep 10
+	#sleep 10
 
 	sed -i "/default_selection/c default_selection $DATASET" ${offset}/EFI/boot/refind.conf
 
@@ -237,55 +237,49 @@ function decompress() {
 	esac
 }
 
-function getG2Version() {
-	local mountpoint=$1
-	local result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
-	result="${result%/*}"	#peek
-	result="${result%/*}"	#peek
-	result="${result#*/}"	#poke
-	result="${result#*/}"	#poke
-	result="${result#*/}"	#poke
+#function getG2Version() {
+#	local mountpoint=$1
+#	local result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
+#	result="${result%/*}"	#peek
+#	result="${result%/*}"	#peek
+#	result="${result#*/}"	#poke
+#	result="${result#*/}"	#poke
+#	result="${result#*/}"	#poke
 	#echo $result
-	echo "17.1"
-}
+#	echo "17.1"
+#}
 
 function getG2Profile() {
 	# assumes that .../amd64/17.X/... ; X will be preceeded by a decimal
 	local mountpoint=$1
 	local result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
+	local _profile=""
 	result="${result#*.[0-9]/}"
-	#echo $result
+	result="$(echo ${result} | sed -e 's/^[ \t]*//' | sed -e 's/\ *$//g')"
 
-	case "${x#*=}" in
-            # special cases for strings ending in selinux, and systemd as they can be part of a combination
-            #'musl')
-            # space at end limits selinux	...		NOT SUPPORTED
-            #    _profile="17.0/musl/hardened "
-            #;;
-                'hardened')		    _profile="17.1/hardened "
-            ;;
-                'openrc')			_profile="17.1/openrc"
-            ;;
-                'systemd')			_profile="17.1/systemd "
-            ;;
-                'plasma')           _profile="17.1/desktop/plasma "
-            ;;
-                'gnome')			_profile="17.1/desktop/gnome "
-            ;;
-                'selinux')          _profile="17.1/selinux "
-                        				echo "${x#*=} is not supported [selinux]"
-            ;;
-                'plasma/systemd')   _profile="17.1/desktop/plasma/systemd "
-            ;;
-                'gnome/systemd')	_profile="17.1/desktop/gnome/systemd "
-            ;;
-                'hardened/selinux') _profile="17.1/hardened/selinux "
-                        				echo "${x#*=} is not supported [selinux]"
-            ;;
-                *)					_profile=""
-            ;;
+	case "${result}" in
+        'hardened')		    		_profile="17.1/hardened "
+        ;;
+        'default/linux/amd64/17.1')	_profile="17.1/openrc"
+        ;;
+        'systemd')					_profile="17.1/systemd "
+        ;;
+        'plasma')           		_profile="17.1/desktop/plasma "
+        ;;
+        'gnome')					_profile="17.1/desktop/gnome "
+        ;;
+        'selinux')          		_profile="17.1/selinux "
+                        			#echo "${x#*=} is not supported [selinux]"
+        ;;
+        'plasma/systemd')   		_profile="17.1/desktop/plasma/systemd "
+        ;;
+        'gnome/systemd')			_profile="17.1/desktop/gnome/systemd "
+        ;;
+        'hardened/selinux') 		_profile="17.1/hardened/selinux "
+                        			#echo "${x#*=} is not supported [selinux]"
+        ;;
         esac
-
+		echo "${_profile}" 
 
 }
 
