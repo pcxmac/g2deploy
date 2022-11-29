@@ -41,7 +41,7 @@ itself.
 
   g3 clones from g2 snapshot_versioning, from g1@safe.
 
-  update w/ openrc broken 
+  x 
 
   break before profile-show, portage rsync addy gentoo-portage reference on backend-server, python Err. 
 
