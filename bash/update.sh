@@ -74,6 +74,8 @@ done
 emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"		
 
 echo "$profile"
+
+#exit
 #
 #	ONLY SUPPORTS ZFS
 #

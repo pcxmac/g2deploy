@@ -5,6 +5,8 @@
 #	in smaller functions : patch_files ; patch_portage ; patch_user ; patch_sys
 #
 
+source ./mget.sh
+
 patch_portage() {
 
     local offset=$1
@@ -208,82 +210,6 @@ function install_modules()
 	sleep 30
 
 }
-#
-#
-# MGET ISSUE, on HTTP MIRRORING PACKAGE.MIRRORS, THE SOURCE FILE CONVERTS TO A FOLDER (desired to be name of destination), THEN SOURCE FILE, OG. Where as I want just desired ... 
-#
-# ADD SUPPORT FOR STDOUT so as to PIPE to DECOMPRESSION ALGOs, etc...
-#
-#
-#
-#
-function mget()
-{
-
-	#local url="$(echo "$1" | tr -d '*')"			# source_URL
-	local destination=$2	# destination_FS
-	local args=$3
-	local offset
-	local host
-	local _source
-	local url=$1 # source_URL
-
-
-	case ${url%://*} in
-		# local rsync only
-		rsync)
-			rsync -av ${args} ${url} ${destination}
-		;;
-		# local websync only
-		#
-		#	IF TIME, UNDERSTAND WHY FORMER AND LATER ftp/http mv structures need to be differentiated.
-		#
-		#
-		#
-		ftp*)
-			wget $args -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination}	--show-progress
-			mv ${destination}/${url#*://} ${destination}/
-			echo "mv ${destination}/${url#*://} ${destination}/"
-			url=${url#*://}
-			url=${url%%/*}
-			rm ${destination}/${url} -R
-		;;
-		http*)
-			echo "${destination}" 2>&1
-			wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress
-			mv ${destination%/*}/${url#*://} ${destination%/*}
-			url=${url#*://}
-			url=${url%%/*}
-			rm ${destination%/*}/${url} -R 
-		;;
-		# local download only
-		ssh)
-			host=${url#*://}
-			_source=${host#*:/}
-			host=${host%:/*}
-			offset=$(echo "$_source" | cut -d "/" -f1)
-			ssh ${host} "tar cf - /${_source}/" | pv --timer --rate | tar xf - -C ${destination}/
-			mv ${destination}/${_source} ${destination}/__temp
-			rm ${destination}/${offset} -R
-			mv ${destination}/__temp/* ${destination}
-			rm ${destination}/__temp -R
-		;;
-		# local file move only
-		file|*)
-			host=${url#*://}
-			_source=${host#*:/}
-			host=${host%:/*}
-			if [[ ! -d "${url#*://}" ]] && [[ ! -f "${url#*://}" ]]; then exit; fi
-			if [[ ! -d "${destination}" ]]; then mkdir -p "${destination}"; fi
-			tar cf - /${_source} | pv --timer --rate | tar xf - -C ${destination}/
-			mv ${destination}/${_source} ${destination}/__temp
-			offset=$(echo "$_source" | cut -d "/" -f2)
-			rm ${destination}/${offset} -R
-			mv ${destination}/__temp/* ${destination}
-			rm ${destination}/__temp -R
-		;;
-	esac
-}
 
 function getKVER() 
 {
@@ -328,7 +254,39 @@ function getG2Profile() {
 	local mountpoint=$1
 	local result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
 	result="${result#*.[0-9]/}"
-	echo $result
+	#echo $result
+
+	case "${x#*=}" in
+            # special cases for strings ending in selinux, and systemd as they can be part of a combination
+            #'musl')
+            # space at end limits selinux	...		NOT SUPPORTED
+            #    _profile="17.0/musl/hardened "
+            #;;
+                'hardened')		    _profile="17.1/hardened "
+            ;;
+                'openrc')			_profile="17.1/openrc"
+            ;;
+                'systemd')			_profile="17.1/systemd "
+            ;;
+                'plasma')           _profile="17.1/desktop/plasma "
+            ;;
+                'gnome')			_profile="17.1/desktop/gnome "
+            ;;
+                'selinux')          _profile="17.1/selinux "
+                        				echo "${x#*=} is not supported [selinux]"
+            ;;
+                'plasma/systemd')   _profile="17.1/desktop/plasma/systemd "
+            ;;
+                'gnome/systemd')	_profile="17.1/desktop/gnome/systemd "
+            ;;
+                'hardened/selinux') _profile="17.1/hardened/selinux "
+                        				echo "${x#*=} is not supported [selinux]"
+            ;;
+                *)					_profile=""
+            ;;
+        esac
+
+
 }
 
 function getHostZPool () {
