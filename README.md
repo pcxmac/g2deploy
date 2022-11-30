@@ -57,7 +57,7 @@ itself.
 
   x
 
-  deploy, kernel modules not installed
+  check if modules deployed during install (only)
 
   deploy is accruing packages in /var/lib/portage ...
 

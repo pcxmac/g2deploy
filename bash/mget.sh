@@ -35,7 +35,7 @@ function getRSYNC()
 		else
 			waiting=1
 			sleep ${pause}
-			sleep=$((pause-1))
+			pause=$((pause-1))
 			if [[ ${pause} == 0 ]]; then waiting=0; fi
 		fi
 	done
@@ -92,7 +92,7 @@ function getFTP()
 			#if [[ -n ${ipCheck} ]];then echo "."; fi
 			waiting=1
 			sleep ${pause}
-			sleep=$((pause-1))
+			pause=$((pause-1))
 			if [[ ${pause} == 0 ]]; then waiting=0; fi
 		fi
 	done
