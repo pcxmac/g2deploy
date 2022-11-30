@@ -30,9 +30,6 @@ function getRSYNC()
 		rCode="$(rsync -n ${host}:: 2>&1 | \grep 'Connection refused')"
         if [[ -z "${rCode}" ]]
 		then
-
-			echo "rsync -av $@ || >${host}<" 2>&1
-			#sleep 5
 			rsync -av $@
 			waiting=0
 		else
@@ -71,7 +68,6 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 			if [[ ${pause} == 0 ]]; then waiting=0; fi
 		fi
 	done
-	sleep 10
 	echo $httpCode
 }
 
@@ -128,13 +124,11 @@ function mget()
 			getFTP ${url} ${destination} ${args}
 			#wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination}	--show-progress
 			mv ${destination}/${url#*://} ${destination}/
-			#echo "mv ${destination}/${url#*://} ${destination}/"
 			url=${url#*://}
 			url=${url%%/*}
 			rm ${destination}/${url} -R
 		;;
 		http*)
-			#echo "${destination}" 2>&1
 			getHTTP ${url} ${destination} ${args}
 			#wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress
 			mv ${destination%/*}/${url#*://} ${destination%/*}

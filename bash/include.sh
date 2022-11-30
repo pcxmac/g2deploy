@@ -39,31 +39,21 @@ patch_portage() {
 	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf
 
 	while read line; do
-		#echo "LINE = $line" 2>&1
-		#sleep 5
 		((LineNum+=1))
 		PREFIX=${line%=*}
-		#echo "PREFIX = $PREFIX" 2>&1
-		#sleep 5
 		SUFFIX=${line#*=}
 		if [[ -n $line ]]
 		then
-			#echo "WHAT ? sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf"
 			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf
 		fi
 	done < <(curl ${common_conf})
 
 	while read line; do
-		#echo "LINE = $line" 2>&1
-		#sleep 5
 		((LineNum+=1))
 		PREFIX=${line%=*}
-		#echo "PREFIX = $PREFIX" 2>&1
-		#sleep 5
 		SUFFIX=${line#*=}
 		if [[ -n $line ]]
 		then
-			#echo "WHAT ? sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf"
 			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf	
 		fi
 	done < <(curl ${spec_conf}.conf)
@@ -105,7 +95,6 @@ function editboot()
 	local initrdL
 
 	echo "line number = ${line_number}" 2>&1
-	#sleep 10
 
 	sed -i "/default_selection/c default_selection $DATASET" ${offset}/EFI/boot/refind.conf
 
@@ -264,9 +253,9 @@ function getG2Profile() {
         ;;
         'systemd')					_profile="17.1/systemd "
         ;;
-        'plasma')           		_profile="17.1/desktop/plasma "
+        'desktop/plasma')     		_profile="17.1/desktop/plasma "
         ;;
-        'gnome')					_profile="17.1/desktop/gnome "
+        'desktop/gnome')			_profile="17.1/desktop/gnome "
         ;;
         'selinux')          		_profile="17.1/selinux "
                         			#echo "${x#*=} is not supported [selinux]"
