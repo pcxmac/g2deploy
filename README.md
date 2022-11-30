@@ -6,7 +6,7 @@ HOW TO USE:
 
   ./deploy.sh build=plasma work=zpool/plasma deploy
 
-  # autosensing for btrfs,zfs,or regular f/s (w/ spec settings, eventually a higher level installer can use yaml/python for extoic configs)
+  # autosensing for btrfs,zfs,or regular f/s (w/ spec settings, eventually a higher level installer can use yaml/python for exotic configs)
   (concept-btrfs) ./deploy build=plasma work=btrfs_mount/subvol   
   
   (concept-ext4,...) ./deploy build=plasma work=/path/to/rootfs deploy
@@ -43,28 +43,43 @@ issues / dependencies : <review>
   [ BACKEND SPEC. | DISTRO SERVER ]
   /var/lib/portage
   ├── binpkgs                   locally built, on build server, or built through sshfs, can be clone, and snapshotted to preserve 'versioning'
+
   ├── kernels                   kernel repo for distribution, *current, and *depreciated
+
   ├── packages                  portage patch, and package configurations for profiles 17.X/...
+
   ├── patchfiles                system wide, generic patch files, independent of profile
+
   ├── profiles                  machine (virtual/hardware) based profiles, for purpose driven, domain name based 
+
   ├── releases                  synchronized too, via esync.sh
+
   ├── repos                     synchronized too, via esync.sh
+
   ├── snapshots                 synchronized too, via esync.sh
+
   ├── distfiles                 synchronized too, via esync.sh
 
+
   [ BACKEND SPEC. | BUILD SERVER ]  :: { to reference pkgmx.sh & profile.sh for profiling machines and maintaining bin_pkgs }
+
   ?       TIME MACHINE BASED REPO REFERENCE (requires metadata build, snapshots...) - GOAL to hit year 2000 /w distfile fetcher
+
   ?       CUSTOM STAGE 3 GENERATOR FOR TIME MACHINE BUILDS
+
   ?       PER USE FLAG, PER VERSION, PACKAGE BUILDER (USE SUBVOLs or DATASET) ... BTRFS PROBABLY BEST SUITED FOR TREEING OUT VARIABLE CASE BUILDS
+
   ?       BUG TRACKING (FROM GENTOO.ORG) & LOCALLY GENERATED BUG REPORTING+LOGGING FACILITIES
+
   ?       AUTOMATED WORK AROUNDS (FIND WAYS TO TEST FOR WORK AROUNDS, AUTOMATICALLY, SAVE GOOD CATCH AS A PATCH, AND A BUG, W/ CLASS TYPE respecting the PATCH FORMULATION) [pluggable]
+
   ?
+
   ?
+
   ?
+
   TBD.
-
-
-
 
   domain tools : have a config file for the domain name/server ips, manage all references through a single command/config file.
 
