@@ -65,16 +65,16 @@ function buildup()
 	snapshot="$(zfs list -o name -t snapshot | sed '1d' | grep '${dset}')"
 
 	# VERIFY ZFS MOUNT IS in DF
-	echo "prepfs ~ $offset" 2>&1
+	echo "prepfs ~ ${offset}" 2>&1
 	echo "deleting old files (calculating...)" 2>&1
-	count="$(find $offset/ | wc -l)"
-	if [[ $count > 1 ]]
+	count="$(find ${offset} | wc -l)"
+	if [[ ${count} > 1 ]]
 	then
-		rm -rv $offset/* | pv -l -s $count 2>&1 > /dev/null
+		rm -rv ${offset}* | pv -l -s ${count} 2>&1 > /dev/null
 	else
 		echo -e "done "
 	fi
-	echo "finished clear_fs ... $offset" 2>&1
+	echo "finished clear_fs ... ${offset}" 2>&1
 
 	echo ${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors ${selection} 2>&1
 	echo $(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors ${selection}) 2>&1
@@ -84,18 +84,22 @@ function buildup()
 	fileasc="$(echo "${files}" | grep '.asc$')"
 	serverType="${filexz%//*}"
 
-	echo "X = ${serverType%//*} :: $files @ $profile" 2>&1
-
+	echo "X = ${serverType%//*} :: $files --> ${offset} @ $profile" 2>&1
+	
 	case ${serverType%//*} in
 		"file:/")
 			echo "LOCAL FILE TRANSFER - RSYNCING" 2>&1
-			rsync -avP ${filexz#*//} ${offset}
-			rsync -avP ${fileasc#*//} ${offset}
+			#rsync -avP ${filexz#*//} ${offset}
+			#rsync -avP ${fileasc#*//} ${offset}
+			mget ${filexz#*//} ${offset}
+			mget ${fileasc#*//} ${offset}
 		;;
 		"http:")
 			echo "REMOTE FILE TRANSFER - WGETTING" 2>&1
-			wget $filexz	--directory-prefix=${offset}
-			wget $fileasc	--directory-prefix=${offset}
+			#wget $filexz	--directory-prefix=${offset}
+			#wget $fileasc	--directory-prefix=${offset}
+			mget ${filexz} ${offset}
+			mget ${fileasc} ${offset}
 		;;
 	esac
 
@@ -108,13 +112,12 @@ function buildup()
 	echo "decompressing $filexz...@ $offset" 2>&1
 	decompress $offset/$filexz $offset
 	rm $offset/$filexz
-	#sleep 30
 
     echo "setting up mounts"
-	mkdir -p ${offset}/var/lib/portage/binpkgs
-	mkdir -p ${offset}/var/lib/portage/distfiles
-	mkdir -p ${offset}/srv/crypto/
-	mkdir -p ${offset}/var/lib/portage/repos/gentoo
+	mkdir -p ${offset}var/lib/portage/binpkgs
+	mkdir -p ${offset}var/lib/portage/distfiles
+	mkdir -p ${offset}srv/crypto/
+	mkdir -p ${offset}var/lib/portage/repos/gentoo
 }
 
 
@@ -253,7 +256,7 @@ function patchProcessor()
 	#
 	#
 
-	echo "${patch_script}" > ${offset}/patches.sh
+	echo "${patch_script}" > ${offset}patches.sh
 }
 
 
@@ -289,6 +292,9 @@ function patchProcessor()
             ;;
         esac
     done
+
+
+	echo "DIRECTORY == ${directory}"
 
 	if [[ -z "${directory}" ]];then echo "Non Existant Work Location for $dataset"; exit; fi
 
@@ -342,6 +348,7 @@ function patchProcessor()
 
 #	NEEDS A MOUNTS ONLY PORTION.
 
+	mount | grep ${directory}
 	buildup ${_profile} ${directory} ${dataset} ${selection}
 
 	mounts ${directory}
