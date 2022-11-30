@@ -40,6 +40,9 @@ function update_runtime() {
 	eselect profile show
 
 	sudo emerge --sync --verbose --backtrack=99 --ask=n;sudo eix-update
+
+	emerge portage --oneshot --ask=n
+
 	sudo emerge -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y ${exclude_atoms}
 
 	eselect news read new
@@ -104,7 +107,7 @@ do
 	case "${x}" in
 		update)
 			echo "patch_portage ${directory} ${profile} "
-
+			#patchProcessor ${directory} ${profile}
 			# zfs only
 			rootDS="$(df / | tail -n 1 | awk '{print $1}')"
 			target="$(getZFSMountPoint ${rootDS})"

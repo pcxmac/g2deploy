@@ -99,7 +99,7 @@ issues / dependencies : <review>
 
   x 
 
-  !!!!!   break before profile-show, portage rsync addy gentoo-portage reference on backend-server, python Err. 
+  x - partially resolved
 
   glibc versioning, alongside kernel versioning
 

@@ -255,8 +255,6 @@ function setup_boot()
 			echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
 			echo "dst Dir = ${dstDir} :: ${boot_src}"
 
-			#sleep 30
-
 			#boot_src="ftp://10.1.0.1/patchfiles/boot/*"
 			if [[ ! -d ${dstDir} ]]; then mkdir -p ${dstDir}; fi
 			mount "$(echo "${parts}" | grep '.2')" ${dstDir}/boot
@@ -266,8 +264,6 @@ function setup_boot()
 			kversion=${kversion#*linux-}
 
 			echo "KVERSION = ${kversion}" 2>&1
-
-			#sleep 10
 
 			install_modules ${dstDir}			# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
 

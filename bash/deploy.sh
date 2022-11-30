@@ -123,7 +123,6 @@ function buildup()
 
 function system()
 {
-	local patch_script="/patches.sh"
 	local pkgs="/package.list"
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
@@ -144,7 +143,7 @@ function system()
 	#
 	#
 
-
+	local patch_script="/patches.sh"
 	echo "ISSUING WORK AROUNDS"
 	sh ${patch_script}
 
@@ -207,8 +206,6 @@ function locales()
 		
 }
 
-
-
 function pkgProcessor()
 {
     local profile=$1
@@ -241,26 +238,6 @@ function pkgProcessor()
 	echo "${diffPkgs}" > ${offset}/package.list
 }
 
-function patchProcessor()
-{
-    local profile=$1
-	local offset=$2
-
-	echo $profile 2>&1
-	echo $offset 2>&1
-
-	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.patches" | sed 's/ //g')"
-	local patch_script="$(curl $url)"
-
-	#
-	#
-	#	CONVERT THIS TO AN OUTPUT STREAM, DO NOT SAVE TO OFFSET (SHOULD BE INVOKED LOCALLY)
-	#
-	#
-	#
-
-	echo "${patch_script}" > ${offset}patches.sh
-}
 
 
 ###################################################################################################################################

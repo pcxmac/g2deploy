@@ -29,11 +29,6 @@ patch_portage() {
 	mget ${spec_conf}.mask ${offset}etc/portage/package.mask
 	mget ${spec_conf}.license ${offset}/etc/portage/package.license
 
-	#if [[ -z "$(readlink ${offset}etc/portage/make.profile)" ]];then ln -s /var/lib/portage/repos/gentoo/profiles/default/linux/amd64/17.1 ${offset}etc/portage/make.profile; fi
-
-	ls -ail ${offset}etc/portage/make.profile 2>&1
-	sleep 10
-
 	mv ${offset}etc/portage/${spec_conf##*/}.uses ${offset}etc/portage/package.use
 	mv ${offset}etc/portage/${spec_conf##*/}.keys ${offset}etc/portage/package.accept_keywords
 	mv ${offset}etc/portage/${spec_conf##*/}.mask ${offset}etc/portage/package.mask
@@ -175,6 +170,27 @@ function mounts()
 	#ls ${offset}/var/lib/portage/binpkgs
 }
 
+function patchProcessor()
+{
+    local profile=$1
+	local offset=$2
+
+	echo $profile 2>&1
+	echo $offset 2>&1
+
+	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.patches" | sed 's/ //g')"
+	local patch_script="$(curl $url)"
+
+	#
+	#
+	#	CONVERT THIS TO AN OUTPUT STREAM, DO NOT SAVE TO OFFSET (SHOULD BE INVOKED LOCALLY)
+	#
+	#
+	#
+
+	echo "${patch_script}" > ${offset}patches.sh
+}
+
 function install_modules()
 {
 	local offset=$1
@@ -197,9 +213,8 @@ function install_modules()
 	ls ${offset} 2>&1
 
 	pv $offset/modules.tar.gz | tar xzf - -C ${offset}
-	#rm ${offset}/modules.tar.gz	
+	rm ${offset}/modules.tar.gz	
 
-	#sleep 30
 
 }
 
