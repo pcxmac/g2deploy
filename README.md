@@ -2,9 +2,15 @@ integration points
 
 HOW TO USE:
 
-  # SIMPLE LOCAL DEPLOYMENT ... REMOTE ?
+  # SIMPLE LOCAL DEPLOYMENT ... LOCAL ONLY.
 
   ./deploy.sh build=plasma work=zpool/plasma deploy
+
+  # autosensing for btrfs,zfs,or regular f/s (w/ spec settings, eventually a higher level installer can use yaml/python for extoic configs)
+  (concept-btrfs) ./deploy build=plasma work=btrfs_mount/subvol   
+  
+  (concept-ext4,...) ./deploy build=plasma work=/path/to/rootfs deploy
+ 
 
   # UPDATE USR SPACE FOR POOL/SET
 
@@ -34,11 +40,47 @@ HOW TO USE:
 
 issues / dependencies : <review>
 
+  [ BACKEND SPEC. | DISTRO SERVER ]
+  /var/lib/portage
+  ├── binpkgs                   locally built, on build server, or built through sshfs, can be clone, and snapshotted to preserve 'versioning'
+  ├── kernels                   kernel repo for distribution, *current, and *depreciated
+  ├── packages                  portage patch, and package configurations for profiles 17.X/...
+  ├── patchfiles                system wide, generic patch files, independent of profile
+  ├── profiles                  machine (virtual/hardware) based profiles, for purpose driven, domain name based 
+  ├── releases                  synchronized too, via esync.sh
+  ├── repos                     synchronized too, via esync.sh
+  ├── snapshots                 synchronized too, via esync.sh
+  ├── distfiles                 synchronized too, via esync.sh
+
+  [ BACKEND SPEC. | BUILD SERVER ]  :: { to reference pkgmx.sh & profile.sh for profiling machines and maintaining bin_pkgs }
+  ?       TIME MACHINE BASED REPO REFERENCE (requires metadata build, snapshots...) - GOAL to hit year 2000 /w distfile fetcher
+  ?       CUSTOM STAGE 3 GENERATOR FOR TIME MACHINE BUILDS
+  ?       PER USE FLAG, PER VERSION, PACKAGE BUILDER (USE SUBVOLs or DATASET) ... BTRFS PROBABLY BEST SUITED FOR TREEING OUT VARIABLE CASE BUILDS
+  ?       BUG TRACKING (FROM GENTOO.ORG) & LOCALLY GENERATED BUG REPORTING+LOGGING FACILITIES
+  ?       AUTOMATED WORK AROUNDS (FIND WAYS TO TEST FOR WORK AROUNDS, AUTOMATICALLY, SAVE GOOD CATCH AS A PATCH, AND A BUG, W/ CLASS TYPE respecting the PATCH FORMULATION) [pluggable]
+  ?
+  ?
+  ?
+  TBD.
+
+
+
+
+  domain tools : have a config file for the domain name/server ips, manage all references through a single command/config file.
+
   !!!!!!  add workarounds to update, use checking to verify if upgrade required ... add check for portage itself.
 
   create build services, to serve as an alternative for distfiles complete sync, where only relavent packages will be installed in to distfiles over sshfs/bind mounts. Build service to feature, binpkg versioning, per kernel, per glibc, ... use the local zfs on VM to snapshot per versioning, client versioning to use this as a basis, for it's own.
 
   g3 clones from g2 snapshot_versioning, from g1@safe.
+
+  better snapshot management, especially for cloning to profile build services
+
+  BTRFS INTEGRATION !!!
+
+  kernel upgrade service, from upgrade script. (local machine upgrade in to kernel tree)
+
+  add zfs key management, before dom-0 ca, must be able to integrate upwards/scale in to dom.0/ca
 
   x 
 
@@ -107,7 +149,7 @@ issues / dependencies : <review>
 
   x
 
-  ....................not mounting BOOT folder w/ nvme on saturn, not storing boot spec accordingly, BOOTEDIT works.
+  x
 
   x
 
@@ -117,7 +159,7 @@ issues / dependencies : <review>
 
   ....................need to auto configure zfs-loop for swap_memory+autofs.
 
-  patches needs to be slective for a particular folder, / ; /root /home /etc ...
+  x
 
   x
 

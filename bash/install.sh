@@ -251,10 +251,8 @@ function setup_boot()
 			#dstDir="$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')/${ddataset}"
 			boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
 			dstDir="${dpath}/${ddataset}"
-
 			echo "----------------------------------------------------------------------------------"
 			echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
-			
 			echo "dst Dir = ${dstDir} :: ${boot_src}"
 
 			#sleep 30

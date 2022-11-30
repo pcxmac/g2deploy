@@ -2323,7 +2323,7 @@ function zfs_keys() {
 	#pools="$(cat /proc/mounts | grep "$offset " | awk '{print $1}')"
 	#pools="${pools%/*}"
 
-	for i in $pools
+	for i in ${pools}
 	do
 		# query datasets
 		listing="$(zfs list | grep "$i/" | awk '{print $1}')"
@@ -2331,30 +2331,30 @@ function zfs_keys() {
 		#echo "$listing"
 		#sleep 5
 
-		for j in $listing
+		for j in ${listing}
 		do
 			#dSet="$(zpool get bootfs $i | awk '{print $3}' | sed -n '2 p')"
 			dSet="$j"
 
-			if [ "$dSet" == '-' ]
+			if [ "${dSet}" == '-' ]
 			then
 				format="N/A"
 				location="N/A"
 				else
-				format="$(zfs get keyformat $dSet | awk '{print $3}' | sed -n '2 p')"
-				location="$(zfs get keylocation $dSet | awk '{print $3}' | sed -n '2 p')"
+				format="$(zfs get keyformat ${dSet} | awk '{print $3}' | sed -n '2 p')"
+				location="$(zfs get keylocation ${dSet} | awk '{print $3}' | sed -n '2 p')"
 			fi
 
 			# if format == raw or hex & location is a valid file ... if not a valid file , complain
 			# ie, not none or passphrase, indicating no key or passphrase, thus implying partition or keyfile type
 
-			if [ $format == 'raw' ] || [ $format == 'hex' ]
+			if [ ${format} == 'raw' ] || [ ${format} == 'hex' ]
 			then
 				# possible locations are : http/s, file:///, prompt, pkcs11:
 				# only concerned with file:///
 
 	  			location_type="${location%:///*}"
-				if [ $location_type == 'file' ]
+				if [ ${location_type} == 'file' ]
 				then
 					# if not, then probably https:/// ....
 					# put key file in to initramfs
@@ -2362,29 +2362,29 @@ function zfs_keys() {
 
 					### GENKERNEL MUTES THESE
 					copyto="${source%/*}"
-					copyto="$destination$copyto"
+					copyto="${destination}${copyto}"
 
 					#echo "? :: $source"
 					#echo "? :: $copyto"
 
-					if [ ! -d $copyto ]
+					if [ ! -d ${copyto} ]
 					then
 						#echo "COPY TO !!!!"
-						mkdir -p $copyto;
+						mkdir -p ${copyto};
 					fi
 
 					# TDIR is destination for genkernel
 					# destination=$1
 
-					if test -f "$source"; then
-						echo "copying $source to $copyto @$j"
-						cp $source $copyto
+					if test -f "${source}"; then
+						echo "copying ${source} to ${copyto} @${j}"
+						cp ${source} ${copyto}
 					else
-						echo "key not found for $j"
+						echo "key not found for ${j}"
 					fi
 					#echo "coppied $source to $destination for $j"
 				else
-					echo "nothing to do for $j ..."
+					echo "nothing to do for ${j} ..."
 				fi
 			fi
 		done

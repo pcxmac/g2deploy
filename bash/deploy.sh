@@ -288,7 +288,15 @@ function patchProcessor()
             work=*)
                 #? zfs= btrfs= generic= tmpfs=
 				directory=$(getZFSMountPoint "${x#*=}")
-                dataset="${x#*=}"
+				if [[ -n ${directory} ]]
+				then	
+					echo "${directory}..."
+        	        dataset="${x#*=}"
+					if [[ -n "$(zfs list -t snapshot | \grep "${dataset}@safe")" ]];then zfs destroy ${dataset}@safe; echo "deleting ${dataset}@safe";fi
+				else
+					echo "dataset does not exist, exiting."
+					exit
+				fi
             ;;
         esac
     done

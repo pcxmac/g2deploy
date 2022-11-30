@@ -279,8 +279,8 @@ function getHostZPool () {
 function getZFSMountPoint ()
 {
 	local dataset=$1
-	local mountpt="$(zfs get mountpoint ${dataset} | sed -n 2p | awk '{print $3}')"
-	echo "$(echo ${mountpt} | sed 's:/*$::')/"
+	local mountpt="$(zfs get mountpoint ${dataset} 2>/dev/null | sed -n 2p | awk '{print $3}')"
+	if [[ -n ${mountpt} ]]; then echo "$(echo ${mountpt} | sed 's:/*$::')/"; fi
 }
 
 function compress() {

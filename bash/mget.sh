@@ -51,7 +51,7 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 
 	while [[ ${waiting} == 1 ]]
 	do
-		httpCode="$(wget -NS --spider ${url} 2>&1 | \grep "HTTP/" | awk '{print $2}' | \grep '200' | uniq)"
+		httpCode="$(wget -NS --spider ${url%\**} 2>&1 | \grep "HTTP/" | awk '{print $2}' | \grep '200' | uniq)"
 		if [[ "${httpCode}" == "200" ]]
 		then
 			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*} --show-progress
@@ -78,8 +78,8 @@ function getFTP()
 
 	while [[ ${waiting} == 1 ]]
 	do
-		ftpCode="$(wget -NS --spider ${url} 2>&1 | \grep "File .* exists."  | awk '{print $2}')"
-		if [[ -n "${ftpCode}" ]]
+		ftpCode="$(wget -NS --spider ${url%\**} 2>&1 | \grep "No such file *."  | awk '{print $2}')"
+		if [[ -z "${ftpCode}" ]]
 		then
 			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination} --show-progress
 			waiting=0
