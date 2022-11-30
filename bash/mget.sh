@@ -8,12 +8,10 @@
 #
 #
 
-
 function getSSH()
 {
 	echo "getSSH"
 }
-
 
 function getRSYNC()
 {
@@ -30,7 +28,7 @@ function getRSYNC()
 		rCode="$(rsync -n ${host}:: 2>&1 | \grep 'Connection refused')"
         if [[ -z "${rCode}" ]]
 		then
-			rsync -av $@
+			rsync -a --no-motd --info=progress2 $@ 
 			waiting=0
 		else
 			waiting=1
@@ -45,7 +43,6 @@ function getRSYNC()
 
 function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 {
-	local args=$3
 	local destination=$2
 	local url=$1
 	local waiting=1
@@ -57,7 +54,7 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 		httpCode="$(wget -NS --spider ${url} 2>&1 | \grep "HTTP/" | awk '{print $2}' | \grep '200' | uniq)"
 		if [[ "${httpCode}" == "200" ]]
 		then
-			wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress
+			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*} --show-progress
 			waiting=0
 		else
 			#ipCheck="$(ping ${url} -c 3 | grep "0 received")"
@@ -73,7 +70,6 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 
 function getFTP()
 {
-	local args=$3
 	local destination=$2
 	local url=$1
 	local waiting=1
@@ -85,7 +81,7 @@ function getFTP()
 		ftpCode="$(wget -NS --spider ${url} 2>&1 | \grep "File .* exists."  | awk '{print $2}')"
 		if [[ -n "${ftpCode}" ]]
 		then
-			wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination}	--show-progress
+			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination} --show-progress
 			waiting=0
 		else
 			#ipCheck="$(ping ${url} -c 3 | grep "0 received")"
@@ -121,7 +117,7 @@ function mget()
 			#rsync -av ${args} ${url} ${destination}
 		;;
 		ftp*)
-			getFTP ${url} ${destination} ${args}
+			getFTP ${url} ${destination} 
 			#wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination}	--show-progress
 			mv ${destination}/${url#*://} ${destination}/
 			url=${url#*://}
@@ -129,8 +125,9 @@ function mget()
 			rm ${destination}/${url} -R
 		;;
 		http*)
-			getHTTP ${url} ${destination} ${args}
+			getHTTP ${url} ${destination} 
 			#wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress
+
 			mv ${destination%/*}/${url#*://} ${destination%/*}
 			url=${url#*://}
 			url=${url%%/*}

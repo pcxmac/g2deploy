@@ -34,8 +34,7 @@ HOW TO USE:
 
 issues / dependencies : <review>
 
-  add workarounds to update, use checking to verify if upgrade required ... add check for portage 
-itself.
+  !!!!!!  add workarounds to update, use checking to verify if upgrade required ... add check for portage itself.
 
   create build services, to serve as an alternative for distfiles complete sync, where only relavent packages will be installed in to distfiles over sshfs/bind mounts. Build service to feature, binpkg versioning, per kernel, per glibc, ... use the local zfs on VM to snapshot per versioning, client versioning to use this as a basis, for it's own.
 
@@ -43,7 +42,7 @@ itself.
 
   x 
 
-  break before profile-show, portage rsync addy gentoo-portage reference on backend-server, python Err. 
+  !!!!!   break before profile-show, portage rsync addy gentoo-portage reference on backend-server, python Err. 
 
   glibc versioning, alongside kernel versioning
 
@@ -53,17 +52,17 @@ itself.
 
   bundles : need meta packages for things like libvirt, to include patches for /etc ... bundles can be placed in /bundle/call/*.pkgs;*.patches/rootdir/...
 
-  put in a timer for waiting for the server should it be offline, post a warning to check the source location. (MGET)
+  x
 
   x
 
   check if modules deployed during install (only)
 
-  deploy is accruing packages in /var/lib/portage ...
+  !!!!!!     deploy is accruing packages in /var/lib/portage ...
 
-  need option for kernel source ... in deploy
+  need option for kernel source ... in deploy ?
 
-  /var/db/pkg & /var/db/repos still exist, pkg was filled ....
+  !!!!!   /var/db/pkg & /var/db/repos still exist, pkg was filled ....
 
   a system update might be getting rid of the spi-... issues
 
@@ -71,13 +70,13 @@ itself.
 
   libvirt is not patched. .... PROFILE ASSERT
 
-  world file, will be over written by portage map, need to rethink ...
+  !!!!!!     world file, will be over written by portage map, need to rethink ...
 
   no network profiling ....
 
   x
 
-  missing completion for gentoo-zsh
+  missing completion for gentoo-zsh (should be inside ~/.zsh/)
 
   qemu missing : swtpm + usermod-utilities, ssh enabled thru profile ... profile+services capture ... profile+key mngmt/capture
 

@@ -19,24 +19,22 @@ patch_portage() {
 	echo "common_conf = ${common_conf}" 2>&1
 	echo "spec_conf = ${spec_conf}" 2>&1
 
-	#sleep 30
+	if [[ -d ${offset}etc/portage/package.license ]];then rm ${offset}etc/portage/package.license -R; fi
+	if [[ -d ${offset}etc/portage/package.use ]];then rm ${offset}etc/portage/package.use -R; fi
+	if [[ -d ${offset}etc/portage/package.mask ]];then rm  ${offset}etc/portage/package.mask -R;fi
+	if [[ -d ${offset}etc/portage/package.accept_keywords ]];then rm ${offset}etc/portage/package.accept_keywords -R;fi
 
-	if [[ -d ${offset}/etc/portage/package.license ]];then rm ${offset}/etc/portage/package.license -R; fi
-	if [[ -d ${offset}/etc/portage/package.use ]];then rm ${offset}/etc/portage/package.use -R; fi
-	if [[ -d ${offset}/etc/portage/package.mask ]];then rm  ${offset}/etc/portage/package.mask -R;fi
-	if [[ -d ${offset}/etc/portage/package.accept_keywords ]];then rm ${offset}/etc/portage/package.accept_keywords -R;fi
-
-	mget ${spec_conf}.uses ${offset}/etc/portage/package.use
-	mget ${spec_conf}.keys ${offset}/etc/portage/package.accept_keywords
-	mget ${spec_conf}.mask ${offset}/etc/portage/package.mask
+	mget ${spec_conf}.uses ${offset}etc/portage/package.use
+	mget ${spec_conf}.keys ${offset}etc/portage/package.accept_keywords
+	mget ${spec_conf}.mask ${offset}etc/portage/package.mask
 	mget ${spec_conf}.license ${offset}/etc/portage/package.license
 
-	mv ${offset}/etc/portage/${spec_conf##*/}.uses ${offset}/etc/portage/package.use
-	mv ${offset}/etc/portage/${spec_conf##*/}.keys ${offset}/etc/portage/package.accept_keywords
-	mv ${offset}/etc/portage/${spec_conf##*/}.mask ${offset}/etc/portage/package.mask
-	mv ${offset}/etc/portage/${spec_conf##*/}.license ${offset}/etc/portage/package.license
+	mv ${offset}etc/portage/${spec_conf##*/}.uses ${offset}etc/portage/package.use
+	mv ${offset}etc/portage/${spec_conf##*/}.keys ${offset}etc/portage/package.accept_keywords
+	mv ${offset}etc/portage/${spec_conf##*/}.mask ${offset}etc/portage/package.mask
+	mv ${offset}etc/portage/${spec_conf##*/}.license ${offset}etc/portage/package.license
 
-	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf
+	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}etc/portage/make.conf
 
 	while read line; do
 		((LineNum+=1))
@@ -44,7 +42,7 @@ patch_portage() {
 		SUFFIX=${line#*=}
 		if [[ -n $line ]]
 		then
-			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf
+			sed -i "/$PREFIX/c $line" ${offset}etc/portage/make.conf
 		fi
 	done < <(curl ${common_conf})
 
@@ -54,7 +52,7 @@ patch_portage() {
 		SUFFIX=${line#*=}
 		if [[ -n $line ]]
 		then
-			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf	
+			sed -i "/$PREFIX/c $line" ${offset}etc/portage/make.conf	
 		fi
 	done < <(curl ${spec_conf}.conf)
 }
@@ -63,8 +61,8 @@ patch_user() {
     local offset=$1
 	local _profile=$2
 	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
-	mget ${psrc}root/ ${offset}/root/ "--progress=info2"
-	mget ${psrc}home/ ${offset}/home/ "--progress=info2"
+	mget ${psrc}/root/ ${offset}/root/ 
+	mget ${psrc}/home/ ${offset}/home/ 
 }
 
 patch_sys() {
@@ -74,10 +72,10 @@ patch_sys() {
 	echo "PATCH SYS - ${_profile}"
 
 	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
-	mget ${psrc}/etc/ ${offset}/etc/ "--progress=info2"
-	mget ${psrc}/var/ ${offset}/var/ "--progress=info2"
-	mget ${psrc}/usr/ ${offset}/usr/ "--progress=info2"
-	mget ${psrc}/ ${offset}/ "--exclude '*' --progress=info2"
+	mget ${psrc}/etc/ ${offset}/etc/ 
+	mget ${psrc}/var/ ${offset}/var/ 
+	mget ${psrc}/usr/ ${offset}/usr/ 
+	mget ${psrc}/ ${offset}/ "--exclude '*'"
 }
 
 #zfs only
@@ -122,7 +120,7 @@ function editboot()
 
 function clear_mounts()
 {
-	local offset=$1
+	local offset="$(echo "$1" | sed 's:/*$::')"
 	local procs="$(lsof ${offset} 2>/dev/null | sed '1d' | awk '{print $2}' | uniq)" 
     local dir="$(echo "$offset" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
 	local output="$(cat /proc/mounts | grep "$dir" | wc -l)"
@@ -196,7 +194,7 @@ function install_modules()
 	pv $offset/modules.tar.gz | tar xzf - -C ${offset}
 	#rm ${offset}/modules.tar.gz	
 
-	sleep 30
+	#sleep 30
 
 }
 
@@ -278,9 +276,11 @@ function getHostZPool () {
 	echo ${pool}
 }
 
-function getZFSMountPoint (){
+function getZFSMountPoint ()
+{
 	local dataset=$1
-	echo "$(zfs get mountpoint $dataset 2>&1 | sed -n 2p | awk '{print $3}')"
+	local mountpt="$(zfs get mountpoint ${dataset} | sed -n 2p | awk '{print $3}')"
+	echo "$(echo ${mountpt} | sed 's:/*$::')/"
 }
 
 function compress() {
