@@ -58,12 +58,8 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 	while [[ ${waiting} == 1 ]]
 	do
 		httpCode="$(wget -NS --spider ${url} 2>&1 | \grep "HTTP/" | awk '{print $2}' | \grep '200' | uniq)"
-		echo "$(wget -NS --spider ${url} 2>&1)" 2>&1
-		echo ${httpCode} 2>1&
-
 		if [[ "${httpCode}" == "200" ]]
 		then
-			#echo ${httpCode}	# returns 200
 			wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress
 			waiting=0
 		else
@@ -75,6 +71,7 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 			if [[ ${pause} == 0 ]]; then waiting=0; fi
 		fi
 	done
+	sleep 10
 	echo $httpCode
 }
 
@@ -89,11 +86,9 @@ function getFTP()
 
 	while [[ ${waiting} == 1 ]]
 	do
-
 		ftpCode="$(wget -NS --spider ${url} 2>&1 | \grep "File .* exists."  | awk '{print $2}')"
 		if [[ -n "${ftpCode}" ]]
 		then
-			#echo ${httpCode}	# returns 200
 			wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination}	--show-progress
 			waiting=0
 		else
