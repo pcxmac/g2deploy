@@ -1,1 +1,1 @@
-emerge glibc
+emerge $emergeOpts glibc

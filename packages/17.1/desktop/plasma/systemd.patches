@@ -2,10 +2,10 @@
 # [blocks B      ] <sys-devel/gcc-config-2.6 ("<sys-devel/gcc-config-2.6" is soft blocking sys-devel/clang-toolchain-symlinks-15-r2)
 #
 
-emerge gcc-config libxml2 dev-libs/icu dev-libs/glib 
+emerge $emergeOpts gcc-config libxml2 dev-libs/icu dev-libs/glib 
 
 # spidermonkey does not seem to want to build this before being built itself.
-emerge sys-libs/glibc qtgui
+emerge $emergeOpts sys-libs/glibc qtgui
 
 #[blocks B      ] <app-accessibility/at-spi2-atk-2.46.0 ("<app-accessibility/at-spi2-atk-2.46.0" is soft blocking app-accessibility/at-spi2-core-2.46.0)
 #[blocks B      ] <dev-libs/atk-2.46.0 ("<dev-libs/atk-2.46.0" is soft blocking app-accessibility/at-spi2-core-2.46.0)

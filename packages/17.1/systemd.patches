@@ -1,2 +1,2 @@
 # SYSTEMD PATCH SCRIPT
-emerge glibc
+emerge $emergeOpts glibc

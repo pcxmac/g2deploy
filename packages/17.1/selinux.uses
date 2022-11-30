@@ -1,3 +1,5 @@
+# selinux use flags
+
 app-text/ghostscript-gpl cups
 media-libs/libsndfile minimal
 net-wireless/wpa_supplicant dbus

@@ -1,3 +1,5 @@
+# uses for hardened
+
 app-text/ghostscript-gpl cups
 media-libs/libsndfile minimal
 net-wireless/wpa_supplicant dbus
