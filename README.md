@@ -56,6 +56,12 @@ issues / dependencies : <review>
 
   x
 
+  !!!!!! Add bastion4 to rc-conf.d
+
+  !!!!!! ADD A CHECK FOR PORTAGE UPGRADE DURING portage-patches
+
+  !!!!!!! verify nproc works on install ... needs to to be addressed, per boot (rc-conf.d)
+
   check if modules deployed during install (only)
 
   !!!!!!     deploy is accruing packages in /var/lib/portage ...
