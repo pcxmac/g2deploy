@@ -29,6 +29,11 @@ patch_portage() {
 	mget ${spec_conf}.mask ${offset}etc/portage/package.mask
 	mget ${spec_conf}.license ${offset}/etc/portage/package.license
 
+	#if [[ -z "$(readlink ${offset}etc/portage/make.profile)" ]];then ln -s /var/lib/portage/repos/gentoo/profiles/default/linux/amd64/17.1 ${offset}etc/portage/make.profile; fi
+
+	ls -ail ${offset}etc/portage/make.profile 2>&1
+	sleep 10
+
 	mv ${offset}etc/portage/${spec_conf##*/}.uses ${offset}etc/portage/package.use
 	mv ${offset}etc/portage/${spec_conf##*/}.keys ${offset}etc/portage/package.accept_keywords
 	mv ${offset}etc/portage/${spec_conf##*/}.mask ${offset}etc/portage/package.mask

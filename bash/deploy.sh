@@ -190,18 +190,21 @@ function locales()
     local key=$1
 	locale-gen -A
 	eselect locale set en_US.utf8
-	emerge-webrsync
 
 	#MOUNT --BIND RESOLVES NEED TO CONTINUALLY SYNC, IN FUTURE USE LOCAL MIRROR
+	emerge-webrsync
+
+	#	{key%/openrc} :: is a for the edgecase 'openrc' where only that string is non existent with in eselect-profile
+	eselect profile set default/linux/amd64/${key%/openrc}
+	eselect profile show
+	sleep 5
+
 	emerge --sync --ask=n
     echo "reading the news (null)..."
 	eselect news read all > /dev/null
 	echo "America/Los_Angeles" > /etc/timezone
 	emerge --config sys-libs/timezone-data
 		
-	#	{key%/openrc} :: is a for the edgecase 'openrc' where only that string is non existent with in eselect-profile
-	eselect profile set default/linux/amd64/${key%/openrc}
-	eselect profile show
 }
 
 
