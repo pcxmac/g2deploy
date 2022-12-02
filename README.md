@@ -79,6 +79,11 @@ issues / dependencies : <review>
 
   ?
 
+  Prospect - profile.sh : ./profile.sh profile=sub.domain.tld work={pool/set}.../ bootpart=/dev/efi_part
+
+  profile.sh - takes in the important settings for a given environment, needs to be modular, including the boot env, and stores them in ./profile/TLD/DOMAIN/SUB
+  granularity is only down to subdomain, as this is meant for machines only,  not apps/services inside a cluster like kubernetes,  docker or lxd. 
+
   TBD.
 
   domain tools : have a config file for the domain name/server ips, manage all references through a single command/config file.
