@@ -269,6 +269,9 @@ function setup_boot()
 
 			editboot ${kversion} "${dpool}/${ddataset}"
 
+			
+
+
 			umount ${dstDir}/boot
  }
 

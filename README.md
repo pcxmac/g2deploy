@@ -83,7 +83,7 @@ issues / dependencies : <review>
 
   domain tools : have a config file for the domain name/server ips, manage all references through a single command/config file.
 
-  !!!!!!  add workarounds to update, use checking to verify if upgrade required ... add check for portage itself.
+  x
 
   create build services, to serve as an alternative for distfiles complete sync, where only relavent packages will be installed in to distfiles over sshfs/bind mounts. Build service to feature, binpkg versioning, per kernel, per glibc, ... use the local zfs on VM to snapshot per versioning, client versioning to use this as a basis, for it's own.
 
@@ -98,7 +98,6 @@ issues / dependencies : <review>
   add zfs key management, before dom-0 ca, must be able to integrate upwards/scale in to dom.0/ca
 
   x 
-
   x - partially resolved
 
   glibc versioning, alongside kernel versioning
@@ -110,22 +109,27 @@ issues / dependencies : <review>
   bundles : need meta packages for things like libvirt, to include patches for /etc ... bundles can be placed in /bundle/call/*.pkgs;*.patches/rootdir/...
 
   x
+  x
+
+  !!!!!! Add bastion4 to rc-conf.d :: new code in to bastion, wait for adapters, and timeout. Perhaps run as a daemon.
 
   x
 
-  !!!!!! Add bastion4 to rc-conf.d
+  !!!!!!! verify nproc works on [update] ... needs to to be addressed, per boot (rc-conf.d) ... install to drive in live env, update not on live image, but to new host, and associate with boot medium. Live env=boot disk.
 
-  !!!!!! ADD A CHECK FOR PORTAGE UPGRADE DURING portage-patches
-
-  !!!!!!! verify nproc works on install ... needs to to be addressed, per boot (rc-conf.d)
+  CIK ---> live rescue image [boot] ---> install to host disk, update w/ CIK in computer, CIK adds a reference to the host system, rinse and repeat and you have one key for many systems.
+  ON A multi-host system, the basis pool can facilitate many different CIK installs, each install is a profile, with a domain name, this is stored on the associated domain 0 for a given domain.
+  Any time a CIK boots a host or rescue image, the initramfs can be swapped out for one with new keys, a rescue volume can have new keys loaded to it (post boot env). This is handled completely 
+  transparently via ssh. Installs require network connectivity, or a an install derived from the rescue disk itself. 32 GB can facilitate up to two desktop systems, (20GB) and a 8GB EFI partition.
+  CIK's up to 250GB can handle many different profiles, and more functionality perhaps, as well as maybe a roaming user space (volume). Disks up to 2TB can serve as a pop in domain 0, or perhaps even 
+  another domain component/application service. See Dom.N / Dom.0. Every Dom. is a Virtual Machine, routed through virtual networking, interlinked via encrypted trunks. Every Dom provides Container Application Support.
 
   check if modules deployed during install (only)
 
-  !!!!!!     deploy is accruing packages in /var/lib/portage ...
+  x
+  x
 
   need option for kernel source ... in deploy ?
-
-  !!!!!   /var/db/pkg & /var/db/repos still exist, pkg was filled ....
 
   a system update might be getting rid of the spi-... issues
 
