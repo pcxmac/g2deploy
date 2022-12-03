@@ -88,7 +88,7 @@ issues / dependencies : <review>
 
   domain tools : have a config file for the domain name/server ips, manage all references through a single command/config file.
 
-  x
+  x...
 
   create build services, to serve as an alternative for distfiles complete sync, where only relavent packages will be installed in to distfiles over sshfs/bind mounts. Build service to feature, binpkg versioning, per kernel, per glibc, ... use the local zfs on VM to snapshot per versioning, client versioning to use this as a basis, for it's own.
 
