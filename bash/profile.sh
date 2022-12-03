@@ -11,7 +11,7 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 	#		work=local/remote zfs://root@localhost:/pool/set
 	#		bootpart=/dev/sdYX
 	#	
-	#		buildenv	#	examin a work#space, save to a profile. 
+	#		buildenv	#	examin a work#space/bootenv, save to a profile. 
 	#		buildout	#	takes a profile patch, a work#space, patch it, on a clone.
 
 source ./include.sh
@@ -40,12 +40,6 @@ source ./include.sh
 #			config.pkgs
 #			users.tar.gz
 #           		
-#
-#		WORK=		...working directory
-#		PACKAGE=	...
-#		INSTALL=
-
-
 	export PYTHONPATH=""
 
 	export -f users
@@ -53,6 +47,8 @@ source ./include.sh
 	export -f system
 	export -f services
 	export -f install_modules
+
+########################################## DEFINES
 
     for x in $@
     do
@@ -64,19 +60,11 @@ source ./include.sh
         esac
     done
 
-	if [[ -z ${directory }]]l then exit; fi
-
-	destination="/var/portage/profiles/"
-
     for x in $@
     do
         case "${x}" in
-            package=*)
-				profile=getG2Profile ${directory}
-				hostname=$(chroot ${directory} /bin/bash -c "hostname")
-				domain=$(chroot ${directory} /bin/bash -c "dnsdomainname")
-				destination="${destination}/${domain}/${hostname}"
-				echo $destination $dataset $domain $hostname $profile
+            bootpart=*)
+
 
             ;;
         esac
@@ -85,7 +73,45 @@ source ./include.sh
     for x in $@
     do
         case "${x}" in
-            install=*)
+            profile=*)
+
+
+            ;;
+        esac
+    done
+
+########################################### SHIGOTO
+
+    for x in $@
+    do
+        case "${x}" in
+            buildout=*)
+                # GET PROFILE OF SAVED_ENV (profile/tld/domain/sub-pro)
+                # SNAPSHOT PROPER PROFILE_TYPE ACCORDING TO JULIANDAY, (WORK*)
+                # SET WORKENV TO CLONE OF PROPER PROFILE_TYPE 
+                # 
+                # 
+                # REQUIRES DOM0_CA_SERVICE: [DECRYPT_PROFILE]
+
+            ;;
+        esac
+    done
+
+    for x in $@
+    do
+        case "${x}" in
+            buildenv=*)
+                # WORK* , get profile, and working directory
+                # extract the goods (LIST, from root)
+                # profile -> profile
+                # service chain (generate a script called services.sh). for every service, add a line to (supports OPENRC ONLY right now)
+                # capture ZFS keys, reference the keylocation, then lookinside the root for that location, save to zfs.key
+                # get the public key from /profile/public/key and sign the archive (subdomain folder to tar.xfvz)
+                #
+                #
+                #
+                #
+                #
 
             ;;
         esac
