@@ -75,7 +75,9 @@ patch_sys() {
 	mget ${psrc}/etc/ ${offset}/etc/ 
 	mget ${psrc}/var/ ${offset}/var/ 
 	mget ${psrc}/usr/ ${offset}/usr/ 
+	# this operation tends to rewrite the root directory w/ portage ownership, not sure how to overwrite rsync behavior in getRSYNC
 	mget ${psrc}/ ${offset}/ "--exclude '*'"
+	chown root.root /* 
 }
 
 #zfs only
