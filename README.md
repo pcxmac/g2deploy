@@ -42,7 +42,8 @@ issues / dependencies : <review>
 
   [ BACKEND SPEC. | DISTRO SERVER ]
   /var/lib/portage
-  ├── binpkgs                   locally built, on build server, or built through sshfs, can be clone, and snapshotted to preserve 'versioning'
+
+  ├── binpkgs                   locally built, on build server, or built through sshfs, can be clone, (and snapshotted to preserve 'versioning' ?)
 
   ├── kernels                   kernel repo for distribution, *current, and *depreciated
 
@@ -59,6 +60,9 @@ issues / dependencies : <review>
   ├── snapshots                 synchronized too, via esync.sh
 
   ├── distfiles                 synchronized too, via esync.sh
+
+  CREATE NEW ! |---- bundles    a bundle is tied to a specific package, every bundle has a build date as a version, it can be superseeded, if it    
+                                needs to be patched. Old bundles will have a different suffix /bundles/handle-version/pkgs+compressed config files, from sys.root (built using tar LIST)
 
 
   [ BACKEND SPEC. | BUILD SERVER ]  :: { to reference pkgmx.sh & profile.sh for profiling machines and maintaining bin_pkgs }
@@ -117,6 +121,7 @@ issues / dependencies : <review>
   x
 
   !!!!!! Add bastion4 to rc-conf.d :: new code in to bastion, wait for adapters, and timeout. Perhaps run as a daemon.
+  MODIFY BASTION TO ASSOCIATE VIRTUAL BRIDGES, AUTOMATING FIND WAN ADAPTERS or LAN (based on Private Network Space/ vs WAN, possibly use conf.d/net ...) Need 
 
   x
 
@@ -136,9 +141,9 @@ issues / dependencies : <review>
 
   need option for kernel source ... in deploy ?
 
-  a system update might be getting rid of the spi-... issues
+  x
 
-  chromium still has the spi issues
+  x
 
   libvirt is not patched. .... PROFILE ASSERT
 
@@ -148,7 +153,7 @@ issues / dependencies : <review>
 
   x
 
-  missing completion for gentoo-zsh (should be inside ~/.zsh/)
+  x
 
   qemu missing : swtpm + usermod-utilities, ssh enabled thru profile ... profile+services capture ... profile+key mngmt/capture
 
@@ -228,7 +233,7 @@ Supplimental infrastructure
 
 oddities
 
-  plasma doesn't boot
+  x
   sysop/root profiles do not have a good gnome or plasma preferences, for the terminal, or desktop, etc...
 
 
