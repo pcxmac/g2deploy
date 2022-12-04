@@ -2,17 +2,46 @@
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
-
-# ARGS = work=$
-
     # INPUTS    
 	#
 	#		profile=jupiter.hypokrites.me
 	#		work=local/remote zfs://root@localhost:/pool/set
+    #       work={config_file w/ multiple pools/sets/directories to snap from} (0.4>)
 	#		bootpart=/dev/sdYX
+    #       keymat=/root/location/of/key (0.2+)
 	#	
 	#		buildenv	#	examin a work#space/bootenv, save to a profile. 
 	#		buildout	#	takes a profile patch, a work#space, patch it, on a clone.
+    #
+    # BACKEND SPEC: <PROFILER> [ BASH-G2DEPLOY ]
+    #
+    #       0.1 - manual/local profile assertion, no privacy|encryption
+    #       0.2 - local assertion, encrypted 
+    #       0.3 - local/remote assertion, encrypted
+    #       0.4 - provision for more sophisticated encryption
+    #       0.5 - configs (scripts for targeting validated locations)
+    #       0.6 - multiple archives per machine
+    #
+    #       /profile/tld/domain/machine.sig
+    #       /profile/...hidden.../private_master_key
+    #       /profile/public_master_key
+    #       /machine_root/.../private_key
+    #       /machine_root/.../public_key
+    #       compress profile locally (.tar.lz4)
+    #       encrypt profile w. public_key (PKI) (user privacy)
+    #       sign encrypted profile (profile.crypt) + public_key with public_master_key (user-backend authentication)
+    #           if using a rolling key, user must provide current key,original key, signed with the public_key to the backend server,
+    #           so, upon future pull, the option for providing *keymat is available.
+    #       ... on the user side, the key can be held in an initramfs, which might pull a machine profile, or in a key cache for
+    #           generating the NON-generic image. it is important to remember, user data as well as package info is stored.
+    #           the profiles are as much a userspace snapshot as well as a backup of user-data (/home/...)
+    #       upon receipt, the backend can unsign the package to reveal the client's public key, this key can be catalogged for future 
+    #           reference/authentication. This serves as a secure token for uploading the data elsewhere. 
+    #       
+    # BACKEND SPEC: <CA_SPEC> [ PYTHON-NEXUS ]
+    #       
+    #       provide functions for BACKEND processes/processing, (PROFILER 0.2=>)
+    #       
 
 source ./include.sh
 
@@ -26,12 +55,7 @@ source ./include.sh
 #       pkg selector    (take globals, diff from profile generated, output to [hostname].pkgs )
 #       users			tar cfvz home.tar.gz ; root.tar.gz
 #		--profile		grab profile.
-#			
-
-#       store values in portage/profiles/[domain]/[hostname]
-#       ex. hypokrites.net/dom0 ... subdomains are attached to the hostname
-#       ex. happy.printer = hostname, hypokrites.net = domain
-#		
+#
 #		~/
 #			profile.txt
 #			etc.tar.gz
@@ -50,6 +74,8 @@ source ./include.sh
 
 ########################################## DEFINES
 
+    base_URL="file:///var/lib/portage/profile"
+
     for x in $@
     do
         case "${x}" in
@@ -64,18 +90,18 @@ source ./include.sh
     do
         case "${x}" in
             bootpart=*)
-
-
-            ;;
+               efi_part=${x#*=}
+             ;;
         esac
     done
 
     for x in $@
     do
         case "${x}" in
-            profile=*)
-
-
+            profile=*)      
+                proper_name=${x#*=}
+                if [[ -d ${base_URL}${proper_name} ]];then echo "profile present, exiting."; exit; fi
+                
             ;;
         esac
     done

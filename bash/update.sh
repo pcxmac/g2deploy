@@ -7,20 +7,23 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
     #           WORK=chroot offset		- update working directory
 	#			BOOT=
 	#
-	#	mounts + binpkgs,
-	#	update patched files
-	#	update kernel (only modules installed, kernel source could be added later, optionally)
-	#	update modules
-	#	update boot spec
-	#	update run time
-	#	unmounts
-	#
 	#
 	#	future features :
 	#		test to see if pool exists, add new zfs datasets if no dataset, other partition types.
 	#		NEED A STRUCTURE TO CHECK CURRENT BOOT SETTING/VERIFY MODULE INSTALL, THEN RETROFIT TO NEW KERNEL IF APPLICABLE, IF NOT, DONT DO SHIT TO THE KERNEL
 	#
 	#	USE = ./update.sh work=pool/set boot=/dev/sdX update
+	#	
+	#	
+	#	
+	#	
+	#	
+	#	
+	#	
+	#	
+	#	
+	#	
+	#	
 
 source ./include.sh
 
@@ -34,18 +37,13 @@ function update_runtime() {
 	#
 
 	echo "executing RUNTIME_UPDATE !"
-
 	exclude_atoms="-X sys-fs/zfs-kmod -X sys-fs/zfs"
-
 	eselect profile show
-
 	sudo emerge --sync --verbose --backtrack=99 --ask=n;sudo eix-update
-
 	emerge portage --oneshot --ask=n
-
 	sudo emerge -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y ${exclude_atoms}
-
 	eselect news read new
+	
 }
 
 export PYTHONPATH=""

@@ -138,10 +138,10 @@ function system()
 	echo "BASIC TOOLS EMERGE !!!!!"
 	emerge $emergeOpts gentoolkit eix mlocate genkernel sudo zsh pv tmux app-arch/lz4 elfutils --ask=n
 
-	#
-	#
-	#
-	#
+	#	
+	#	
+	#	
+	#	
 
 	local patch_script="/patches.sh"
 	echo "ISSUING WORK AROUNDS"
@@ -155,16 +155,20 @@ function system()
 
 	emergeOpts="--verbose-conflicts"
 	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts =zfs-9999 --nodeps
-	
-	#
-	#
-	#
-	#
+
+	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+	echo "UPDATE SYSTEM !!!"
+	emerge -b -uDN --with-bdeps=y @world --ask=n $emergeOpts
+
+	#	
+	#	
+	#	
+	#	
 	#	need an extras-packages install here, like chromium, vscode, etc...
-	#
-	#
-	#
-	#
+	#	
+	#	
+	#	
+	#	
 
 	#echo "SETTING SERVICES"
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import

@@ -262,16 +262,9 @@ function setup_boot()
 			sleep 5
 			kversion=$(getKVER)
 			kversion=${kversion#*linux-}
-
 			echo "KVERSION = ${kversion}" 2>&1
-
 			install_modules ${dstDir}			# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
-
 			editboot ${kversion} "${dpool}/${ddataset}"
-
-			
-
-
 			umount ${dstDir}/boot
  }
 
