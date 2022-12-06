@@ -7,6 +7,11 @@
 
 source ./mget.sh
 
+
+tStamp() {
+	echo "obase=16; $(date %s)))" | bc
+}
+
 patch_portage() {
 
     local offset=$1
