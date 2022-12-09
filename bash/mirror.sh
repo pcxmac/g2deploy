@@ -25,7 +25,7 @@
 	esac
 
 	case "${type##*/}" in
-		bin*|pack*|kernel*|release*|snaps*|dist*|repos*|patch*)		serversList="$type"				;;
+		bin*|pack*|kernel*|release*|snaps*|dist*|repos*|patch*|meta*)		serversList="$type"				;;
 		*)															echo "invalid input";exit		;;
 	esac
 
@@ -54,7 +54,7 @@
 							if [[ ${profile} == ${server%://*} ]]; then echo "${server}"; exit; fi
 						fi
 					;;
-					bin*|pack*|kernel*|dist*|repos*|snaps*|patch*)
+					bin*|pack*|kernel*|dist*|repos*|snaps*|patch*|meta*)
 						if [[ ${profile} == ${server%://*} ]]; then echo "${server}"; exit; fi
 					;;
 				esac
@@ -72,7 +72,7 @@
 						#echo "$release_base_string"
 						if [[ -z $release_base_string ]];	then	echo "${server}";	exit;	fi
 					;;
-					bin*|pack*|kernel*|dist*|repos*|snaps*|patch*)
+					bin*|pack*|kernel*|dist*|repos*|snaps*|patch*|meta*)
 						if [[ ${profile} == ${server%://*} ]]; then echo "${server}"; exit; fi
 					;;
 				esac
@@ -85,7 +85,7 @@
 						selectStr="${locationStr#*current-*}"
 						selectStr="${selectStr%*/}"
 						# filter for curl content, and grep'ing through mangled URLs, ie last few characters are missing or distorted
-						urlCurrent="$(curl -s $urlBase | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"
+						urlCurrent="$(curl -s $urlBase --silent | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"
 						urlCurrent="$(echo $urlCurrent | awk '{print $1}' | head -n 1 )"
 						urlCurrent="${urlCurrent%.t*}"
 						if [[ "$release_base_string" != "invalid" ]]; then
@@ -96,7 +96,7 @@
 							fi
 						fi
 					;;
-                	bin*|pack*|kernel*|dist*|repos*|snaps*|patch*)
+                	bin*|pack*|kernel*|dist*|repos*|snaps*|patch*|meta*)
 						if [[ ${profile} == ${server%://*} ]]; then echo "${server}"; exit; fi
                 	;;
 	            esac

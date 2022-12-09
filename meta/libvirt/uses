@@ -1,0 +1,2 @@
+app-emulation/qemu fuse gtk iscsi opengl nfs lzo sdl spice snappy ssh usb usbredir vde vbox-user-fs vte xfs zstd
+net-dns/dnsmasq script                             

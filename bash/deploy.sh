@@ -184,7 +184,7 @@ function services()
 	local lineNum=0
 	local service_list=$1
 
-	bash <(curl "${service_list}")
+	bash <(curl "${service_list}" --silent)
 }
 
 function locales()
@@ -219,10 +219,10 @@ function pkgProcessor()
 	echo $offset 2>&1
 
 	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.pkgs" | sed 's/ //g')"
-	commonPkgs="$(curl $url)"
+	commonPkgs="$(curl $url --silent)"
 	echo ":::: $url"
 	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.pkgs" | sed 's/ //g')"
-	profilePkgs="$(curl $url)"
+	profilePkgs="$(curl $url --silent)"
 	echo ":::: $url"
 
 	local allPkgs="$(echo -e "${commonPkgs}\n${profilePkgs}" | uniq | sort)"

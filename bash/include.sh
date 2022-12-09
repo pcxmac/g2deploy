@@ -49,7 +49,7 @@ patch_portage() {
 		then
 			sed -i "/$PREFIX/c $line" ${offset}etc/portage/make.conf
 		fi
-	done < <(curl ${common_conf})
+	done < <(curl ${common_conf} --silent)
 
 	while read line; do
 		((LineNum+=1))
@@ -59,7 +59,7 @@ patch_portage() {
 		then
 			sed -i "/$PREFIX/c $line" ${offset}etc/portage/make.conf	
 		fi
-	done < <(curl ${spec_conf}.conf)
+	done < <(curl ${spec_conf}.conf --silent)
 }
 
 patch_user() {
@@ -186,7 +186,7 @@ function patchProcessor()
 	echo $offset 2>&1
 
 	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.patches" | sed 's/ //g')"
-	local patch_script="$(curl $url)"
+	local patch_script="$(curl $url --silent)"
 
 	#
 	#
@@ -232,7 +232,7 @@ function getKVER()
 	#kver=${kver%.tar.gz*}
 	# used for kernel boot spec folder
 	local url_kernel="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"
-	local kver="$(curl "$url_kernel" | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep "\-gentoo")"
+	local kver="$(curl "$url_kernel" --silent | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep "\-gentoo")"
 	kver="linux-${kver}"
 	echo ${kver}
 }
