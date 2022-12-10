@@ -117,6 +117,8 @@ issues / dependencies : <review>
 
   bundles : need meta packages for things like libvirt, to include patches for /etc ... bundles can be placed in /bundle/call/*.pkgs;*.patches/rootdir/...
 
+  Add Gentoo ADMIN CD/DVD, LIVE DVD & MEMFREE to boot entries.
+
   x
   x
 

@@ -1,0 +1,1 @@
+emerge ${emergeOpts} app-editors/vscode --ask=n

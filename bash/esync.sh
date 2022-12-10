@@ -9,7 +9,7 @@ source ${SCRIPT_DIR}/include.sh
 /sbin/rc-service lighttpd stop
 /bin/sync
 
-echo "############################### [ REPOS ] ###################################"
+echo "################################# [ REPOS ] #####################################"
 URL="rsync://rsync.us.gentoo.org/gentoo-portage/"
 echo -e "SYNCING w/ ***$URL*** [REPOS]"
 emerge --sync | tee /var/log/esync.log
