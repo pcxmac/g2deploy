@@ -1,7 +1,5 @@
-#file:///var/lib/portage/snapshots
-#rsync://10.1.0.1/gentoo-distfiles/snapshots
-#rsync://mirror.rackspace.com/gentoo/snapshots
-#rsync://rsync31.us.gentoo.org/gentoo/snapshots
+rsync://mirror.rackspace.com/gentoo/snapshots
+rsync://rsync31.us.gentoo.org/gentoo/snapshots
 rsync://rsync.nl.gentoo.org/gentoo/snapshots
 rsync://rsync.uk.gentoo.org/gentoo/snapshots
 #rsync://rsync.jp.gentoo.org/gentoo/snapshots
