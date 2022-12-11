@@ -47,6 +47,18 @@ issues / dependencies : <review>
 
   ├── kernels                   kernel repo for distribution, *current, and *depreciated
 
+  |-----------                  X.Y.Z-gentoo (ex. /6.0.1-gentoo)
+
+  |-------------------          modules.tar.gz (from /lib/modules/X.Y.Z-gentoo)
+
+  |-------------------          System.Map
+
+  |-------------------          Kernel.Config
+
+  |-------------------          initramfs
+
+  |-------------------          vmlinuz (kernel image)
+
   ├── packages                  portage patch, and package configurations for profiles 17.X/...
 
   ├── patchfiles                system wide, generic patch files, independent of profile
@@ -61,9 +73,7 @@ issues / dependencies : <review>
 
   ├── distfiles                 synchronized too, via esync.sh
 
-  CREATE NEW ! |---- bundles    a bundle is tied to a specific package, every bundle has a build date as a version, it can be superseeded, if it    
-                                needs to be patched. Old bundles will have a different suffix /bundles/handle-version/pkgs+compressed config files, from sys.root (built using tar LIST)
-
+  ├── meta                      meta package information, for meta builds (patches, configs, portage is not perfect)
 
   [ BACKEND SPEC. | BUILD SERVER ]  :: { to reference pkgmx.sh & profile.sh for profiling machines and maintaining bin_pkgs }
 
@@ -121,6 +131,8 @@ issues / dependencies : <review>
 
   x
   x
+
+  add support for inclusion of arm+ builds { binpkgs | repos | releases | ... }
 
   !!!!!! Add bastion4 to rc-conf.d :: new code in to bastion, wait for adapters, and timeout. Perhaps run as a daemon.
   MODIFY BASTION TO ASSOCIATE VIRTUAL BRIDGES, AUTOMATING FIND WAN ADAPTERS or LAN (based on Private Network Space/ vs WAN, possibly use conf.d/net ...) Need 

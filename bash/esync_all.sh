@@ -21,10 +21,16 @@ URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/snapshots_remote.mirror
 echo -e "SYNCING w/ $URL \e[25,42m[SNAPSHOTS]\e[0m";sleep 1
 rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-existing --no-owner --no-group ${URL} /var/lib/portage/ | tee /var/log/esync.log
 
+#
+#   the releases url in the releases.mirrors file needs to have a closing forward slash, other wise it will copy in to releases/releases/*
+#
+#
+
 echo "############################### [ RELEASES ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases_remote.mirrors rsync)"
 echo -e "SYNCING w/ $URL \e[25,42m[RELEASES]\e[0m";sleep 1
-rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-existing --no-owner --no-group ${URL}/amd64 /var/lib/portage/releases/ | tee /var/log/esync.log
+# destination URL is extended due to 'amd64' being the only requested arch for releases, perhaps select for, in this script later ie x32, amd64, arm,...
+rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-existing --no-owner --no-group ${URL} /var/lib/portage/releases | tee /var/log/esync.log
 
 echo "############################### [ DISTFILES ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/distfiles_remote.mirrors rsync)"
