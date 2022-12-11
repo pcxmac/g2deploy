@@ -132,7 +132,7 @@ issues / dependencies : <review>
   x
   x
 
-  add support for inclusion of arm+ builds { binpkgs | repos | releases | ... }
+  add support for inclusion of arm+ builds { binpkgs | releases | ... }
 
   !!!!!! Add bastion4 to rc-conf.d :: new code in to bastion, wait for adapters, and timeout. Perhaps run as a daemon.
   MODIFY BASTION TO ASSOCIATE VIRTUAL BRIDGES, AUTOMATING FIND WAN ADAPTERS or LAN (based on Private Network Space/ vs WAN, possibly use conf.d/net ...) Need 

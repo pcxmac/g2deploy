@@ -4,10 +4,16 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/include.sh
 
+#ARCH="riscv/"
+#ARCH="ppc/"
+#ARCH="amd64/"
+ARCH=""             # all archetectures
 
 /sbin/rc-service rsyncd stop
 /sbin/rc-service lighttpd stop
 /bin/sync
+
+
 
 echo "################################# [ REPOS ] #####################################"
 URL="rsync://rsync.us.gentoo.org/gentoo-portage/"
@@ -15,16 +21,14 @@ echo -e "SYNCING w/ ***$URL*** [REPOS]"
 emerge --sync | tee /var/log/esync.log
 
 echo "############################### [ SNAPSHOTS ] ###################################"
-
 URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/snapshots_remote.mirrors rsync)"
-
 echo -e "SYNCING w/ $URL \e[25,42m[SNAPSHOTS]\e[0m";sleep 1
 rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-existing --no-owner --no-group ${URL} /var/lib/portage/ | tee /var/log/esync.log
 
 echo "############################### [ RELEASES ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases_remote.mirrors rsync)"
 echo -e "SYNCING w/ $URL \e[25,42m[RELEASES]\e[0m";sleep 1
-rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-existing --no-owner --no-group ${URL}/amd64 /var/lib/portage/releases/ | tee /var/log/esync.log
+rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-existing --no-owner --no-group ${URL}${ARCH} /var/lib/portage/releases | tee /var/log/esync.log
 
 echo "############################### [ DISTFILES ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/distfiles_remote.mirrors rsync)"
