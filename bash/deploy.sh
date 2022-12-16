@@ -75,7 +75,9 @@ function buildup()
 		echo -e "done "
 	fi
 	echo "finished clear_fs ... ${offset}" 2>&1
-	files="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors file ${selection})"
+
+	# file method does not work, redress later...
+	files="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors http ${selection})"
 	filexz="$(echo "${files}" | grep '.xz$')"
 	fileasc="$(echo "${files}" | grep '.asc$')"
 	serverType="${filexz%//*}"

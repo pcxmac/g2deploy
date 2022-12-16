@@ -1,4 +1,5 @@
-#file:///var/lib/portage/
+file:///var/lib/portage/
+http://10.1.0.1/gentoo/
 #http://mirror.bytemark.co.uk/gentoo/
 #http://gentoo.mirrors.tera-byte.com/
 #http://gentoo.gossamerhost.com/
