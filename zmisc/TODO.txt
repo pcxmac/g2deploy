@@ -1,18 +1,4 @@
-INTEGRATE THE ESYNC.SH script in to the functionality of this stuff
 TURN THE PROGRAM IN TO PYTHON
-REVAMP SOURCE CONTROL, use conventions like rsync:/// file:/// ..., all source locations need to become URLs. 
-REVAMP MIRROS AND A SCORING SYSTEM
-
-
-*** FIND A WAY TO RSYNC the kernel source so that it can be reMAKEd cleanly and ZFS-KMOD builds flawlessly.
-
-
-
-
-
-
-
-
 
 need to correct :
 
@@ -69,3 +55,49 @@ need to correct :
 
 		dom0.email connects to smtp service some where. smtp servers are employed arbitrarily, dom0 holds email in a 
 		secure repo
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+	need PKI/CA for Dom.0
+
+	need VPN Routing for Dom.X	(WG0)
+		WG FORWARDS TO WAN
+
+
+	
+	need VX routing for Dom.X	(VIRBR0)
+		LIBVIRT BRIDGES TO THIS
+		THIS IS FORWARDED TO WAN
+		
+
+
+
+
+
+											WAN
+	PHYSICAL MACHINE						|
+											|
+							   VIRBR0		|
+			VMX	(DOMAIN.Y)	----|			|
+				WG.X--|(virbr0)	|			|
+					  |			|-----------|
+								|
+			VMZ	(DOMAIN.Y)	----|
+				WG.Z			|
+								|
+								|
+			VMY	(DOMAIN.X)	----|
+				WG.Y			|
+								|
+								|
+			VMW	(DOMAIN.Y)	----|
+				WG.W						^
+											^
+											^
+			LO---------------->WG0----------|
+								|
+			DEFAULT ROUTE-------|
+
+
+
+
