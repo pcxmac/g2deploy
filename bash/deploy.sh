@@ -76,7 +76,7 @@ function buildup()
 	fi
 	echo "finished clear_fs ... ${offset}" 2>&1
 
-	echo ${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors ${selection} 2>&1
+	#echo ${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors ${selection} 2>&1
 	echo $(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors ${selection}) 2>&1
 
 	files="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors ${selection})"
