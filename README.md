@@ -44,7 +44,7 @@ HOW TO USE:
 
   # SYNCHRONIZE BACKEND
 
-  ./esync.sh            # uses ../config/ESYNC/*.mirrors
+  ./esync.sh            # checkout backend spec/folder specification, this script populates about half of the /var/lib/portage directory, but about 99% of the data. 
 
   # BIGGEST ISSUE : ZFS ONLY.
 
