@@ -30,7 +30,13 @@ HOW TO USE:
 
   # MIRROR URL FOR TYPE OF RESOURCE + PROTOCOL || PROVIDE PROFILE FOR SPECIFIC URL pair FOR A GIVEN PROFILE
 
-  ./mirror.sh ../config/[type]_[remote?].mirrors [PROFILE-releases.mirrors || protocol type {ftp,rsync,http*}]
+  ./mirror.sh ../config/[type]_[remote?].mirrors [protocol type {ftp,rsync,http*}] [PROFILE-releases.mirrors]
+
+  example - ./mirror.sh ../config/releases.mirrors http plasma      # use a http URL reference in the mirrors-file
+  example - ./mirror.sh ../config/releases.mirrors file plasma      # use a local file system reference in the mirrors-file
+  example - ./mirror.sh ../config/releases.mirrors http sync-only   # 3rd argument is trivial, this will pull down a sync url, for esync
+  example - ./mirror.sh ../config/distfiles.mirrors rsync sync-only   # 3rd argument is trivial, in fact, it doesn't have to be stated, pulls down distfiles sync URL
+   
 
   # SYNCHRONIZE BACKEND
 
@@ -92,6 +98,10 @@ issues / dependencies : <review>
   ?
 
   ?
+
+  //unmount.exe for unmounting chroots
+
+  need a way to verify portage version, AND NOT UPGRADE if present one is current version
 
   Prospect - profile.sh : ./profile.sh profile=sub.domain.tld work={pool/set}.../ bootpart=/dev/efi_part
 
