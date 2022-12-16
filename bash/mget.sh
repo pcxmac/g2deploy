@@ -25,6 +25,7 @@ function getRSYNC()
 
 	while [[ ${waiting} == 1 ]]
 	do
+		# timout introduced because some rsync servers will take forever and a day while generating directory of shares
 		rCode="$(timeout 10 rsync -n ${host}:: 2>&1 | \grep 'Connection refused')"
         if [[ -z "${rCode}" ]]
 		then
