@@ -75,30 +75,22 @@ function buildup()
 		echo -e "done "
 	fi
 	echo "finished clear_fs ... ${offset}" 2>&1
-
-	#echo ${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors ${selection} 2>&1
-	echo $(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors ${selection}) 2>&1
-
-	files="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors ${selection})"
+	files="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors file ${selection})"
 	filexz="$(echo "${files}" | grep '.xz$')"
 	fileasc="$(echo "${files}" | grep '.asc$')"
 	serverType="${filexz%//*}"
-
-	echo "X = ${serverType%//*} :: $files --> ${offset} @ $profile" 2>&1
 	
 	case ${serverType%//*} in
 		"file:/")
-			echo "LOCAL FILE TRANSFER - RSYNCING" 2>&1
-			#rsync -avP ${filexz#*//} ${offset}
-			#rsync -avP ${fileasc#*//} ${offset}
+			echo "LOCAL FILE TRANSFER ... " 2>&1
 			mget ${filexz#*//} ${offset}
 			mget ${fileasc#*//} ${offset}
 		;;
-		"http:")
-			echo "REMOTE FILE TRANSFER - WGETTING" 2>&1
-			#wget $filexz	--directory-prefix=${offset}
-			#wget $fileasc	--directory-prefix=${offset}
+		"http:"|"rsync:")
+			echo "REMOTE FILE TRANSFER - ${serverType%//*}//" 2>&1
+			echo "fetching ${filexz}..." 2>1&
 			mget ${filexz} ${offset}
+			echo "fetching ${fileasc}..." 2>1&
 			mget ${fileasc} ${offset}
 		;;
 	esac
@@ -295,10 +287,8 @@ function pkgProcessor()
         #echo "before cases $x"
         case "${x}" in
             build=*)
-                echo "build..."
                 _profile="invalid profile"
                 selection="${x#*=}"
-				echo "ZDRAT + ${x#*=}"
                 case "${x#*=}" in
                     # special cases for strings ending in selinux, and systemd as they can be part of a combination
                     #'musl')

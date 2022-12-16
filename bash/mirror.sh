@@ -1,16 +1,25 @@
 #!/bin/bash
 
-#	ARGS: 	$TYPE{ release, snapshots, distfiles, repos } [ $PROFILE{ eselect* } | prefix_type (http/rsync...) ]
+#	ARGS: 	$MIRROR{ release, snapshots, distfiles, repos } [$TYPE = GET METHOD ] [ $PROFILE{ eselect* } | prefix_type (http/rsync...) | ]
 #	OUTPUT: [SCORED] [RANDOMIZED] MIRROR URL (file)
 #
-#	TYPE:
+#	MIRROR:
 #			RELEASE		:	echo the URL for the .XZ and .ASC files (URI.xz|.asc)
 #			SNAPSHOTS	:	echo the URL for snapshot sync (system initialization) ... (file|rsync://)
 #			DISTFILES	:	echo the URL for distfile sync (file|rsync://)
 #			REPOS		:	echo the URL for repos sync (file|rsync://)
+#
+#
+#
+#
+#
+#
 
-	profile="$2"
-	type="$1"
+
+	profile="$3"
+	type="$2"
+	mirror="$1"
+
 	release_base_string=""
 	serversList="invalid"
 
@@ -24,8 +33,8 @@
 		*)				release_base_string=""																			;;
 	esac
 
-	case "${type##*/}" in
-		bin*|pack*|kernel*|release*|snaps*|dist*|repos*|patch*|meta*)		serversList="$type"				;;
+	case "${mirror##*/}" in
+		bin*|pack*|kernel*|release*|snaps*|dist*|repos*|patch*|meta*)		serversList="$mirror"				;;
 		*)															echo "invalid input";exit		;;
 	esac
 
@@ -34,11 +43,10 @@
     do
     	case ${server%://*} in
 			file)
-				case "${type##*/}" in
+				case "${mirror##*/}" in
 					release*)
 						if [[ "$release_base_string" != "invalid" ]];	then
 							locationStr="$release_base_string"
-							echo $locationStr
 							urlBase="${server#*://}${locationStr}"
 							selectStr="${locationStr#*current-*}"
 							selectStr="${selectStr%*/}"
@@ -46,16 +54,16 @@
 							urlCurrent_asc="$(ls $urlBase | grep "$selectStr" | grep ".asc$")"
 							urlBase="${server}${locationStr}"
 							if [[ -n $urlCurrent_xz ]];	then
-								echo "${urlBase}${urlCurrent_xz}"
-								echo "${urlBase}${urlCurrent_asc}"
+								printf "${urlBase}${urlCurrent_xz}\n"
+								printf "${urlBase}${urlCurrent_asc}\n"
 								exit
 							fi
 						else
-							if [[ ${profile} == ${server%://*} ]]; then echo "${server}"; exit; fi
+							if [[ ${type} == ${server%://*} ]]; then echo "${server}"; exit; fi
 						fi
 					;;
 					bin*|pack*|kernel*|dist*|repos*|snaps*|patch*|meta*)
-						if [[ ${profile} == ${server%://*} ]]; then echo "${server}"; exit; fi
+						if [[ ${type} == ${server%://*} ]]; then echo "${server}"; exit; fi
 					;;
 				esac
 			;;
@@ -67,18 +75,37 @@
     do
     	case ${server%://*} in
 			rsync)
-				case "${type##*/}" in
+				case "${mirror##*/}" in
             		release*)
-						#echo "$release_base_string"
-						if [[ -z $release_base_string ]];	then	echo "${server}";	exit;	fi
+						if [[ -z "${release_base_string}" ]]
+						then
+							echo "${server}"
+							exit
+						else
+							# THIS IS FOR A SPECIFIC REFERENCE, not a general repo sync
+							host="${server#*://}"
+							tld="${host##*.}"
+							tld="${tld%%/*}"
+							hostname="${host%${tld}*}${tld}"
+							dir=${host##*${tld}}
+							dir=${dir#*/}
+							dir=${dir%releases/*}
+							selectStr="${release_base_string#*current-}"
+							selectStr="${selectStr%*/}"
+							urlCurrent_xz="$(rsync -n ${hostname}::${dir}${release_base_string} | awk '{print $5}' | sed -e 's/<[^>]*>//g' | grep "$selectStr" | grep ".xz$")"
+							urlCurrent_asc="$(rsync -n ${hostname}::${dir}${release_base_string} | awk '{print $5}' | sed -e 's/<[^>]*>//g' | grep "$selectStr" | grep ".asc$")"
+							printf "${server%releases/*}${release_base_string}${urlCurrent_xz}\n"
+							printf "${server%releases/*}${release_base_string}${urlCurrent_asc}\n"
+							exit
+						fi
 					;;
 					bin*|pack*|kernel*|dist*|repos*|snaps*|patch*|meta*)
-						if [[ ${profile} == ${server%://*} ]]; then echo "${server}"; exit; fi
+						if [[ ${type} == ${server%://*} ]]; then echo "${server}"; exit; fi
 					;;
 				esac
 			;;
           	http*|ftp)
-				case "${type##*/}" in
+				case "${mirror##*/}" in
             		release*)
 						locationStr="$release_base_string"
 						urlBase="$server/$locationStr"
@@ -90,14 +117,14 @@
 						urlCurrent="${urlCurrent%.t*}"
 						if [[ "$release_base_string" != "invalid" ]]; then
 							if [[ -n $urlCurrent ]];	then	
-								echo "${urlBase}${urlCurrent}.tar.xz"
-								echo "${urlBase}${urlCurrent}.tar.xz.asc"
+								printf "${urlBase}${urlCurrent}.tar.xz\n"
+								printf "${urlBase}${urlCurrent}.tar.xz.asc\n"
 								exit
 							fi
 						fi
 					;;
                 	bin*|pack*|kernel*|dist*|repos*|snaps*|patch*|meta*)
-						if [[ ${profile} == ${server%://*} ]]; then echo "${server}"; exit; fi
+						if [[ ${type} == ${server%://*} ]]; then echo "${server}"; exit; fi
                 	;;
 	            esac
 			;;

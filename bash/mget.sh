@@ -23,9 +23,11 @@ function getRSYNC()
 	host=${host#*://}
 	host=${host%%/*}
 
+	echo "getRSYNC()"
+
 	while [[ ${waiting} == 1 ]]
 	do
-		rCode="$(rsync -n ${host}:: 2>&1 | \grep 'Connection refused')"
+		rCode="$(timeout 10 rsync -n ${host}:: 2>&1 | \grep 'Connection refused')"
         if [[ -z "${rCode}" ]]
 		then
 			rsync -a --no-motd --info=progress2 $@ 
