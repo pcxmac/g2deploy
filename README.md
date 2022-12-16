@@ -102,6 +102,8 @@ issues / dependencies : <review>
   ?
 
   ?
+  
+  !!!!! move lxd-prep in to lxd meta package. virbr0 will be for libvirt, autosensed by fw, virbr1 reserved for lxd, autosensed.
 
   !!!!! run a service check (base services) w/ update (command [services]) on command line ./update.sh
 
