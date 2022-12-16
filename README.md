@@ -103,6 +103,8 @@ issues / dependencies : <review>
 
   ?
 
+  !!!!! run a service check (base services) w/ update (command [services]) on command line ./update.sh
+
   !!!!! NEED TO MOVE SCRIPT BASE DIR to project dir, and then prefix with bash, then move esync over to ./config, include stays in ./bash, along with mget, mirror moves to ./config --refactor
 
   //unmount.exe for unmounting chroots
