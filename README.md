@@ -107,7 +107,7 @@ issues / dependencies : <review>
 
   !!!!! NEED TO MOVE SCRIPT BASE DIR to project dir, and then prefix with bash, then move esync over to ./config, include stays in ./bash, along with mget, mirror moves to ./config --refactor
 
-  //unmount.exe for unmounting chroots
+  //unmount.exe for unmounting chroots...
 
   need a way to verify portage version, AND NOT UPGRADE if present one is current version
 
