@@ -1,0 +1,4 @@
+emerge ${emergeOpts} app-emulation/libvirt --ask=n
+emerge ${emergeOpts} app-crypt/swtpm --ask=n
+emerge ${emergeOpts} net-misc/spice-gtk --ask=n
+emerge ${emergeOpts} app-emulation/qemu --ask=n
