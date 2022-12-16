@@ -1,2 +1,3 @@
 # HARDENED PATCH SCRIPT
 emerge $emergeOpts glibc
+emerge portage --oneshot --ask=n

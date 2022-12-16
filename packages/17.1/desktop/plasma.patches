@@ -10,7 +10,7 @@ emerge $emergeOpts sys-libs/glibc qtgui
 #[blocks B      ] <app-accessibility/at-spi2-atk-2.46.0 ("<app-accessibility/at-spi2-atk-2.46.0" is soft blocking app-accessibility/at-spi2-core-2.46.0)
 #[blocks B      ] <dev-libs/atk-2.46.0 ("<dev-libs/atk-2.46.0" is soft blocking app-accessibility/at-spi2-core-2.46.0)
 
-
+emerge portage --oneshot --ask=n
 
 
 

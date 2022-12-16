@@ -4,7 +4,8 @@
 
 offset="$(pwd)"
 
-mSize="$(awk '$3=="kB"{$2=$2/1024^2;$3="GB";} 1' /proc/meminfo | column -t | grep 'MemFree' | awk '{print $2}')"
+#mSize="$(awk '$3=="kB"{$2=$2/1024^2;$3="GB";} 1' /proc/meminfo | column -t | grep 'MemFree' | awk '{print $2}')"
+mSize="$(awk '$3=="kB"{$2=$2/1024^2;$3="GB";} 1' /proc/meminfo | column -t | grep 'MemTotal' | awk '{print $2}')"
 mSize="${mSize%%.*}"
 mSize=$(expr $mSize / 2)
 mSize="${mSize}G"
@@ -32,8 +33,8 @@ mount -t tmpfs tmpfs $offset/run
 #mount -t nfs 192.168.2.200:/gentoo-distfiles $(pwd)/var/lib/portage/distfiles || echo "unable to mount distfiles !"
 #mount -t nfs 192.168.2.200:/gentoo-pkgs $(pwd)/var/lib/portage/binpkgs || echo "unable to mount binpkgs !"
 
-#mount --bind /var/lib/portage/binpkgs $offset/var/lib/portage/binpkgs
-#mount --bind /var/lib/portage/distfiles $offset/var/lib/portage/distfiles
+mount --bind /var/lib/portage/binpkgs $offset/var/lib/portage/binpkgs
+mount --bind /var/lib/portage/distfiles $offset/var/lib/portage/distfiles
 
 export PYTHONPATH=""
 

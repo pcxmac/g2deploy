@@ -1,1 +1,4 @@
+# patches for selinux - hardened
+
 emerge $emergeOpts glibc
+emerge portage --oneshot --ask=n
