@@ -285,9 +285,9 @@ function getG2Profile() {
         'selinux')          		_profile="17.1/selinux "
                         			#echo "${x#*=} is not supported [selinux]"
         ;;
-        'plasma/systemd')   		_profile="17.1/desktop/plasma/systemd "
+        'desktop/plasma/systemd')   _profile="17.1/desktop/plasma/systemd "
         ;;
-        'gnome/systemd')			_profile="17.1/desktop/gnome/systemd "
+        'desktop/gnome/systemd')	_profile="17.1/desktop/gnome/systemd "
         ;;
         'hardened/selinux') 		_profile="17.1/hardened/selinux "
                         			#echo "${x#*=} is not supported [selinux]"

@@ -65,6 +65,7 @@ do
 				echo "**${directory}** ?? **${target}**"
 				exit
 			else
+				echo "shazaam!"
 				dataset="${x#*=}"
 				profile="$(getG2Profile ${directory})"
 			fi
@@ -72,7 +73,6 @@ do
 	esac
 done
 
-echo "***$(getG2Profile ${directory})***"
 
 emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"		
 
