@@ -32,14 +32,14 @@ HOW TO USE:
 
   ./mirror.sh ../config/[type]_[remote?].mirrors [protocol type {ftp,rsync,http*}] [PROFILE-releases.mirrors]
 
-  example - ./mirror.sh ../config/releases.mirrors http plasma      # use a http URL reference in the mirrors-file
+  example - ./mirror.sh ../config/releases.mirrors http plasma      # use a http URL reference in the mirrors-file for the xz/asc latest stage3
 
-  example - ./mirror.sh ../config/releases.mirrors file plasma      # use a local file system reference in the mirrors-file
+  example - ./mirror.sh ../config/releases.mirrors file plasma      # use a local file system reference in the mirrors-file for the xz/asc latest stage3
 
   example - ./mirror.sh ../config/releases.mirrors http sync-only   # 3rd argument is trivial, this will pull down a sync url, for esync
 
   example - ./mirror.sh ../config/distfiles.mirrors rsync sync-only   # 3rd argument is trivial, in fact, it doesn't have to be stated, pulls down distfiles sync URL
-  
+
    
 
   # SYNCHRONIZE BACKEND
