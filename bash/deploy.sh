@@ -81,18 +81,20 @@ function buildup()
 	filexz="$(echo "${files}" | grep '.xz$')"
 	fileasc="$(echo "${files}" | grep '.asc$')"
 	serverType="${filexz%//*}"
+
 	
 	case ${serverType%//*} in
 		"file:/")
 			echo "LOCAL FILE TRANSFER ... " 2>&1
 			mget ${filexz#*//} ${offset}
+
 			mget ${fileasc#*//} ${offset}
 		;;
 		"http:"|"rsync:")
 			echo "REMOTE FILE TRANSFER - ${serverType%//*}//" 2>&1
-			echo "fetching ${filexz}..." 2>1&
+			echo "fetching ${filexz}..." 2>&1
 			mget ${filexz} ${offset}
-			echo "fetching ${fileasc}..." 2>1&
+			echo "fetching ${fileasc}..." 2>&1
 			mget ${fileasc} ${offset}
 		;;
 	esac
@@ -334,27 +336,19 @@ function pkgProcessor()
 
 	mount | grep ${directory}
 	buildup ${_profile} ${directory} ${dataset} ${selection}
-
 	mounts ${directory}
-
 	patch_user ${directory} ${_profile}
 	patch_sys ${directory} ${_profile}
 	patch_portage ${directory} ${_profile}
-
 	zfs_keys ${dataset}
 	echo "certificates ?"
-
 	pkgProcessor ${_profile} ${directory}
 	patchProcessor ${_profile} ${directory}
-
 	chroot ${directory} /bin/bash -c "locales ${_profile}"
 
 	#install_modules ${directory}	--- THIS NEEDS TO BE INTEGRATED IN TO UPDATE & INSTALL, DEPLOY IS USR SPACE ONLY, NOT BOOTENV
-
-	chroot ${directory} /bin/bash -c "system"
-
+ 	chroot ${directory} /bin/bash -c "system"
 	chroot ${directory} /bin/bash -c "users ${_profile}"
-
 	services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
 
 	echo "services URL = ${services_URL}"
