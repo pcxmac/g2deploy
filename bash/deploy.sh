@@ -37,10 +37,10 @@ function users()
 	#	
 
 	usermod -s /bin/zsh root
-	sudo sh -c 'echo root:@PCXmacR00t | chpasswd' 2>/dev/null
+	sudo sh -c 'echo root:password | chpasswd' 2>/dev/null
 	# CYCLE THROUGH USERS ?
 	useradd sysop
-	sudo sh -c 'echo sysop:@PCXmacSy$ | chpasswd' 2>/dev/null
+	sudo sh -c 'echo sysop:password | chpasswd' 2>/dev/null
 	echo "home : sysop"
 	usermod --home /home/sysop sysop
 	echo "wheel : sysop"
