@@ -1,0 +1,24 @@
+# GNOME SERVICES ROLLUP
+
+rc-update add NetworkManager
+rc-update add local
+rc-update add zfs-mount boot
+rc-update add zfs-load-key boot
+rc-update add zfs-zed boot
+rc-update add zfs-import boot
+rc-update add autofs
+rc-update add cronie
+rc-update add syslog-ng
+rc-update add ntpd
+
+sed -i "/DISPLAYMANAGER/c DISPLAYMANAGER='gdm'" /etc/conf.d/display-manager
+emerge --ask --noreplace gui-libs/display-manager-init --ask=n
+
+rc-update add elogind boot
+rc-update add dbus
+rc-update add display-manager default
+
+dir="/var/lib/AccountsService/users"
+mkdir -p $dir
+printf "[User]\nSession=gnome-wayland\nIcon=/home/sysop/.face\nSystemAccount=false\n " > $dir/sysop
+printf "[User]\nSession=gnome-wayland\nIcon=/home/root/.face\nSystemAccount=false\n " > $dir/root

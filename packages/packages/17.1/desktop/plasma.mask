@@ -1,0 +1,4 @@
+# PLASMA MASK
+
+<=sys-libs/glibc-2.35
+>=sys-kernel/gentoo-sources-6.1.0

@@ -103,6 +103,23 @@ issues / dependencies : <review>
 
   ?
   
+  ** META PACKAGE, FW NOTES:
+
+    systemd-resolved disabled
+
+    wireguard routing/instantiation/dependency installs
+
+    openrc/systemd installer (./install.sh)
+
+    assets: bastionX.sh, as (/etc/init.d - service) || (systemd unit files + sbin)
+
+    dependency chains for net-tools & ipcalc
+
+    bastionX, accounts for dynamic virttual bridging, and 1 wg interface, domain specific, for the machine its on 
+
+
+  * bring vscode key, in to meta package, take out of default for desktop profiles.
+
   !!!!! move lxd-prep in to lxd meta package. virbr0 will be for libvirt, autosensed by fw, virbr1 reserved for lxd, autosensed.
 
   !!!!! run a service check (base services) w/ update (command [services]) on command line ./update.sh

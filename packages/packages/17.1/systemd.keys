@@ -1,0 +1,11 @@
+# SYSTEMD KEYS
+
+sys-kernel/gentoo-sources		~amd64
+>=sys-fs/zfs-kmod-9999 **
+>=sys-fs/zfs-9999 **
+
+dev-haskell/alsa-core                   ~amd64
+dev-haskell/alsa-mixer                  ~amd64
+app-admin/haskell-updater               ~amd64
+dev-haskell/extensible-exceptions       ~amd64
+dev-lang/ghc                            ~amd64

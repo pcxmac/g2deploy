@@ -1,0 +1,24 @@
+
+
+
+meta for iptables installer, takes an iptables script and works with ->
+
+gentoo : systemd,openrc
+ubuntu : systemd
+
+
+
+coverage/scope -
+
+
+	fw			{virbr* | (lan > wg*)} > wan 
+
+	lxd			{virbr1}	domain {192.168.x.x}
+	libvirt		{virbr0}	domain {192.168.x.x}
+	kubernetes	...			
+	docker		...			
+
+
+
+
+

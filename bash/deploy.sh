@@ -37,10 +37,10 @@ function users()
 	#	
 
 	usermod -s /bin/zsh root
-	sudo sh -c 'echo root:password | chpasswd' 2>/dev/null
+	sudo sh -c 'echo root:P@ssw0rd | chpasswd' 2>/dev/null
 	# CYCLE THROUGH USERS ?
 	useradd sysop
-	sudo sh -c 'echo sysop:password | chpasswd' 2>/dev/null
+	sudo sh -c 'echo sysop:P@ssw0rd | chpasswd' 2>/dev/null
 	echo "home : sysop"
 	usermod --home /home/sysop sysop
 	echo "wheel : sysop"
@@ -131,8 +131,8 @@ function system()
 	#	
 	#	
 
-	echo "BASIC TOOLS EMERGE !!!!!"
-	emerge $emergeOpts gentoolkit eix mlocate genkernel sudo zsh pv tmux app-arch/lz4 elfutils --ask=n
+	#echo "BASIC TOOLS EMERGE !!!!!"
+	#emerge $emergeOpts gentoolkit eix mlocate genkernel sudo zsh pv tmux app-arch/lz4 elfutils --ask=n
 
 	#	
 	#	
@@ -230,12 +230,14 @@ function pkgProcessor()
 
 	#
 	#
-	#	CONVERT THIS TO AN OUTPUT STREAM, DO NOT SAVE TO OFFSET (SHOULD BE INVOKED LOCALLY)
+	#	CONVERT THIS TO AN OUTPUT STREAM, DO NOT SAVE TO OFFSET (SHOULD BE INVOKED LOCALLY) ....
 	#
 	#
 	#
 
-	echo "${diffPkgs}" > ${offset}/package.list
+	echo "${diffPkgs}" > ${offset}/.package.list
+	cat ${offset}/.package.list | sed '/^#/d' | uniq > ${offset}/package.list
+	rm ${offset}/.package.list
 }
 
 
