@@ -102,7 +102,15 @@ issues / dependencies : <review>
   ?
 
   ?
-  
+
+  Need to add support for EFI resolutions : { 1024x768 ; 640x480 ; 800x600 }
+
+  refind missing \EFI\boot\refind.d\
+
+  "ERROR setting graphics mode 1280 x 1024; using default mode!
+
+  portage still owns root, fix in deploy/update
+
   ** META PACKAGE, FW NOTES:
 
     systemd-resolved disabled
