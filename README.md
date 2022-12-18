@@ -102,10 +102,16 @@ issues / dependencies : <review>
   ?
 
   ?
+  
+  begin adding comments to all fixes to prevent git comments from being verbose
+
+  add fixes for .tmp-unverified after esync, ie, check to see if those exist, if so, resync until remedied
+
+  add boot resolutions to the [profile], to be patched after deploy-system-[update], alongside the rest of the profile packages/configs.
 
   Need to add support for EFI resolutions : { 1024x768 ; 640x480 ; 800x600 }
 
-  refind missing \EFI\boot\refind.d\
+  x
 
   "ERROR setting graphics mode 1280 x 1024; using default mode!
 
@@ -172,7 +178,7 @@ issues / dependencies : <review>
 
   bundles : need meta packages for things like libvirt, to include patches for /etc ... bundles can be placed in /bundle/call/*.pkgs;*.patches/rootdir/...
 
-  Add Gentoo ADMIN CD/DVD, LIVE DVD & MEMFREE to boot entries.
+  x ... live environments/isos are not supported by refind, directly, would require separate gpt partitions, memtest added.
 
   x
   x
