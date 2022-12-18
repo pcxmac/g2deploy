@@ -109,13 +109,13 @@ issues / dependencies : <review>
 
   add boot resolutions to the [profile], to be patched after deploy-system-[update], alongside the rest of the profile packages/configs.
 
-  Need to add support for EFI resolutions : { 1024x768 ; 640x480 ; 800x600 }
+  x
 
   x
 
-  "ERROR setting graphics mode 1280 x 1024; using default mode!
+  x
 
-  portage still owns root, fix in deploy/update
+  x - troubleshoot zpool ownwership issues following all scripts !
 
   ** META PACKAGE, FW NOTES:
 

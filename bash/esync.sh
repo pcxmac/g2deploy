@@ -16,7 +16,17 @@ ARCH=""             # all archetectures
 echo "################################# [ REPOS ] #####################################"
 URL="rsync://rsync.us.gentoo.org/gentoo-portage/"
 echo -e "SYNCING w/ ***$URL*** [REPOS]"
-emerge --sync | tee /var/log/esync.log
+
+# overcome sticky unverified download quarantine issue which occassionally props up (rsync)
+unverified="none"
+testCase="$(emerge --info | grep 'location:' | awk '{print $2}')/.tmp-unverified-download-quarantine"
+while [[ -n ${unverified} ]]
+do
+    emerge --sync | tee /var/log/esync.log
+    sleep 1
+    sync
+    if [[ -d  "${testCase}" ]];then unverified=""; fi
+done
 
 echo "############################### [ SNAPSHOTS ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/snapshots.mirrors rsync)"
