@@ -2,7 +2,7 @@
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
-source ${SCRIPT_DIR}/include.sh
+source ${SCRIPT_DIR}/bash/include.sh
 
 #ARCH="riscv/"
 #ARCH="ppc/"

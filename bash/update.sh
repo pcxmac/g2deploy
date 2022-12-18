@@ -25,7 +25,7 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 	#	
 	#	
 
-source ./include.sh
+source ${SCRIPT_DIR}/bash/include.sh
 
 function update_runtime() {
 

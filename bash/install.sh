@@ -9,7 +9,7 @@
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
-source ./include.sh
+source ${SCRIPT_DIR}/bash/include.sh
 
 #
 #	MODULARIZE SETUPBOOT, ATTEMPT TO FIND REUSABLE CODE AND REPOSIT IN TO INCLUDE.SH

@@ -5,7 +5,7 @@
 #	in smaller functions : patch_files ; patch_portage ; patch_user ; patch_sys
 #
 
-source ./mget.sh
+source ${SCRIPT_DIR}/bash/mget.sh
 
 
 tStamp() {

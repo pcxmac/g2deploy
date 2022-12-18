@@ -43,7 +43,7 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
     #       provide functions for BACKEND processes/processing, (PROFILER 0.2=>)
     #       
 
-source ./include.sh
+source ${SCRIPT_DIR}/bash/include.sh
 
 ###################################################################################################################################
 

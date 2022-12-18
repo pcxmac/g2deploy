@@ -3,15 +3,9 @@
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
-source ./include.sh
+source ${SCRIPT_DIR}/bash/include.sh
 
 echo "script dir = ${SCRIPT_DIR}"
-
-#
-#
-#	fix the destination, last slash, and replicating the same directory in itself
-#
-#
 
 mget rsync://10.1.0.1/gentoo/meta/*			${SCRIPT_DIR}/meta/
 mget rsync://10.1.0.1/gentoo/profiles/*		${SCRIPT_DIR}/profiles/

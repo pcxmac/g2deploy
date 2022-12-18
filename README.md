@@ -105,7 +105,7 @@ issues / dependencies : <review>
   
   begin adding comments to all fixes to prevent git comments from being verbose
 
-  add fixes for .tmp-unverified after esync, ie, check to see if those exist, if so, resync until remedied
+  x
 
   add boot resolutions to the [profile], to be patched after deploy-system-[update], alongside the rest of the profile packages/configs.
 
