@@ -1,3 +1,5 @@
+# GNOME PACKAGES
+
 sys-auth/elogind
 gnome-base/gnome-light
 gnome-base/gnome-desktop
@@ -7,3 +9,4 @@ app-editors/gedit
 app-editors/gedit-plugins
 gnome-extra/gnome-weather
 media-sound/pavucontrol
+gnome-extra/gnome-calculator

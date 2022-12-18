@@ -1,4 +1,4 @@
-# spec use for plasma-systemd
+# PLASMA/SYSTEMD USES
 
 sys-libs/zlib minizip
 media-video/ffmpeg opus

@@ -9,4 +9,3 @@ dev-haskell/alsa-mixer                  ~amd64
 app-admin/haskell-updater               ~amd64
 dev-haskell/extensible-exceptions       ~amd64
 dev-lang/ghc                            ~amd64
-

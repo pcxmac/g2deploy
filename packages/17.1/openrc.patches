@@ -1,3 +1,4 @@
 # OPENRC PATCH SCRIPT
-emerge $emergeOpts glibc
-emerge portage --oneshot --ask=n
+
+#emerge $emergeOpts glibc
+#emerge portage --oneshot --ask=n

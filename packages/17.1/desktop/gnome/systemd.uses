@@ -1,4 +1,4 @@
-# spec use for gnome-systemd
+# GNOME/SYSTEMD USES
 
 sys-libs/zlib minizip
 media-video/ffmpeg opus

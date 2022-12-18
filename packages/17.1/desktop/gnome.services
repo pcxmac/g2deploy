@@ -1,3 +1,5 @@
+# GNOME SERVICES ROLLUP
+
 rc-update add NetworkManager
 rc-update add local
 rc-update add zfs-mount boot

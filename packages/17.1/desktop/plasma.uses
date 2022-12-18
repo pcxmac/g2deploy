@@ -1,4 +1,5 @@
-# spec use for plasma
+# PLASMA USES
+
 sys-libs/zlib minizip
 media-video/ffmpeg opus
 media-libs/mesa xa
