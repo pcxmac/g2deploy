@@ -22,10 +22,17 @@ unverified="none"
 testCase="$(emerge --info | grep 'location:' | awk '{print $2}')/.tmp-unverified-download-quarantine"
 while [[ -n ${unverified} ]]
 do
+	
+	
     emerge --sync | tee /var/log/esync.log
     sleep 1
     sync
-    if [[ -d  "${testCase}" ]];then unverified=""; fi
+    if [[ -d  "${testCase}" ]];then echo "shit!" unverified=""; fi
+
+	ls ${testCase} -ail | grep 'tmp'
+
+	sleep 30
+
 done
 
 echo "############################### [ SNAPSHOTS ] ###################################"

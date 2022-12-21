@@ -97,6 +97,25 @@ issues / dependencies : <review>
 
   ?       AUTOMATED WORK AROUNDS (FIND WAYS TO TEST FOR WORK AROUNDS, AUTOMATICALLY, SAVE GOOD CATCH AS A PATCH, AND A BUG, W/ CLASS TYPE respecting the PATCH FORMULATION) [pluggable]
 
+  * VERIFY MODULES ARE INSTALLED ON INSTALL.
+
+  - skipping modules missing program (networking)
+  - adsl/pppoe
+  - br2684ctl
+  - atmsigd/clip
+  - netplugd
+  - ifplugd
+  - ipppd
+  - iwoconfig
+  - firewald
+  - udhcpc/busybox
+  - pump
+  - dhclient
+  
+
+
+
+
   ?
 
   ?
@@ -112,6 +131,21 @@ issues / dependencies : <review>
   x
 
   x
+
+  please find out where rsync is owning the parent folder (deploy...)
+
+  add wpa_supplicant, and auto spawn for wireless, given an adapter, spawn can be used in fw meta package
+
+      wireless = always LAN
+      
+      wired = check ip range, LAN = private space ; WAN = public space
+
+      wireguard takes in all LAN + lo + default route
+
+      virbr0 goes to WAN / static routes point to WAN-NET
+
+      wireguard goes to WAN IP, need to define routing exchange
+
 
   x
 

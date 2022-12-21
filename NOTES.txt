@@ -1,0 +1,33 @@
+sshfs issue / can use mount -t fuse.sshfs but not through autofs
+certificate is valid, if trying to use ssh, no password
+system rebooted/refreshed doesn't do anything
+https://wiki.gentoo.org/wiki/SSHFS
+
+added fuse/udev-root group
+
+Dec 19 01:49:24 localhost automount[53618]: mount(generic): calling mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@127.0.0.1:/root /test
+Dec 19 01:49:24 localhost automount[53618]: spawn_mount: mtab link detected, passing -n to mount
+Dec 19 01:49:24 localhost automount[53618]: >> fuse: unknown option(s): `-n'
+Dec 19 01:49:24 localhost automount[53618]: mount(generic): failed to mount root@127.0.0.1:/root (type fuse.sshfs) on /test
+Dec 19 01:49:24 localhost automount[53618]: dev_ioctl_send_fail: token = 27
+Dec 19 01:49:24 localhost automount[53618]: failed to mount /test
+
+
+it appears the issue is with automount invoking spawn_mount
+
+sshfs did not include sys-fs/fuse as a dependency.
+
+not sure if sshfs or fuse should find a way to ignore the -n flag
+
+i am replacing libfuse in /usr/lib64/ as well as fusermount3 in /usr/bin (sys-fs/fuse)
+mount.fuse3: /usr/sbin/mount.fuse3 /usr/share/man/man8/mount.fuse3.8.bz2
+fusermount3: /usr/bin/fusermount3 /usr/share/man/man1/fusermount3.1.bz2
+17377:/usr/lib64/libfuse3.so.3.12.0
+
+changed mount.c ()
+    FUSE_OPT_KEY("n",               KEY_MTAB_OPT),
+
+
+STRACE -
+
+libmount (fuse) calls sshfs (sshfs), 
