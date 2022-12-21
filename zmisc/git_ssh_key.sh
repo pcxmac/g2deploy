@@ -1,8 +1,8 @@
 
 #!/bin/bash
 
-#ssh-keygen -t ed25519 -C "ciaran@hypokrites.me"
-ssh-keygen -t rsa -b 4096 -C "ciaran@hypokrites.me"
+#ssh-keygen -t ed25519 -C "${email}"
+ssh-keygen -t rsa -b 4096 -C "${email}"
 
 # add to .ssh/config
 

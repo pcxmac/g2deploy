@@ -85,7 +85,9 @@ if [[ ! -d ${repo} ]]; then git -C ${repo%/*} clone ${repoServer}; fi
 git -C ${repo} fetch --all
 git -C ${repo} pull
 
-egencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc
-
+egencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc --change-log-output=
 
 # SYNC FROM GIT REPO (SYNC-GENTOO)
+
+eix-update
+updatedb

@@ -21,15 +21,10 @@ function getRSYNC()
 	local pause=60
 
 	host=${host#*://}
-	local_move="$(echo ${host} | grep '^/')"
+	local local_move="$(echo ${host} | grep '^/')"
 
 	# will be null if local_move 
 	host=${host%%/*}
-
-
-
-
-
 
 	# ALLOW LOCAL RSYNC w/ rsync:/// , no host condition.
 
@@ -55,7 +50,6 @@ function getRSYNC()
 
 	if [[ -z ${host} ]]
 	then
-			args=$@
 			rsync -a --no-motd --info=progress2 --rsync-path="sudo rsync" ${@#*rsync://} 
 	fi
 	echo $rCode
