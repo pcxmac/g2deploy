@@ -147,7 +147,8 @@ function mget()
 			ssh ${host} "tar cf - /${_source}/" | pv --timer --rate | tar xf - -C ${destination}/
 			mv ${destination}/${_source} ${destination}/__temp
 			rm ${destination}/${offset} -R
-			mv ${destination}/__temp/* ${destination}
+			# move would try to replace existing folders, and throw errors
+			cp ${destination}/__temp/* ${destination} -Rp
 			rm ${destination}/__temp -R
 
 		;;

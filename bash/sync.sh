@@ -66,8 +66,6 @@ group="$(stat -c '%G' ${SCRIPT_DIR})"
 chown ${owner}:${group} ${SCRIPT_DIR}/meta -R			1>/dev/null
 chown ${owner}:${group} ${SCRIPT_DIR}/profiles -R		1>/dev/null
 chown ${owner}:${group} ${SCRIPT_DIR}/packages -R		1>/dev/null
-#chown ${owner}:${group} ${SCRIPT_DIR}/patchfiles -R		1>/dev/null <<<<<< VERY BAD, ZOMG !
-
 
 # sync repo from git source
 
