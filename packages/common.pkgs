@@ -1,3 +1,6 @@
+net-irc/irssi
+net-irc/irssi-xmpp
+
 app-portage/gentoolkit
 app-portage/eix
 sys-apps/mlocate

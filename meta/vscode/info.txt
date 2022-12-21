@@ -1,0 +1,4 @@
+# user settings for vscode ! 
+# https://superuser.com/questions/1113022/how-do-i-remove-vs-code-settings-from-ubuntu
+
+cd ~ && rm -rf .vscode && rm -rf .config/Code

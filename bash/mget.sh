@@ -29,7 +29,7 @@ function getRSYNC()
 		rCode="$(timeout 10 rsync -n ${host}:: 2>&1 | \grep 'Connection refused')"
         if [[ -z "${rCode}" ]]
 		then
-			rsync -a --no-motd --info=progress2 $@ 
+			rsync -a --no-motd --info=progress2 --rsync-path="sudo rsync" $@ 
 			waiting=0
 		else
 			waiting=1

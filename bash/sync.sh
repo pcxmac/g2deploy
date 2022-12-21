@@ -16,12 +16,11 @@
 #   
 
 
+
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
-
-#echo "script dir = ${SCRIPT_DIR}"
 
 echo "############################### [ SNAPSHOTS ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/snapshots.mirrors rsync)"
@@ -49,10 +48,16 @@ hostip="$(/bin/ip --brief address show dev $hostip | /usr/bin/awk '{print $3}')"
 # IMPORT meta-profile-package-patch data in to git repo, for tracking config changes (single user)
 # in the future, a multi-user mode approach will be required to handle multiple systems/users/packages/profiles
 
-mget rsync://10.1.0.1/gentoo/meta/*			${SCRIPT_DIR}/meta/
-mget rsync://10.1.0.1/gentoo/profiles/*		${SCRIPT_DIR}/profiles/
-mget rsync://10.1.0.1/gentoo/packages/*		${SCRIPT_DIR}/packages/
-mget rsync://10.1.0.1/gentoo/patchfiles/*	${SCRIPT_DIR}/patchfiles/
+pkgHOST="$(scanConfig ${SCRIPT_DIR}/config/host.cfg pkgserver host)"
+
+mget rsync://${pkgHOST}/gentoo/meta/*			${SCRIPT_DIR}/meta/
+mget rsync://${pkgHOST}/gentoo/profiles/*		${SCRIPT_DIR}/profiles/
+mget rsync://${pkgHOST}/gentoo/packages/*		${SCRIPT_DIR}/packages/
+
+# HAVE TO USE TAR/SSH because the rsync server can have issues with the permissions 
+# OR USE UID = root GID = root in the rsyncd.conf on the pkgserver
+
+mget rsync://${pkgHOST}/gentoo/patchfiles/*	    ${SCRIPT_DIR}/patchfiles/
 
 owner="$(stat -c '%U' ${SCRIPT_DIR})"
 group="$(stat -c '%G' ${SCRIPT_DIR})"
@@ -70,10 +75,10 @@ chown ${owner}:${group} ${SCRIPT_DIR}/patchfiles -R		1>/dev/null
 
 # MANUAL BUILD OF REPO
 
-repo="/var/lib/portage/repos/gentoo"
+#repo="/var/lib/portage/repos/gentoo"
 
-git -C ${repo} fetch --all
-git -C ${repo} pull
+#git -C ${repo} fetch --all
+#git -C ${repo} pull
 
 #egencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc
 

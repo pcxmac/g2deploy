@@ -397,3 +397,69 @@ function zfs_keys()
 		done
 	done
 }
+# this command pulls one key value out of the host.cfg, in same folder
+
+# ARG LIST SYNTAX : host.sh pkgserver host; yields = (ex.) 10.1.0.1
+
+function findKeyValue() {
+
+	# header has pattern "^\[[a-z].*\]$"
+
+	local header=$1
+	local key=$2
+	local scan=0
+	local cfgFile="$(cat ${config_file})"
+
+	while read line
+	do
+		if [[ -n "$(echo ${line} | grep "^\[${header}]$")" ]]
+		then
+			scan=1
+		fi
+		if [[ ${scan} == 1 ]]
+		then
+			if [[ ${line%%=*} == ${key} ]]
+			then
+				echo "${line#*=}"
+				break
+			fi
+		fi
+	done < ${config_file}
+}
+
+
+# args : $1 = config_file path $2 = server $3 = key
+function scanConfig() {
+
+	# could test for the file's existence, maybe later...
+	local config_file="$1"
+	local server=$2
+	local key=$3
+	local line=""
+
+	case ${server} in
+		pkgserver)
+					case ${key} in
+						host)
+							line="$(findKeyValue ${server} ${key})"
+							;;
+						*)	exit
+							;;
+					esac
+					;;
+		buildserver)
+					case ${key} in
+						host)
+							line="$(findKeyValue ${server} ${key})"
+							;;
+						*)	exit
+							;;
+					esac
+					;;
+		*)
+					exit
+					;;
+	esac
+
+	echo "${line#*=}"
+}
