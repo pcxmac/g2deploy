@@ -58,7 +58,10 @@ mget rsync://${pkgHOST}/gentoo/packages/*		${SCRIPT_DIR}/packages/
 # OR USE UID = root GID = root in the rsyncd.conf on the pkgserver
 # CHANGE PATCHFILES in to a tarchive, gitignore the archive, but in a directory place a readme w/ the spec.
 
-mget ssh://root@${pkgHOST}:/var/lib/portage/patchfiles/	    ${SCRIPT_DIR}/patchfiles/
+mkdir -p /tmp/patchfiles_hold
+mget ssh://root@${pkgHOST}:/var/lib/portage/patchfiles/	    /tmp/patchfiles_hold
+mget rsync:///tmp/patchfiles_hold ${SCRIPT_DIR}/patchfiles
+
 
 owner="$(stat -c '%U' ${SCRIPT_DIR})"
 group="$(stat -c '%G' ${SCRIPT_DIR})"
@@ -69,18 +72,20 @@ chown ${owner}:${group} ${SCRIPT_DIR}/packages -R		1>/dev/null
 
 # sync repo from git source
 
-# server - https://gitweb.gentoo.org/repo/gentoo.git/
+repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
 
 # type of meta data to crunch - GLSA / REPO / NEWS / DTD / ...
 
 # MANUAL BUILD OF REPO
 
-#repo="/var/lib/portage/repos/gentoo"
+repo="/var/lib/portage/repos/gentoo"
 
-#git -C ${repo} fetch --all
-#git -C ${repo} pull
+if [[ ! -d ${repo} ]]; then git -C ${repo%/*} clone ${repoServer}; fi
 
-#egencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc
+git -C ${repo} fetch --all
+git -C ${repo} pull
+
+egencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc
 
 
 # SYNC FROM GIT REPO (SYNC-GENTOO)

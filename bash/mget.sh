@@ -21,9 +21,19 @@ function getRSYNC()
 	local pause=60
 
 	host=${host#*://}
+	local_move="$(echo ${host} | grep '^/')"
+
+	# will be null if local_move 
 	host=${host%%/*}
 
-	while [[ ${waiting} == 1 ]]
+
+
+
+
+
+	# ALLOW LOCAL RSYNC w/ rsync:/// , no host condition.
+
+	while [[ ${waiting} == 1 && -n ${host} ]]
 	do
 		# timout introduced because some rsync servers will take forever and a day while generating directory of shares
 		rCode="$(timeout 10 rsync -n ${host}:: 2>&1 | \grep 'Connection refused')"
@@ -38,6 +48,16 @@ function getRSYNC()
 			if [[ ${pause} == 0 ]]; then waiting=0; fi
 		fi
 	done
+
+	# local move state, host="" & local_move = source $@ | rsync:/// is invalid according to rsync, so $@ must be pruned to reflect a hostless source
+	# ex. string for @$ = "rsync:///var/lib/portage/patchfiles/ /tmp/output/" 
+	# change to ${@rsync://#*/}
+
+	if [[ -z ${host} ]]
+	then
+			args=$@
+			rsync -a --no-motd --info=progress2 --rsync-path="sudo rsync" ${@#*rsync://} 
+	fi
 	echo $rCode
 }
 

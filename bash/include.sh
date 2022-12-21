@@ -251,18 +251,6 @@ function decompress() {
 	esac
 }
 
-#function getG2Version() {
-#	local mountpoint=$1
-#	local result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
-#	result="${result%/*}"	#peek
-#	result="${result%/*}"	#peek
-#	result="${result#*/}"	#poke
-#	result="${result#*/}"	#poke
-#	result="${result#*/}"	#poke
-	#echo $result
-#	echo "17.1"
-#}
-
 function getG2Profile() {
 	# assumes that .../amd64/17.X/... ; X will be preceeded by a decimal
 	local mountpoint=$1
