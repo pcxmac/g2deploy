@@ -9,7 +9,7 @@ source ${SCRIPT_DIR}/bash/mget.sh
 
 
 tStamp() {
-	echo "obase=16; $(date %s)))" | bc
+	echo "obase=16; $(date +%s)" | bc
 }
 
 patch_portage() {

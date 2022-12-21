@@ -56,8 +56,9 @@ mget rsync://${pkgHOST}/gentoo/packages/*		${SCRIPT_DIR}/packages/
 
 # HAVE TO USE TAR/SSH because the rsync server can have issues with the permissions 
 # OR USE UID = root GID = root in the rsyncd.conf on the pkgserver
+# CHANGE PATCHFILES in to a tarchive, gitignore the archive, but in a directory place a readme w/ the spec.
 
-mget rsync://${pkgHOST}/gentoo/patchfiles/*	    ${SCRIPT_DIR}/patchfiles/
+mget ssh://root@${pkgHOST}:/var/lib/portage/patchfiles/	    ${SCRIPT_DIR}/patchfiles/
 
 owner="$(stat -c '%U' ${SCRIPT_DIR})"
 group="$(stat -c '%G' ${SCRIPT_DIR})"
@@ -65,7 +66,8 @@ group="$(stat -c '%G' ${SCRIPT_DIR})"
 chown ${owner}:${group} ${SCRIPT_DIR}/meta -R			1>/dev/null
 chown ${owner}:${group} ${SCRIPT_DIR}/profiles -R		1>/dev/null
 chown ${owner}:${group} ${SCRIPT_DIR}/packages -R		1>/dev/null
-chown ${owner}:${group} ${SCRIPT_DIR}/patchfiles -R		1>/dev/null
+#chown ${owner}:${group} ${SCRIPT_DIR}/patchfiles -R		1>/dev/null <<<<<< VERY BAD, ZOMG !
+
 
 # sync repo from git source
 
