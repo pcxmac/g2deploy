@@ -116,7 +116,11 @@ issues / dependencies : <review>
   - pump
   - dhclient
   
+  - add pkg update to system install, after sync up, before profile packages. No more no-meshing w/ versions
 
+  - add a common.patches in /packages, getting tired of overcoming profile wide versioning issues. (concatenate both files in to hybrid.patches)
+
+  - should i move to git type sync ? look in to glsa/news/manifests/signing more, need comprehensive list of requirements for git -> rsync conversion.
 
   - figure out why fstab is not loading up the pool/swap
 

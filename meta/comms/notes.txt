@@ -1,0 +1,5 @@
+net-irc/irssi
+net-irc/irssi-xmpp
+
+
+this requires keywords, as well, dependencies, can add other things like softphone+voip, etc...
