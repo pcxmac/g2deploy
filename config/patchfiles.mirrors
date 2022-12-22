@@ -1,3 +1,3 @@
-rsync://10.1.0.1/gentoo/patchfiles
-ftp://10.1.0.1/patchfiles
-http://10.1.0.1/gentoo/patchfiles
+rsync://pkg.hypokrites.me/gentoo/patchfiles
+ftp://pkg.hypokrites.me/patchfiles
+http://pkg.hypokrites.me/gentoo/patchfiles
