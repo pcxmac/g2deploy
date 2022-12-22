@@ -110,18 +110,18 @@
 		then
 			case "${mirror##*/}" in
 				release*)
-					locationStr="$release_base_string"
+					locationStr="${release_base_string}"
 					urlBase="$server/$locationStr"
 					selectStr="${locationStr#*current-*}"
 					selectStr="${selectStr%*/}"
-					echo "${selectStr} | ${urlBase} | ${locationStr}"
-
+					#echo "${selectStr} | ${urlBase} | ${locationStr}" 2>&1
 					# filter for curl content, and grep'ing through mangled URLs, ie last few characters are missing or distorted
 					urlCurrent="$(curl -s $urlBase --silent | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"
 					urlCurrent="$(echo $urlCurrent | awk '{print $1}' | head -n 1 )"
 					urlCurrent="${urlCurrent%.t*}"
-
-					if [[ "$release_base_string" != "invalid" ]]; then
+					#echo "$(curl -s $urlBase --silent | grep "$selectStr")" 2>&1
+					#echo "release - ${release_base_string} | urlCurrent = ${urlCurrent}" 2>&1
+					if [[ "${release_base_string}" != "invalid" ]]; then
 						if [[ -n $urlCurrent ]];	then	
 							printf "${urlBase}${urlCurrent}.tar.xz\n"
 							printf "${urlBase}${urlCurrent}.tar.xz.asc\n"

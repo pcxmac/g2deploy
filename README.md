@@ -97,6 +97,10 @@ issues / dependencies : <review>
 
   ?       AUTOMATED WORK AROUNDS (FIND WAYS TO TEST FOR WORK AROUNDS, AUTOMATICALLY, SAVE GOOD CATCH AS A PATCH, AND A BUG, W/ CLASS TYPE respecting the PATCH FORMULATION) [pluggable]
 
+  - web serves are too inconsistent and will require 'tests'/QC after syncs/pulls (hashs most likely)
+
+  - NOW MIGRATING TO DYNAMIC HOSTS, etc/hosts will be patched, soon a respectful dhcp/subnet-friendly/dns solution will be required for the dom.0 but before this, i will need to build NEXUS up.
+
   * VERIFY MODULES ARE INSTALLED ON INSTALL.
 
   - skipping modules missing program (networking)
@@ -114,7 +118,7 @@ issues / dependencies : <review>
   
 
 
-
+  - figure out why fstab is not loading up the pool/swap
 
   ?
 

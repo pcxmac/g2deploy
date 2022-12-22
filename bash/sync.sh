@@ -54,9 +54,7 @@ mget rsync://${pkgHOST}/gentoo/meta/*			${SCRIPT_DIR}/meta/
 mget rsync://${pkgHOST}/gentoo/profiles/*		${SCRIPT_DIR}/profiles/
 mget rsync://${pkgHOST}/gentoo/packages/*		${SCRIPT_DIR}/packages/
 
-# HAVE TO USE TAR/SSH because the rsync server can have issues with the permissions 
-# OR USE UID = root GID = root in the rsyncd.conf on the pkgserver
-# CHANGE PATCHFILES in to a tarchive, gitignore the archive, but in a directory place a readme w/ the spec.
+# added 'local move' to mget+rsync to facilitate lower data transfer comits.
 
 mkdir -p /tmp/patchfiles_hold
 mget ssh://root@${pkgHOST}:/var/lib/portage/patchfiles/	    /tmp/patchfiles_hold
@@ -78,16 +76,25 @@ repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
 
 # MANUAL BUILD OF REPO
 
-repo="/var/lib/portage/repos/gentoo"
+repo="/var/lib/portage/repository/gentoo"
 
-if [[ ! -d ${repo} ]]; then git -C ${repo%/*} clone ${repoServer}; fi
+#if [[ ! -d ${repo} ]]; then git -C ${repo%/*} clone ${repoServer}; fi
+#git -C ${repo} fetch --all
+#git -C ${repo} pull
 
-git -C ${repo} fetch --all
-git -C ${repo} pull
+for x in $(ls ${repo%/*})
+do
+    echo "-------${x}-------"
+    git -C ${repo%/*}/${x} fetch --all
+    git -C ${repo%/*}/${x} pull
+done
 
-egencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc --change-log-output=
+egencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc
 
-# SYNC FROM GIT REPO (SYNC-GENTOO)
+hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | /usr/bin/awk '{print $8}')"
+hostip="$(/bin/ip --brief address show dev $hostip | /usr/bin/awk '{print $3}')"
+sed -i "s|HOST:.*|HOST: $hostip|g" /etc/rsync/rsyncd.motd
+sed -i "s|DATE:.*|DATE: $(date)|g" /etc/rsync/rsyncd.motd
 
 eix-update
 updatedb

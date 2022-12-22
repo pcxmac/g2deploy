@@ -1,5 +1,5 @@
 file:///var/lib/portage/distfiles
-#rsync://10.1.0.1/gentoo-distfiles/
+#rsync://pkg.hypokrites.me/gentoo-distfiles/
 rsync://mirror.leaseweb.com/gentoo/distfiles
 
 rsync://mirror.rackspace.com/gentoo/distfiles

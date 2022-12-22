@@ -1,4 +1,7 @@
 # OPENRC MASK
 
+# waiting on patch for sys-fs/fuse, -n flag (pull request submitted)
+>sys-fs/fuse-3.12.0
+
 <=sys-libs/glibc-2.35
 >=sys-kernel/gentoo-sources-6.1.0

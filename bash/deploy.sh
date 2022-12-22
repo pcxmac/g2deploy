@@ -48,7 +48,7 @@ function users()
 	echo "shell : sysop"
 	usermod --shell /bin/zsh sysop
 	homedir="$(eval echo ~sysop)"
-	chown sysop.sysop ${homedir} -R 2>/dev/null
+	chown sysop:sysop ${homedir} -R 2>/dev/null
 	echo "homedir"
 }
 
@@ -82,12 +82,13 @@ function buildup()
 	fileasc="$(echo "${files}" | grep '.asc$')"
 	serverType="${filexz%//*}"
 
-	
+	#echo "${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors http ${selection}" 2>&1
+	#echo "FILES >>> ${files}" 2>&1
+
 	case ${serverType%//*} in
 		"file:/")
 			echo "LOCAL FILE TRANSFER ... " 2>&1
 			mget ${filexz#*//} ${offset}
-
 			mget ${fileasc#*//} ${offset}
 		;;
 		"http:"|"rsync:")
@@ -342,6 +343,7 @@ function pkgProcessor()
 	patch_user ${directory} ${_profile}
 	patch_sys ${directory} ${_profile}
 	patch_portage ${directory} ${_profile}
+
 	zfs_keys ${dataset}
 	echo "certificates ?"
 	pkgProcessor ${_profile} ${directory}

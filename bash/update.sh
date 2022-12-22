@@ -110,9 +110,11 @@ do
 			rootDS="$(df / | tail -n 1 | awk '{print $1}')"
 			target="$(getZFSMountPoint ${rootDS})"
 
-			patch_sys ${directory} ${profile}
 			patch_portage ${directory} ${profile}
 			chroot ${directory} /bin/bash -c "update_runtime"
+			# patch over new software files, if required.
+			patch_sys ${directory} ${profile}
+
 	;;
 	esac
 done
