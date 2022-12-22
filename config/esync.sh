@@ -27,7 +27,7 @@ do
     emerge --sync | tee /var/log/esync.log
     sleep 1
     sync
-    if [[ -d  "${testCase}" ]];then echo "shit!" unverified=""; fi
+    if [[ -d  "${testCase}" ]];then echo "?" unverified=""; fi
 
 	ls ${testCase} -ail | grep 'tmp'
 

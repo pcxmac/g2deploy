@@ -22,6 +22,26 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
+echo "################################# [ REPOS ] #####################################"
+URL="rsync://rsync.us.gentoo.org/gentoo-portage/"
+echo -e "SYNCING w/ ***$URL*** [REPOS]"
+
+# overcome sticky unverified download quarantine issue which occassionally props up (rsync)
+unverified="none"
+testCase="$(emerge --info | grep 'location:' | awk '{print $2}')/.tmp-unverified-download-quarantine"
+#while [[ -n ${unverified} ]]
+#do
+#	emerge --sync | tee /var/log/esync.log
+#    sleep 1
+#    sync
+#    if [[ -d  "${testCase}" ]];then echo "?" unverified=""; fi
+#	ls ${testCase} -ail | grep 'tmp'
+#	sleep 30
+#done
+
+emerge --sync | tee /var/log/esync.log
+
+
 echo "############################### [ SNAPSHOTS ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/snapshots.mirrors rsync)"
 echo -e "SYNCING w/ $URL \e[25,42m[SNAPSHOTS]\e[0m";sleep 1
@@ -89,7 +109,7 @@ do
     git -C ${repo%/*}/${x} pull
 done
 
-egencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc
+#egencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc
 
 hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | /usr/bin/awk '{print $8}')"
 hostip="$(/bin/ip --brief address show dev $hostip | /usr/bin/awk '{print $3}')"
