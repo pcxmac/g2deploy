@@ -58,23 +58,27 @@ function buildup()
     #echo "getting stage 3"
 	local profile=$1
 	local offset=$2
-	local dSet=$3
+	#local dSet=$3
 	local selection=$4
 
 	#setExists=
-	snapshot="$(zfs list -o name -t snapshot | sed '1d' | grep '${dset}')"
+	#snapshot="$(zfs list -o name -t snapshot | sed '1d' | grep '${dSet}')"
 
 	# VERIFY ZFS MOUNT IS in DF
-	echo "prepfs ~ ${offset}" 2>&1
+	echo "prepfs ~ ${offset}/" 2>&1
 	echo "deleting old files (calculating...)" 2>&1
-	count="$(find ${offset} | wc -l)"
-	if [[ ${count} > 1 ]]
+	count="$(find ${offset}/ | wc -l)"
+
+
+	#echo "${offset} ..........................."; sleep 200
+
+	if [[ ${count} -gt 1 ]]
 	then
-		rm -rv ${offset}* | pv -l -s ${count} 2>&1 > /dev/null
+		rm -rv ${offset}/* | pv -l -s ${count} 2>&1 > /dev/null
 	else
 		echo -e "done "
 	fi
-	echo "finished clear_fs ... ${offset}" 2>&1
+	echo "finished clear_fs ... ${offset}/" 2>&1
 
 	# file method does not work, redress later...
 	files="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors http ${selection})"
@@ -88,15 +92,15 @@ function buildup()
 	case ${serverType%//*} in
 		"file:/")
 			echo "LOCAL FILE TRANSFER ... " 2>&1
-			mget ${filexz#*//} ${offset}
-			mget ${fileasc#*//} ${offset}
+			mget ${filexz#*//} ${offset}/
+			mget ${fileasc#*//} ${offset}/
 		;;
 		"http:"|"rsync:")
 			echo "REMOTE FILE TRANSFER - ${serverType%//*}//" 2>&1
 			echo "fetching ${filexz}..." 2>&1
-			mget ${filexz} ${offset}
+			mget ${filexz} ${offset}/
 			echo "fetching ${fileasc}..." 2>&1
-			mget ${fileasc} ${offset}
+			mget ${fileasc} ${offset}/
 		;;
 	esac
 
@@ -145,7 +149,7 @@ function system()
 	sh ${patch_script}
 
 	echo "EMERGE PROFILE PACKAGES !!!!"
-	emerge $emergeOpts $(cat "$pkgs")
+	emerge "${emergeOpts}" "$(cat "$pkgs")"
 
 	#rm ${patch_script}
 	#rm ${pkgs}
@@ -211,6 +215,9 @@ function pkgProcessor()
 {
     local profile=$1
 	local offset=$2
+	local diffPkgs=""
+	local iBase=""
+	local allPkgs=""
 
 	echo $profile 2>&1
 	echo $offset 2>&1
@@ -222,12 +229,12 @@ function pkgProcessor()
 	profilePkgs="$(curl $url --silent)"
 	echo ":::: $url"
 
-	local allPkgs="$(echo -e "${commonPkgs}\n${profilePkgs}" | uniq | sort)"
+	allPkgs="$(echo -e "${commonPkgs}\n${profilePkgs}" | uniq | sort)"
 
-	local iBase="$(chroot ${offset} /usr/bin/qlist -I)"
+	iBase="$(chroot ${offset} /usr/bin/qlist -I)"
 	iBase="$(echo "${iBase}" | uniq | sort)"
 
-	local diffPkgs="$(comm -1 -3 <(echo "${iBase}") <(echo "${allPkgs}"))"
+	diffPkgs="$(comm -1 -3 <(echo "${iBase}") <(echo "${allPkgs}"))"
 
 	#
 	#
@@ -265,7 +272,7 @@ function pkgProcessor()
 	profile=""				#	the build profile of the install
 	selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
 
-    for x in $@
+    for x in "$@"
     do
         case "${x}" in
             work=*)
@@ -289,7 +296,7 @@ function pkgProcessor()
 
 	if [[ -z "${directory}" ]];then echo "Non Existant Work Location for $dataset"; exit; fi
 
-	for x in $@
+	for x in "$@"
     do
         #echo "before cases $x"
         case "${x}" in

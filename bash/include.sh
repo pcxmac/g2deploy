@@ -24,17 +24,22 @@ patch_portage() {
 	echo "common_conf = ${common_URI}.conf" 2>&1
 	echo "spec_conf = ${spec_conf}" 2>&1
 
-	if [[ -d ${offset}etc/portage/package.license ]];then rm ${offset}etc/portage/package.license -R; fi
-	if [[ -d ${offset}etc/portage/package.use ]];then rm ${offset}etc/portage/package.use -R; fi
-	if [[ -d ${offset}etc/portage/package.mask ]];then rm  ${offset}etc/portage/package.mask -R;fi
-	if [[ -d ${offset}etc/portage/package.accept_keywords ]];then rm ${offset}etc/portage/package.accept_keywords -R;fi
+	if [[ -d ${offset}/etc/portage/package.license ]];then rm ${offset}/etc/portage/package.license -R; fi
+	if [[ -d ${offset}/etc/portage/package.use ]];then rm ${offset}/etc/portage/package.use -R; fi
+	if [[ -d ${offset}/etc/portage/package.mask ]];then rm  ${offset}/etc/portage/package.mask -R;fi
+	if [[ -d ${offset}/etc/portage/package.accept_keywords ]];then rm ${offset}/etc/portage/package.accept_keywords -R;fi
 	
+
+	#echo -e "$(mget ${common_URI}.uses)\n$(mget ${spec_conf}.uses)"
+
+	#sleep 100
+
 	echo -e "$(mget ${common_URI}.uses)\n$(mget ${spec_conf}.uses)" > ${offset}/etc/portage/package.use
 	echo -e "$(mget ${common_URI}.keys)\n$(mget ${spec_conf}.keys)" > ${offset}/etc/portage/package.accept_keywords
 	echo -e "$(mget ${common_URI}.mask)\n$(mget ${spec_conf}.mask)" > ${offset}/etc/portage/package.mask
 	echo -e "$(mget ${common_URI}.license)\n$(mget ${spec_conf}.license)" > ${offset}/etc/portage/package.license
 
-	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}etc/portage/make.conf
+	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf
 
 	while read line; do
 		((LineNum+=1))
@@ -42,7 +47,7 @@ patch_portage() {
 		SUFFIX=${line#*=}
 		if [[ -n $line ]]
 		then
-			sed -i "/$PREFIX/c $line" ${offset}etc/portage/make.conf
+			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf
 		fi
 	done < <(curl ${common_conf}.conf --silent)
 
@@ -52,7 +57,7 @@ patch_portage() {
 		SUFFIX=${line#*=}
 		if [[ -n $line ]]
 		then
-			sed -i "/$PREFIX/c $line" ${offset}etc/portage/make.conf	
+			sed -i "/$PREFIX/c $line" ${offset}/etc/portage/make.conf	
 		fi
 	done < <(curl ${spec_conf}.conf --silent)
 }
@@ -198,7 +203,7 @@ function patchProcessor()
 	#
 	#
 
-	echo "${patch_script}\n${common_patches}" > ${offset}patches.sh
+	echo "${patch_script}\n${common_patches}" > ${offset}/patches.sh
 }
 
 function install_modules()
