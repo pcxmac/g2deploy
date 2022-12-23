@@ -115,10 +115,21 @@ issues / dependencies : <review>
   - udhcpc/busybox
   - pump
   - dhclient
+
+
+  - better granularity over profile versions, and then move common in to specific versions, then be able to understand the version when patching w/ specific sets. 
+
+  - create a meta-sync (out of sync.sh) for rollups prior to backups/commits
+  
+  - create an autopatcher script for updating servers, and software patches (basically a portage + sys patch hooked to a server update or emerge --update)
+
+  - centralize the hosting-config for pkg/bld services with new host scripts. I need to be able to turn towards public or private, and between private servers with in one edit.
+
+  - sanitize mget - stream methods, need to check this one closely for most/close to all cases.
   
   - add pkg update to system install, after sync up, before profile packages. No more no-meshing w/ versions
 
-  - add a common.patches in /packages, getting tired of overcoming profile wide versioning issues. (concatenate both files in to hybrid.patches)
+  x
 
   - should i move to git type sync ? look in to glsa/news/manifests/signing more, need comprehensive list of requirements for git -> rsync conversion.
 
@@ -184,7 +195,7 @@ issues / dependencies : <review>
 
   //unmount.exe for unmounting chroots...
 
-  need a way to verify portage version, AND NOT UPGRADE if present one is current version
+    x
 
   Prospect - profile.sh : ./profile.sh profile=sub.domain.tld work={pool/set}.../ bootpart=/dev/efi_part
 
@@ -212,9 +223,9 @@ issues / dependencies : <review>
   x 
   x - partially resolved
 
-  glibc versioning, alongside kernel versioning
+  x
 
-  find a way to check if patches files exists, if not, disregard, right now it throws error during script execution.
+  x
 
   find a way to hash patched server directories, log output, and report differences
 
@@ -264,14 +275,14 @@ issues / dependencies : <review>
 
   qemu missing : swtpm + usermod-utilities, ssh enabled thru profile ... profile+services capture ... profile+key mngmt/capture
 
-  distfiles not accessible remotely w/out sshfs-autofs
+  x
 
   network addressing / configuration can take place using auto negotiation, utilizing certs, vpn-tun/tap's and dhcp. vpn's require a general client certificate + a private key/auth mechanism
 
   get rid of @safe snapshot prior to deployment, deployment assumes initialization ...
 
-  all ip address scheme - dom.zero 10.0.0.1 (dns resolve pt) .: universal naming convention for the distribution hub, prod.dom.zero and dev.dom.zero
-  all other resolve points will be, if neccessary captured by a patch_sys -> /etc/hosts, for which the rest of the system can elate across the network through name services.
+  !!!!!!!!!!!!!!!!!!!! all ip address scheme - dom.zero 10.0.0.1 (dns resolve pt) .: universal naming convention for the distribution hub, prod.dom.zero and dev.dom.zero
+                      all other resolve points will be, if neccessary captured by a patch_sys -> /etc/hosts, for which the rest of the system can elate across the network through name services.
 
   install will assume the originating dataset's key and mount points, also install does not have a schema build system, where as multiple disks and custom properties cannot be asserted conveniently. 
 

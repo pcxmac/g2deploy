@@ -129,27 +129,12 @@ function system()
 
 	export emergeOpts
 
-	#	PLEASE MOVE THIS IN TO PKGPROCESSOR
-	#	
-	#	
-	#	
-	#	
-	#	
-
-	#echo "BASIC TOOLS EMERGE !!!!!"
-	#emerge $emergeOpts gentoolkit eix mlocate genkernel sudo zsh pv tmux app-arch/lz4 elfutils --ask=n
-
-	#	
-	#	
-	#	
-	#	
-
 	local patch_script="/patches.sh"
 	echo "ISSUING WORK AROUNDS"
 	sh ${patch_script}
 
 	echo "EMERGE PROFILE PACKAGES !!!!"
-	emerge "${emergeOpts}" "$(cat "$pkgs")"
+	emerge ${emergeOpts} $(cat $pkgs)
 
 	#rm ${patch_script}
 	#rm ${pkgs}
@@ -167,8 +152,8 @@ function system()
 	#	
 	#	need an extras-packages install here, like chromium, vscode, etc...
 	#	
-	#	
-	#	
+	#	! meta packages will be installed separately, per profile, or via GUI+YAML
+	#	or later w/ console manual install
 	#	
 
 	#echo "SETTING SERVICES"
@@ -241,7 +226,7 @@ function pkgProcessor()
 	#	CONVERT THIS TO AN OUTPUT STREAM, DO NOT SAVE TO OFFSET (SHOULD BE INVOKED LOCALLY) ....
 	#
 	#
-	#
+	#	AT THE VERY LEAST FIGURE OUT WHY I ECHO THEN CAT...
 
 	echo "${diffPkgs}" > ${offset}/.package.list
 	cat ${offset}/.package.list | sed '/^#/d' | uniq > ${offset}/package.list
