@@ -44,7 +44,7 @@ patch_portage() {
 		then
 			sed -i "/$PREFIX/c $line" ${offset}etc/portage/make.conf
 		fi
-	done < <(curl ${common_conf} --silent)
+	done < <(curl ${common_conf}.conf --silent)
 
 	while read line; do
 		((LineNum+=1))
