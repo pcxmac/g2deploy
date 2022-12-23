@@ -21,9 +21,4 @@
 
 #emerge portage --oneshot --ask=n
 
-emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y
-emerge $emergeOpts =virtual/perl-CPAN-Meta-2.150.10-r6 --ask=n
-emerge $emergeOpts =virtual/perl-Encode-3.170.0 --ask=n
-emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y
-
 

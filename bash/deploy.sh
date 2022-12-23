@@ -330,9 +330,7 @@ function pkgProcessor()
     done
 
 	echo ${_profile}
-
 	if [[ -z "${_profile}" ]];then echo "profile does not exist for $selection"; exit; fi
-
 	clear_mounts ${directory}
 
 #	NEEDS A MOUNTS ONLY PORTION.
@@ -364,11 +362,7 @@ function pkgProcessor()
 	#	
 
 	chroot ${directory} /bin/bash -c "services ${services_URL}"
-
 	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key ${dataset}
-
 	clear_mounts ${directory}
-
 	chown root:root ${directory}
-
 	zfs snapshot ${dataset}@safe

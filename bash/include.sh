@@ -9,7 +9,7 @@ source ${SCRIPT_DIR}/bash/mget.sh
 
 
 tStamp() {
-	echo "obase=16; $(date +%s)" | bc
+	echo "0x$("obase=16; $(date +%s)" | bc)"
 }
 
 patch_portage() {
@@ -191,6 +191,11 @@ function patchProcessor()
 	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.patches" | sed 's/ //g')"
 	local patch_script="$(curl $url --silent)"
 
+	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.patches" | sed 's/ //g')"
+	local common_patches="$(curl $url --silent)"
+
+
+
 	#
 	#
 	#	CONVERT THIS TO AN OUTPUT STREAM, DO NOT SAVE TO OFFSET (SHOULD BE INVOKED LOCALLY)
@@ -198,7 +203,7 @@ function patchProcessor()
 	#
 	#
 
-	echo "${patch_script}" > ${offset}patches.sh
+	echo "${patch_script}\n${common_patches}" > ${offset}patches.sh
 }
 
 function install_modules()

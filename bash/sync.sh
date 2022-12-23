@@ -13,7 +13,12 @@
 #       /kernels
 #   
 #   
-#   
+
+#
+#       https://www.gentoo.org/glep/glep-0074.html (MANIFESTS)   
+#
+#
+
 
 # DO I NEED TO KILL RSYNC OR LIGHTTPD ?
 
@@ -109,7 +114,8 @@ do
     git -C ${repo%/*}/${x} pull
 done
 
-#egencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc
+qmanifest -g
+egencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc
 
 hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | /usr/bin/awk '{print $8}')"
 hostip="$(/bin/ip --brief address show dev $hostip | /usr/bin/awk '{print $3}')"
