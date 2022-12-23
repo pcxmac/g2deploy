@@ -3,21 +3,19 @@
 # backend data-server synchronization (no arguments) 
 #
 #   /var/lib/portage
-#       /snapshots
-#       /releases
-#       /distfiles
-#       /repos
-#       /meta
-#       /profiles
-#       /packages
-#       /kernels
-#   
-#   
-
+#       /snapshots (snapshots from gentoo, [rsync] )
+#       /releases (releases from gentoo [rsync] )
+#       /distfiles (distfiles for gentoo [rsync] )
+#       /repository (git repos for gentoo, plus associated)
+#       /meta       ( meta package configuration files (for mpm.sh) )
+#       /profiles   ( system profiles, for roaming/continuity/backup purposes )
+#       /packages   ( binary packages, built by portage/emerge )
+#       /kernels    ( 'official' kernel builds, for distribution )
+#       /repos      (soft/hard link to maintained repo @ [/repository] )
 #
 #       https://www.gentoo.org/glep/glep-0074.html (MANIFESTS)   
-#
-#
+#       
+#       
 
 
 # DO I NEED TO KILL RSYNC OR LIGHTTPD ?
