@@ -1,0 +1,19 @@
+# COMMON PATCHES 17.X
+
+
+# UPDATE PORTAGE (integrate in to deploy)
+
+
+qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1
+
+
+emerge portage --oneshot --ask=n
+
+
+
+# BLOCK FOR PERL VERSIONING ISSUES 12-22-2022
+emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y
+emerge $emergeOpts =virtual/perl-CPAN-Meta-2.150.10-r6 --ask=n
+emerge $emergeOpts =virtual/perl-Encode-3.170.0 --ask=n
+emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y
+#
