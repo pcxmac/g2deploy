@@ -112,8 +112,8 @@ do
     git -C ${repo%/*}/${x} pull
 done
 
-qmanifest -g
-egencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc
+#qmanifest -g
+#gencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc
 
 hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | /usr/bin/awk '{print $8}')"
 hostip="$(/bin/ip --brief address show dev $hostip | /usr/bin/awk '{print $3}')"

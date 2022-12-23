@@ -18,26 +18,21 @@ patch_portage() {
 	local _profile=$2
 	local lineNum=0
 
-	common_conf="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.conf" | sed 's/ //g' | sed "s/\"/'/g")"
+	common_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common" | sed 's/ //g' | sed "s/\"/'/g")"
 	spec_conf="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${_profile}" | sed 's/ //g' | sed "s/\"/'/g")"
 
-	echo "common_conf = ${common_conf}" 2>&1
+	echo "common_conf = ${common_URI}.conf" 2>&1
 	echo "spec_conf = ${spec_conf}" 2>&1
 
 	if [[ -d ${offset}etc/portage/package.license ]];then rm ${offset}etc/portage/package.license -R; fi
 	if [[ -d ${offset}etc/portage/package.use ]];then rm ${offset}etc/portage/package.use -R; fi
 	if [[ -d ${offset}etc/portage/package.mask ]];then rm  ${offset}etc/portage/package.mask -R;fi
 	if [[ -d ${offset}etc/portage/package.accept_keywords ]];then rm ${offset}etc/portage/package.accept_keywords -R;fi
-
-	mget ${spec_conf}.uses ${offset}etc/portage/package.use
-	mget ${spec_conf}.keys ${offset}etc/portage/package.accept_keywords
-	mget ${spec_conf}.mask ${offset}etc/portage/package.mask
-	mget ${spec_conf}.license ${offset}/etc/portage/package.license
-
-	mv ${offset}etc/portage/${spec_conf##*/}.uses ${offset}etc/portage/package.use
-	mv ${offset}etc/portage/${spec_conf##*/}.keys ${offset}etc/portage/package.accept_keywords
-	mv ${offset}etc/portage/${spec_conf##*/}.mask ${offset}etc/portage/package.mask
-	mv ${offset}etc/portage/${spec_conf##*/}.license ${offset}etc/portage/package.license
+	
+	echo -e "$(mget ${common_URI}.uses)\n$(mget ${spec_conf}.uses)" > ${offset}/etc/portage/package.use
+	echo -e "$(mget ${common_URI}.keys)\n$(mget ${spec_conf}.keys)" > ${offset}/etc/portage/package.accept_keywords
+	echo -e "$(mget ${common_URI}.mask)\n$(mget ${spec_conf}.mask)" > ${offset}/etc/portage/package.mask
+	echo -e "$(mget ${common_URI}.license)\n$(mget ${spec_conf}.license)" > ${offset}/etc/portage/package.license
 
 	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}etc/portage/make.conf
 
@@ -303,7 +298,7 @@ function getZFSMountPoint ()
 {
 	local dataset=$1
 	local mountpt="$(zfs get mountpoint ${dataset} 2>/dev/null | sed -n 2p | awk '{print $3}')"
-	if [[ -n ${mountpt} ]]; then echo "$(echo ${mountpt} | sed 's:/*$::')/"; fi
+	if [[ -n ${mountpt} ]]; then echo "$(echo ${mountpt} | sed 's:/*$::')"; fi
 }
 
 function compress() {

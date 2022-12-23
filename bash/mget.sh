@@ -13,12 +13,15 @@ function getSSH()
 	echo "getSSH"
 }
 
+# needs passwordless-authorized key to stream through getRSYNC
 function getRSYNC()
 {
 	local host=$@
 	local waiting=1
 	local rCode=""
 	local pause=60
+	local uri=""
+	local destination=$2
 
 	host=${host#*://}
 	local local_move="$(echo ${host} | grep '^/')"
@@ -34,7 +37,13 @@ function getRSYNC()
 		rCode="$(timeout 10 rsync -n ${host}:: 2>&1 | \grep 'Connection refused')"
         if [[ -z "${rCode}" ]]
 		then
-			rsync -a --no-motd --info=progress2 --rsync-path="sudo rsync" $@ 
+			if [[ -z ${destination} ]]
+			then
+				uri=$1
+				scp ${uri#*rsync://} /dev/stdout
+			else
+				rsync -a --no-motd --info=progress2 --rsync-path="sudo rsync" $@ 
+			fi
 			waiting=0
 		else
 			waiting=1
@@ -52,7 +61,7 @@ function getRSYNC()
 	then
 			rsync -a --no-motd --info=progress2 --rsync-path="sudo rsync" ${@#*rsync://} 
 	fi
-	echo $rCode
+	#echo $rCode
 }
 
 
@@ -69,7 +78,12 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 		httpCode="$(wget -NS --spider ${url%\**} 2>&1 | \grep "HTTP/" | awk '{print $2}' | \grep '200' | uniq)"
 		if [[ "${httpCode}" == "200" ]]
 		then
-			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*} --show-progress
+			if [[ -z ${destination} ]]
+			then
+				wget -O - --reject "index.*" --no-verbose --no-parent ${url} 2>/dev/null
+			else
+				wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*} --show-progress
+			fi
 			waiting=0
 		else
 			#ipCheck="$(ping ${url} -c 3 | grep "0 received")"
@@ -80,7 +94,8 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 			if [[ ${pause} == 0 ]]; then waiting=0; fi
 		fi
 	done
-	echo $httpCode
+	# better not to echo code, for streaming
+	#echo $ftpCode
 }
 
 function getFTP()
@@ -96,7 +111,12 @@ function getFTP()
 		ftpCode="$(wget -NS --spider ${url%\**} 2>&1 | \grep "No such file *."  | awk '{print $2}')"
 		if [[ -z "${ftpCode}" ]]
 		then
-			wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination} --show-progress
+			if [[ -z ${destination} ]]
+			then
+				wget -O - --reject "index.*" --no-verbose --no-parent ${url} 2>/dev/null
+			else
+				wget -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination} --show-progress
+			fi
 			waiting=0
 		else
 			#ipCheck="$(ping ${url} -c 3 | grep "0 received")"
@@ -107,7 +127,8 @@ function getFTP()
 			if [[ ${pause} == 0 ]]; then waiting=0; fi
 		fi
 	done
-	echo $ftpCode
+	# better not to echo code, for streaming
+	#echo $ftpCode
 }
 
 
@@ -128,25 +149,36 @@ function mget()
 	case ${url%://*} in
 		# local rsync only
 		rsync)
-            getRSYNC $@  # ${url} ${destination} ${args}
-			#rsync -av ${args} ${url} ${destination}
+			if [[ -z ${destination} ]]
+			then
+				echo "$(getRSYNC $@)"
+			else
+	            getRSYNC $@  # ${url} ${destination} ${args}
+			fi
 		;;
 		ftp*)
-			getFTP ${url} ${destination} 
-			#wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination}	--show-progress
-			mv ${destination}/${url#*://} ${destination}/
-			url=${url#*://}
-			url=${url%%/*}
-			rm ${destination}/${url} -R
+			if [[ -z ${destination} ]]
+			then
+				echo "$(getFTP ${url})"
+			else
+				getFTP ${url} ${destination} 
+				mv ${destination}/${url#*://} ${destination}/
+				url=${url#*://}
+				url=${url%%/*}
+				rm ${destination}/${url} -R
+			fi
 		;;
 		http*)
-			getHTTP ${url} ${destination} 
-			#wget ${args} -r --reject "index.*" --no-verbose --no-parent ${url} -P ${destination%/*}	--show-progress
-
-			mv ${destination%/*}/${url#*://} ${destination%/*}
-			url=${url#*://}
-			url=${url%%/*}
-			rm ${destination%/*}/${url} -R 
+			if [[ -z ${destination} ]]
+			then
+				echo "$(getHTTP ${url})"
+			else
+				getHTTP ${url} ${destination} 
+				mv ${destination%/*}/${url#*://} ${destination%/*}
+				url=${url#*://}
+				url=${url%%/*}
+				rm ${destination%/*}/${url} -R 
+			fi
 		;;
 		# local download only
 		ssh)
