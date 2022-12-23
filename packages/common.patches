@@ -3,13 +3,27 @@
 
 # UPDATE PORTAGE (integrate in to deploy)
 
-emerge portage --oneshot --ask=n
+pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
+pv=${pv#*-}
+av="$(qlist --tree -vR | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
+av=${av%::*}
+av=${av#*-}
 
+# need code to look at only stable versions. trying  to findout how to use q-applets to figure test vs stable package flags
+if [[ "${av}" != "${pv}" ]]
+then 
+	emerge portage --oneshot --ask=n
+fi
 
+echo "av = ${av} pv = ${pv}"
+
+sleep 10
 
 # BLOCK FOR PERL VERSIONING ISSUES 12-22-2022
+
 emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y
-emerge $emergeOpts =virtual/perl-CPAN-Meta-2.150.10-r6 --ask=n
-emerge $emergeOpts =virtual/perl-Encode-3.170.0 --ask=n
-emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y
+
+#emerge $emergeOpts =virtual/perl-CPAN-Meta-2.150.10-r6 --ask=n
+#emerge $emergeOpts =virtual/perl-Encode-3.170.0 --ask=n
+#emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y
 #
