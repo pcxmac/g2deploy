@@ -29,16 +29,12 @@ patch_portage() {
 	if [[ -d ${offset}/etc/portage/package.mask ]];then rm  ${offset}/etc/portage/package.mask -R;fi
 	if [[ -d ${offset}/etc/portage/package.accept_keywords ]];then rm ${offset}/etc/portage/package.accept_keywords -R;fi
 	
-
-	#echo -e "$(mget ${common_URI}.uses)\n$(mget ${spec_conf}.uses)"
-
-	#sleep 100
-
 	echo -e "$(mget ${common_URI}.uses)\n$(mget ${spec_conf}.uses)" > ${offset}/etc/portage/package.use
 	echo -e "$(mget ${common_URI}.keys)\n$(mget ${spec_conf}.keys)" > ${offset}/etc/portage/package.accept_keywords
 	echo -e "$(mget ${common_URI}.mask)\n$(mget ${spec_conf}.mask)" > ${offset}/etc/portage/package.mask
 	echo -e "$(mget ${common_URI}.license)\n$(mget ${spec_conf}.license)" > ${offset}/etc/portage/package.license
 
+	# THIS NEEDS TO BE MOVED TO THE INSTALLER.SH
 	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf
 
 	while read line; do
@@ -180,14 +176,17 @@ function mounts()
 	#ls ${offset}/var/lib/portage/binpkgs
 }
 
-# NEEDS TO STREAM IN TO CHROOT, NOT PLACE FILE IN ROOT of DIRECTORY
+
+# outputs a stream of text to be executed by #!/bin/bash
 function patchProcessor()
 {
-    local profile=$1
-	local offset=$2
+	# PATCH TYPE $1
+	# 	deployment		v0.1
+	#	update			v0.2
+	#	fix (#XXXX)		v0.3
 
-	echo $profile 2>&1
-	echo $offset 2>&1
+    local profile
+	profile="$(getG2Profile '/')"
 
 	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.patches" | sed 's/ //g')"
 	local patch_script="$(curl $url --silent)"
@@ -195,16 +194,7 @@ function patchProcessor()
 	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.patches" | sed 's/ //g')"
 	local common_patches="$(curl $url --silent)"
 
-
-
-	#
-	#
-	#	CONVERT THIS TO AN OUTPUT STREAM, DO NOT SAVE TO OFFSET (SHOULD BE INVOKED LOCALLY)
-	#
-	#
-	#
-
-	echo "${patch_script}\n${common_patches}" > ${offset}/patches.sh
+	echo "${patch_script}\n${common_patches}"
 }
 
 
@@ -303,35 +293,49 @@ function decompress() {
 function getG2Profile() {
 	# assumes that .../amd64/17.X/... ; X will be preceeded by a decimal
 	local mountpoint=$1
-	local result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
 	local _profile=""
+	local result=""
+
+	# if a directory exists, it is implied that this is the root, else, it's either predefined or implied to be self
+	if [[ -n "$(stat ${mountpoint} 2>/dev/null)" && -d ${mountpoint} ]]
+	then
+		result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
+	else
+		if [[ -z ${mountpoint} ]]		# if no mountpoint, implied to use local machine, else result is already defined
+		then
+			result="$(/usr/bin/eselect profile show | tail -n1)"
+		else
+			result="$1"
+		fi
+	fi
+
 	result="${result#*.[0-9]/}"
 	result="$(echo ${result} | sed -e 's/^[ \t]*//' | sed -e 's/\ *$//g')"
 
 	case "${result}" in
-        'hardened')		    		_profile="17.1/hardened "
+        hardened)		    					_profile="17.1/hardened "
         ;;
-        'default/linux/amd64/17.1')	_profile="17.1/openrc"
+        default/linux/amd64/17.1 | openrc)		_profile="17.1/openrc"
         ;;
-        'systemd')					_profile="17.1/systemd "
+        systemd)								_profile="17.1/systemd "
         ;;
-        'desktop/plasma')     		_profile="17.1/desktop/plasma "
+        *plasma)     							_profile="17.1/desktop/plasma "
         ;;
-        'desktop/gnome')			_profile="17.1/desktop/gnome "
+        *gnome)									_profile="17.1/desktop/gnome "
         ;;
-        'selinux')          		_profile="17.1/selinux "
-                        			#echo "${x#*=} is not supported [selinux]"
+        selinux)          						_profile="17.1/selinux "
         ;;
-        'desktop/plasma/systemd')   _profile="17.1/desktop/plasma/systemd "
+        *plasma/systemd)   						_profile="17.1/desktop/plasma/systemd "
         ;;
-        'desktop/gnome/systemd')	_profile="17.1/desktop/gnome/systemd "
+        *gnome/systemd)							_profile="17.1/desktop/gnome/systemd "
         ;;
-        'hardened/selinux') 		_profile="17.1/hardened/selinux "
-                        			#echo "${x#*=} is not supported [selinux]"
+        hardened/selinux) 						_profile="17.1/hardened/selinux "
         ;;
-        esac
-		echo "${_profile}" 
+		*)										_profile=""
+		;;
+    esac
 
+	echo "${_profile}" 
 }
 
 function getHostZPool () {

@@ -69,7 +69,6 @@ function buildup()
 	echo "deleting old files (calculating...)" 2>&1
 	count="$(find ${offset}/ | wc -l)"
 
-
 	#echo "${offset} ..........................."; sleep 200
 
 	if [[ ${count} -gt 1 ]]
@@ -130,11 +129,17 @@ function system()
 	export emergeOpts
 
 	echo "ISSUING UPDATES!"
-	emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
+	#emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
 
 	local patch_script="/patches.sh"
 	echo "ISSUING WORK AROUNDS"
-	sh ${patch_script}
+
+	echo patchProcessor
+
+	sh < patchProcessor
+
+	echo "pause here"
+	sleep 10
 
 	echo "EMERGE PROFILE PACKAGES !!!!"
 	emerge ${emergeOpts} $(cat $pkgs)
@@ -258,61 +263,37 @@ function locales()
 
 	for x in "$@"
     do
+
         #echo "before cases $x"
         case "${x}" in
             build=*)
-                _profile="invalid profile"
-                selection="${x#*=}"
-                case "${x#*=}" in
-                    # special cases for strings ending in selinux, and systemd as they can be part of a combination
-                    #'musl')
-                        # space at end limits selinux	...		NOT SUPPORTED
-                    #    _profile="17.0/musl/hardened "
-                    #;;
-                    'hardened')		    _profile="17.1/hardened "
-                    ;;
-                    'openrc')			_profile="17.1/openrc"
-                    ;;
-                    'systemd')			_profile="17.1/systemd "
-                    ;;
-                    'plasma')           _profile="17.1/desktop/plasma "
-                    ;;
-                    'gnome')			_profile="17.1/desktop/gnome "
-                    ;;
-                    'selinux')          _profile="17.1/selinux "
-                        				echo "${x#*=} is not supported [selinux]"
-                    ;;
-                    'plasma/systemd')   _profile="17.1/desktop/plasma/systemd "
-                    ;;
-                    'gnome/systemd')	_profile="17.1/desktop/gnome/systemd "
-                    ;;
-                    'hardened/selinux') _profile="17.1/hardened/selinux "
-                        				echo "${x#*=} is not supported [selinux]"
-                    ;;
-                    *)					_profile=""
-                    ;;
-                esac
+				_selection="${x#*=}"
+				_profile="$(getG2Profile ${x#*=})"
+				echo "PROFILE = ${_profile}"
             ;;
         esac
     done
 
-	echo ${_profile}
-	if [[ -z "${_profile}" ]];then echo "profile does not exist for $selection"; exit; fi
+	if [[ -z "${_profile}" ]];then echo "profile does not exist for $_selection"; exit; fi
 	clear_mounts ${directory}
 
 #	NEEDS A MOUNTS ONLY PORTION.
 
-	mount | grep ${directory}
-	buildup ${_profile} ${directory} ${dataset} ${selection}
+	#mount | grep ${directory}
+	buildup ${_profile} ${directory} ${dataset} ${_selection}
 	mounts ${directory}
+
 	patch_user ${directory} ${_profile}
 	patch_sys ${directory} ${_profile}
 	patch_portage ${directory} ${_profile}
 
 	zfs_keys ${dataset}
 	echo "certificates ?"
+
 	pkgProcessor ${_profile} ${directory}
-	patchProcessor ${_profile} ${directory}
+
+	#patchProcessor ${_profile} ${directory}
+	
 	chroot ${directory} /bin/bash -c "locales ${_profile}"
 
 	#install_modules ${directory}	--- THIS NEEDS TO BE INTEGRATED IN TO UPDATE & INSTALL, DEPLOY IS USR SPACE ONLY, NOT BOOTENV
