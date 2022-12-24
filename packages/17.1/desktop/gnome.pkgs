@@ -10,3 +10,6 @@ app-editors/gedit-plugins
 gnome-extra/gnome-weather
 media-sound/pavucontrol
 gnome-extra/gnome-calculator
+gnome-extra/gnome-tweaks
+x11-themes/papirus-icon-theme
+x11-themes/numix-icon-theme-circle

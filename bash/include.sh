@@ -178,15 +178,28 @@ function mounts()
 
 
 # outputs a stream of text to be executed by #!/bin/bash
-function patchProcessor()
+function patchProcessor()	
 {
-	# PATCH TYPE $1
-	# 	deployment		v0.1
-	#	update			v0.2
-	#	fix (#XXXX)		v0.3
+	# PROFILE	 	$1
+	# PKGSRV HOST	$2
+	# PATCH TYPE 	$3
+	# 	deployment		v0.1	.. 	executed in chroot
+	#	update			v0.2	..	""
+	#	fix (#XXXX)		v0.3	..	""
 
-    local profile
-	profile="$(getG2Profile '/')"
+
+    local profile=$1
+	local pkgsrv=$2
+	local type=$3
+	#profile="$(getG2Profile $1)"
+
+	# RESTRUCTURE SO THAT EVAL ((MGET script) (MGET source) ARG2 )
+	# mirror will have to reside in the cloud from now on, and be refactored out of the rest of the project
+	# down sides for hosting this function online ?
+	# security issues with redirection ...
+	# 	probably require mget authenticates with the file service
+	#	this will effectively be mget returning the script, the source file, and the user providing a an argument or two
+	
 
 	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.patches" | sed 's/ //g')"
 	local patch_script="$(curl $url --silent)"
@@ -194,7 +207,24 @@ function patchProcessor()
 	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.patches" | sed 's/ //g')"
 	local common_patches="$(curl $url --silent)"
 
-	echo "${patch_script}\n${common_patches}"
+	case ${type} in
+		deploy*)
+				echo "ISSUING WORK AROUNDS"
+				eval ${common_patches}
+				eval ${patch_script}
+		;;
+		update)
+				echo "update"
+		;;
+		fix=*)
+				echo "fix"
+		;;
+	esac
+
+
+
+
+	esac
 }
 
 

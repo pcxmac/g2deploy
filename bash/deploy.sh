@@ -131,16 +131,6 @@ function system()
 	echo "ISSUING UPDATES!"
 	#emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
 
-	local patch_script="/patches.sh"
-	echo "ISSUING WORK AROUNDS"
-
-	echo patchProcessor
-
-	sh < patchProcessor
-
-	echo "pause here"
-	sleep 10
-
 	echo "EMERGE PROFILE PACKAGES !!!!"
 	emerge ${emergeOpts} $(cat $pkgs)
 
@@ -228,9 +218,12 @@ function locales()
 
 	export -f users
 	export -f locales
-	export -f system
 	export -f services
-	export -f install_modules
+
+	export -f system
+	export -f patchProcessor
+	export -f getG2Profile
+	export -f mirror
 
 	dataset=""				#	the working dataset of the installation
 	directory=""			# 	the working directory of the prescribed dataset
@@ -280,21 +273,21 @@ function locales()
 #	NEEDS A MOUNTS ONLY PORTION.
 
 	#mount | grep ${directory}
-	buildup ${_profile} ${directory} ${dataset} ${_selection}
+	###buildup ${_profile} ${directory} ${dataset} ${_selection}
 	mounts ${directory}
 
-	patch_user ${directory} ${_profile}
-	patch_sys ${directory} ${_profile}
-	patch_portage ${directory} ${_profile}
+	###patch_user ${directory} ${_profile}
+	###patch_sys ${directory} ${_profile}
+	###patch_portage ${directory} ${_profile}
 
-	zfs_keys ${dataset}
-	echo "certificates ?"
+	###zfs_keys ${dataset}
+	###echo "certificates ?"
 
 	pkgProcessor ${_profile} ${directory}
 
 	#patchProcessor ${_profile} ${directory}
 	
-	chroot ${directory} /bin/bash -c "locales ${_profile}"
+	####chroot ${directory} /bin/bash -c "locales ${_profile}"
 
 	#install_modules ${directory}	--- THIS NEEDS TO BE INTEGRATED IN TO UPDATE & INSTALL, DEPLOY IS USR SPACE ONLY, NOT BOOTENV
  	chroot ${directory} /bin/bash -c "system"
