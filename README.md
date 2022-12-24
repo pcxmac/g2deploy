@@ -116,6 +116,9 @@ issues / dependencies : <review>
   - pump
   - dhclient
 
+  - build list of dependencies for this platform, add pkgcore.
+
+  - add meta commands to f/w (ex. fw.meta + fw.sh = tables) the meta file maps out invalid packet specs, and host configs. That said, the current intent to recurse a form of networking through all layers of the network stack, should be attempted, and then modeled afterwards, w/ in the meta config. 
 
   - better granularity over profile versions, and then move common in to specific versions, then be able to understand the version when patching w/ specific sets. 
 

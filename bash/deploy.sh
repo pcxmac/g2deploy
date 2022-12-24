@@ -115,10 +115,10 @@ function buildup()
 	rm $offset/$filexz
 
     echo "setting up mounts"
-	mkdir -p ${offset}var/lib/portage/binpkgs
-	mkdir -p ${offset}var/lib/portage/distfiles
-	mkdir -p ${offset}srv/crypto/
-	mkdir -p ${offset}var/lib/portage/repos/gentoo
+	mkdir -p ${offset}/var/lib/portage/binpkgs
+	mkdir -p ${offset}/var/lib/portage/distfiles
+	mkdir -p ${offset}/srv/crypto/
+	mkdir -p ${offset}/var/lib/portage/repos/gentoo
 }
 
 
@@ -128,6 +128,9 @@ function system()
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
 	export emergeOpts
+
+	echo "ISSUING UPDATES!"
+	emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
 
 	local patch_script="/patches.sh"
 	echo "ISSUING WORK AROUNDS"
@@ -142,8 +145,10 @@ function system()
 	emergeOpts="--verbose-conflicts"
 	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts =zfs-9999 --nodeps
 
+
+
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
-	echo "UPDATE SYSTEM !!!"
+	echo "POST INSTALL UPDATE !!!"
 	emerge -b -uDN --with-bdeps=y @world --ask=n $emergeOpts
 
 	#	
@@ -193,6 +198,16 @@ function locales()
 	eselect news read all > /dev/null
 	echo "America/Los_Angeles" > /etc/timezone
 	emerge --config sys-libs/timezone-data
+
+	# update portage, if able
+	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
+	pv=${pv##*-}
+	av="$(pquery sys-apps/portage --ma 2>/dev/null)"
+	av=${av##*-}
+	if [[ "${av}" != "${pv}" ]]
+	then 
+		emerge portage --oneshot --ask=n
+	fi
 		
 }
 
