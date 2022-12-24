@@ -14,7 +14,7 @@
 
 # need code to look at only stable versions. trying  to findout how to use q-applets to figure test vs stable package flags
 #if [[ "${av}" != "${pv}" ]]
-#hen 
+#then 
 #	emerge portage --oneshot --ask=n
 #fi
 

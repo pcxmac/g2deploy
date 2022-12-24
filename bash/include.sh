@@ -180,6 +180,7 @@ function mounts()
 	#ls ${offset}/var/lib/portage/binpkgs
 }
 
+# NEEDS TO STREAM IN TO CHROOT, NOT PLACE FILE IN ROOT of DIRECTORY
 function patchProcessor()
 {
     local profile=$1
@@ -205,6 +206,46 @@ function patchProcessor()
 
 	echo "${patch_script}\n${common_patches}" > ${offset}/patches.sh
 }
+
+
+# NEEDS TO STREAM IN TO CHROOT, NOT PLACE FILE IN ROOT of DIRECTORY
+function pkgProcessor()
+{
+    local profile=$1
+	local offset=$2
+	local diffPkgs=""
+	local iBase=""
+	local allPkgs=""
+
+	echo $profile 2>&1
+	echo $offset 2>&1
+
+	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.pkgs" | sed 's/ //g')"
+	commonPkgs="$(curl $url --silent)"
+	echo ":::: $url"
+	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.pkgs" | sed 's/ //g')"
+	profilePkgs="$(curl $url --silent)"
+	echo ":::: $url"
+
+	allPkgs="$(echo -e "${commonPkgs}\n${profilePkgs}" | uniq | sort)"
+
+	iBase="$(chroot ${offset} /usr/bin/qlist -I)"
+	iBase="$(echo "${iBase}" | uniq | sort)"
+
+	diffPkgs="$(comm -1 -3 <(echo "${iBase}") <(echo "${allPkgs}"))"
+
+	#
+	#
+	#	CONVERT THIS TO AN OUTPUT STREAM, DO NOT SAVE TO OFFSET (SHOULD BE INVOKED LOCALLY) ....
+	#
+	#
+	#	AT THE VERY LEAST FIGURE OUT WHY I ECHO THEN CAT...
+
+	echo "${diffPkgs}" > ${offset}/.package.list
+	cat ${offset}/.package.list | sed '/^#/d' | uniq > ${offset}/package.list
+	rm ${offset}/.package.list
+}
+
 
 function install_modules()
 {

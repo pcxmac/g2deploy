@@ -76,13 +76,7 @@ pkgHOST="$(scanConfig ${SCRIPT_DIR}/config/host.cfg pkgserver host)"
 mget rsync://${pkgHOST}/gentoo/meta/*			${SCRIPT_DIR}/meta/
 mget rsync://${pkgHOST}/gentoo/profiles/*		${SCRIPT_DIR}/profiles/
 mget rsync://${pkgHOST}/gentoo/packages/*		${SCRIPT_DIR}/packages/
-
-# added 'local move' to mget+rsync to facilitate lower data transfer comits.
-
-mkdir -p /tmp/patchfiles_hold
-mget ssh://root@${pkgHOST}:/var/lib/portage/patchfiles/	    /tmp/patchfiles_hold
-mget rsync:///tmp/patchfiles_hold ${SCRIPT_DIR}/patchfiles
-
+mget rsync://${pkgHOST}/gentoo/patchfiles/*		${SCRIPT_DIR}/patchfiles/
 
 owner="$(stat -c '%U' ${SCRIPT_DIR})"
 group="$(stat -c '%G' ${SCRIPT_DIR})"

@@ -40,7 +40,25 @@ function update_runtime() {
 	exclude_atoms="-X sys-fs/zfs-kmod -X sys-fs/zfs"
 	eselect profile show
 	sudo emerge --sync --verbose --backtrack=99 --ask=n;sudo eix-update
-	emerge portage --oneshot --ask=n
+
+	# look at common.pkgs, and add if missing.
+	
+
+
+
+	# update portage, if able
+	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
+	av="$(pquery sys-apps/portage --ma 2>/dev/null)"
+
+	echo "${pv} | ${av}"
+	sleep 10
+
+
+	if [[ "${av##*-}" != "${pv##*-}" ]]
+	then 
+		emerge portage --oneshot --ask=n
+	fi
+		
 	sudo emerge -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y ${exclude_atoms}
 	eselect news read new
 	

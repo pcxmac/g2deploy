@@ -191,8 +191,9 @@ function locales()
 	#	{key%/openrc} :: is a for the edgecase 'openrc' where only that string is non existent with in eselect-profile
 	eselect profile set default/linux/amd64/${key%/openrc}
 	eselect profile show
-	sleep 5
+	sleep 2
 
+	# 	sync repo, read news and set timezone
 	emerge --sync --ask=n
     echo "reading the news (null)..."
 	eselect news read all > /dev/null
@@ -201,54 +202,13 @@ function locales()
 
 	# update portage, if able
 	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
-	pv=${pv##*-}
 	av="$(pquery sys-apps/portage --ma 2>/dev/null)"
-	av=${av##*-}
-	if [[ "${av}" != "${pv}" ]]
+	if [[ "${av##*-}" != "${pv##*-}" ]]
 	then 
 		emerge portage --oneshot --ask=n
 	fi
 		
 }
-
-function pkgProcessor()
-{
-    local profile=$1
-	local offset=$2
-	local diffPkgs=""
-	local iBase=""
-	local allPkgs=""
-
-	echo $profile 2>&1
-	echo $offset 2>&1
-
-	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.pkgs" | sed 's/ //g')"
-	commonPkgs="$(curl $url --silent)"
-	echo ":::: $url"
-	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.pkgs" | sed 's/ //g')"
-	profilePkgs="$(curl $url --silent)"
-	echo ":::: $url"
-
-	allPkgs="$(echo -e "${commonPkgs}\n${profilePkgs}" | uniq | sort)"
-
-	iBase="$(chroot ${offset} /usr/bin/qlist -I)"
-	iBase="$(echo "${iBase}" | uniq | sort)"
-
-	diffPkgs="$(comm -1 -3 <(echo "${iBase}") <(echo "${allPkgs}"))"
-
-	#
-	#
-	#	CONVERT THIS TO AN OUTPUT STREAM, DO NOT SAVE TO OFFSET (SHOULD BE INVOKED LOCALLY) ....
-	#
-	#
-	#	AT THE VERY LEAST FIGURE OUT WHY I ECHO THEN CAT...
-
-	echo "${diffPkgs}" > ${offset}/.package.list
-	cat ${offset}/.package.list | sed '/^#/d' | uniq > ${offset}/package.list
-	rm ${offset}/.package.list
-}
-
-
 
 ###################################################################################################################################
 #
