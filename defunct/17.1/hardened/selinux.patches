@@ -1,4 +1,0 @@
-# HARDENED/SELINUX PATCHES
-
-#emerge $emergeOpts glibc
-#emerge portage --oneshot --ask=n
