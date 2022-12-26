@@ -1,5 +1,4 @@
 # SELINUX PATCH SCRIPT
 
-#emerge $emergeOpts glibc
-#emerge portage --oneshot --ask=n
+echo "no selinux patches...";
 

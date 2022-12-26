@@ -1,24 +1,4 @@
 # GNOME/SYSTEMD PATCHES
 
-# 24 NOV 2022
-# [blocks B      ] <sys-devel/gcc-config-2.6 ("<sys-devel/gcc-config-2.6" is soft blocking sys-devel/clang-toolchain-symlinks-15-r2)
-#
-
-#emerge $emergeOpts gcc-config libxml2 dev-libs/icu dev-libs/glib 
-
-# spidermonkey does not seem to want to build this before being built itself.
-#emerge $emergeOpts sys-libs/glibc
-
-#[blocks B      ] <app-accessibility/at-spi2-atk-2.46.0 ("<app-accessibility/at-spi2-atk-2.46.0" is soft blocking app-accessibility/at-spi2-core-2.46.0)
-#[blocks B      ] <dev-libs/atk-2.46.0 ("<dev-libs/atk-2.46.0" is soft blocking app-accessibility/at-spi2-core-2.46.0)
-
-
-# gcr conflict w/ gnome
-#[blocks B      ] <app-crypt/gcr-3.41.1-r1 ("<app-crypt/gcr-3.41.1-r1" is soft blocking app-crypt/gcr-4.0.0)
-#[blocks B      ] <gnome-base/gnome-desktop-43:3 ("<gnome-base/gnome-desktop-43:3" is soft blocking gnome-base/gnome-desktop-43-r400)
-
-#emerge =app-crypt/gcr-3.41.1-r1
-
-#emerge portage --oneshot --ask=n
-
+echo "no gnome/systemd patches...";
 

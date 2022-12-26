@@ -1,5 +1,4 @@
 # HARDENED/SELINUX PATCHES
 
-#emerge $emergeOpts glibc
-#emerge portage --oneshot --ask=n
+echo "no hardened/selinux patches...";
 

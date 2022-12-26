@@ -1,6 +1,4 @@
 # HARDENED PATCHES
 
-#emerge $emergeOpts glibc
-#emerge portage --oneshot --ask=n
-#emerge =dev-lang/perl-5.36.0-r1 =virtual/perl-Data-Dumper-2.184.0
+echo "no hardened patches";
 

@@ -1,3 +1,5 @@
 # COMMON PATCHES 17.X
 
-echo "no common patches found...";
+echo "no common patches";
+
+
