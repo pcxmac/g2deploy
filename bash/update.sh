@@ -43,8 +43,20 @@ function update_runtime() {
 
 	# look at common.pkgs, and add if missing.
 	
+	echo "PATCHING UPDATES"
+	# INJECT POINT FOR PATCH PROCESSOR
+	if [[ -f /patches.sh ]]
+	then
+		sh < /patches.sh
+		rm /patches.sh
+	fi
 
-
+	echo "EMERGE MISSING PACKAGES"
+	if [[ -f /package.list ]]
+	then
+		emerge ${emergeOpts} $(cat /package.list)
+		rm /package.list
+	fi
 
 	# update portage, if able
 	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
@@ -85,7 +97,7 @@ do
 			else
 				echo "shazaam!"
 				dataset="${x#*=}"
-				profile="$(getG2Profile ${directory})"
+				_profile="$(getG2Profile ${directory})"
 			fi
 		;;
 	esac
@@ -94,7 +106,7 @@ done
 
 emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"		
 
-echo "PROFILE -- $profile"
+echo "PROFILE -- $_profile"
 
 #exit
 #
@@ -122,16 +134,20 @@ for x in $@
 do
 	case "${x}" in
 		update)
-			echo "patch_portage ${directory} ${profile} "
+			echo "patch_portage ${directory} ${_profile} "
 			#patchProcessor ${directory} ${profile}
 			# zfs only
 			rootDS="$(df / | tail -n 1 | awk '{print $1}')"
 			target="$(getZFSMountPoint ${rootDS})"
 
-			patch_portage ${directory} ${profile}
+			patch_portage ${directory} ${_profile}
+			
+			pkgProcessor ${_profile} ${directory} > ${directory}/package.list
+			patchSystem ${_profile} 'update' > ${directory}/patches.sh
+
 			chroot ${directory} /bin/bash -c "update_runtime"
 			# patch over new software files, if required.
-			patch_sys ${directory} ${profile}
+			patch_sys ${directory} ${_profile}
 
 	;;
 	esac

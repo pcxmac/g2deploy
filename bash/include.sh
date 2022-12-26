@@ -223,9 +223,11 @@ function pkgProcessor()
 	iBase="$(chroot ${offset} /usr/bin/qlist -I)"
 	iBase="$(echo "${iBase}" | uniq | sort)"
 
-	diffPkgs="$(comm -1 -3 <(echo "${iBase}") <(echo "${allPkgs}"))"
+	#diffPkgs="$iBase"
+	#diffPkgs="$(comm -13 <(echo "${iBase}") <(echo "${allPkgs}"))"
+	diffPkgs="$(awk 'FNR==NR {a[$0]++; next} !($0 in a)' <(echo "${iBase}") <(echo "${allPkgs}"))"
 
-	echo "${diffPkgs}" | sed '/^#/d'
+	echo "${diffPkgs}" | sed '/^#/d' | sed '/^$/d'
 }
 
 
