@@ -1,4 +1,4 @@
-
+sys-apps/pkgcore
 app-portage/gentoolkit
 app-portage/eix
 sys-apps/mlocate
@@ -9,7 +9,6 @@ app-shells/zsh
 app-misc/tmux
 app-arch/lz4
 dev-libs/elfutils
-
 app-text/tree
 dev-haskell/alsa-mixer
 dev-haskell/alsa-core
@@ -367,10 +366,7 @@ net-wireless/hostapd
 net-wireless/iw
 net-wireless/wireless-regdb
 net-wireless/wpa_supplicant
-perl-core/CPAN
-perl-core/Encode
 perl-core/File-Temp
-perl-core/Scalar-List-Utils
 sec-keys/openpgp-keys-gentoo-release
 sys-apps/acl
 sys-apps/attr

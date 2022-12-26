@@ -141,7 +141,7 @@ do
 			target="$(getZFSMountPoint ${rootDS})"
 
 			patch_portage ${directory} ${_profile}
-			
+
 			pkgProcessor ${_profile} ${directory} > ${directory}/package.list
 			patchSystem ${_profile} 'update' > ${directory}/patches.sh
 
