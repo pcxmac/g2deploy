@@ -139,7 +139,7 @@ function system()
 
 	echo "EMERGE PROFILE PACKAGES"
 	emerge ${emergeOpts} $(cat /package.list)
-	#rm /package.list
+	rm /package.list
 
 	emergeOpts="--verbose-conflicts"
 	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts =zfs-9999 --nodeps
@@ -201,7 +201,7 @@ function locales()
 
 	# update portage, if able
 	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
-	av="$(pquery sys-apps/portage --ma 2>/dev/null)"
+	av="$(pquery sys-apps/portage --max 2>/dev/null)"
 	if [[ "${av##*-}" != "${pv##*-}" ]]
 	then 
 		emerge portage --oneshot --ask=n

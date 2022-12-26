@@ -60,7 +60,7 @@ function update_runtime() {
 
 	# update portage, if able
 	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
-	av="$(pquery sys-apps/portage --ma 2>/dev/null)"
+	av="$(pquery sys-apps/portage --max 2>/dev/null)"
 
 	echo "${pv} | ${av}"
 	sleep 10
