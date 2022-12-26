@@ -62,10 +62,6 @@ function update_runtime() {
 	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
 	av="$(pquery sys-apps/portage --max 2>/dev/null)"
 
-	echo "${pv} | ${av}"
-	sleep 10
-
-
 	if [[ "${av##*-}" != "${pv##*-}" ]]
 	then 
 		emerge portage --oneshot --ask=n

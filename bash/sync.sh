@@ -93,7 +93,7 @@ repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
 
 # MANUAL BUILD OF REPO
 
-repo="/var/lib/portage/repository/gentoo"
+repo="/var/lib/portage/repository"
 
 #if [[ ! -d ${repo} ]]; then git -C ${repo%/*} clone ${repoServer}; fi
 #git -C ${repo} fetch --all
