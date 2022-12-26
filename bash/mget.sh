@@ -218,7 +218,7 @@ function mget()
 
 # API_ENTRY		$src	$dst
 
-if [[ $# -gt 0 ]]
-then
-	mget $1 $2
-fi
+#if [[ $# -gt 0 ]]
+#then
+#	mget $1 $2
+#fi

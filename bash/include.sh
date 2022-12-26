@@ -12,11 +12,36 @@ tStamp() {
 	echo "0x$("obase=16; $(date +%s)" | bc)"
 }
 
+
+# outputs a stream of text to be executed by #!/bin/bash
+function patchSystem()	
+{
+	# PROFILE	 	$1
+	# PATCH TYPE 	$2
+
+    local profile=$1
+	local type=$2
+	local Purl="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.patches" | sed 's/ //g')"
+	local Curl="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.patches" | sed 's/ //g')"
+
+	case ${type} in
+		deploy*)
+			echo "$(curl ${Curl} --silent | sed '/^#/d')"
+			echo "$(curl ${Purl} --silent | sed '/^#/d')"
+		;;
+		update)
+				echo "update"
+		;;
+		fix=*)
+				echo "fix"
+		;;
+	esac
+}
+
 patch_portage() {
 
-    local offset=$1
-	local _profile=$2
-	local lineNum=0
+    local offset="$1"
+	local _profile="$2"
 
 	common_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common" | sed 's/ //g' | sed "s/\"/'/g")"
 	spec_conf="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${_profile}" | sed 's/ //g' | sed "s/\"/'/g")"
@@ -176,58 +201,6 @@ function mounts()
 	#ls ${offset}/var/lib/portage/binpkgs
 }
 
-
-# outputs a stream of text to be executed by #!/bin/bash
-function patchProcessor()	
-{
-	# PROFILE	 	$1
-	# PKGSRV HOST	$2
-	# PATCH TYPE 	$3
-	# 	deployment		v0.1	.. 	executed in chroot
-	#	update			v0.2	..	""
-	#	fix (#XXXX)		v0.3	..	""
-
-
-    local profile=$1
-	local pkgsrv=$2
-	local type=$3
-	#profile="$(getG2Profile $1)"
-
-	# RESTRUCTURE SO THAT EVAL ((MGET script) (MGET source) ARG2 )
-	# mirror will have to reside in the cloud from now on, and be refactored out of the rest of the project
-	# down sides for hosting this function online ?
-	# security issues with redirection ...
-	# 	probably require mget authenticates with the file service
-	#	this will effectively be mget returning the script, the source file, and the user providing a an argument or two
-	
-
-	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.patches" | sed 's/ //g')"
-	local patch_script="$(curl $url --silent)"
-
-	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.patches" | sed 's/ //g')"
-	local common_patches="$(curl $url --silent)"
-
-	case ${type} in
-		deploy*)
-				echo "ISSUING WORK AROUNDS"
-				eval ${common_patches}
-				eval ${patch_script}
-		;;
-		update)
-				echo "update"
-		;;
-		fix=*)
-				echo "fix"
-		;;
-	esac
-
-
-
-
-	esac
-}
-
-
 # NEEDS TO STREAM IN TO CHROOT, NOT PLACE FILE IN ROOT of DIRECTORY
 function pkgProcessor()
 {
@@ -237,15 +210,13 @@ function pkgProcessor()
 	local iBase=""
 	local allPkgs=""
 
-	echo $profile 2>&1
-	echo $offset 2>&1
+	#echo $profile 2>&1
+	#echo $offset 2>&1
 
 	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.pkgs" | sed 's/ //g')"
 	commonPkgs="$(curl $url --silent)"
-	echo ":::: $url"
 	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.pkgs" | sed 's/ //g')"
 	profilePkgs="$(curl $url --silent)"
-	echo ":::: $url"
 
 	allPkgs="$(echo -e "${commonPkgs}\n${profilePkgs}" | uniq | sort)"
 
@@ -254,16 +225,7 @@ function pkgProcessor()
 
 	diffPkgs="$(comm -1 -3 <(echo "${iBase}") <(echo "${allPkgs}"))"
 
-	#
-	#
-	#	CONVERT THIS TO AN OUTPUT STREAM, DO NOT SAVE TO OFFSET (SHOULD BE INVOKED LOCALLY) ....
-	#
-	#
-	#	AT THE VERY LEAST FIGURE OUT WHY I ECHO THEN CAT...
-
-	echo "${diffPkgs}" > ${offset}/.package.list
-	cat ${offset}/.package.list | sed '/^#/d' | uniq > ${offset}/package.list
-	rm ${offset}/.package.list
+	echo "${diffPkgs}" | sed '/^#/d'
 }
 
 

@@ -21,12 +21,13 @@
 #
 #############################################################################
 
+echo "hello"
+
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
-#echo "${source}"
 
 function users()
 {
@@ -71,6 +72,8 @@ function buildup()
 	echo "prepfs ~ ${offset}/" 2>&1
 	echo "deleting old files (calculating...)" 2>&1
 	count="$(find ${offset}/ | wc -l)"
+
+	#echo "${offset} ..........................."; sleep 200
 
 	if [[ ${count} -gt 1 ]]
 	then
@@ -129,17 +132,14 @@ function system()
 
 	export emergeOpts
 
-	echo "ISSUING UPDATES"
-	emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
+	echo "ISSUING UPDATES!"
+	#emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
 
-	echo "PATCHING UPDATES"
-	# INJECT POINT FOR PATCH PROCESSOR
-	sh < /patches.sh
-	rm /patches.sh
+	echo "EMERGE PROFILE PACKAGES !!!!"
+	emerge ${emergeOpts} $(cat $pkgs)
 
-	echo "EMERGE PROFILE PACKAGES"
-	emerge ${emergeOpts} $(cat /package.list)
-	#rm /package.list
+	#rm ${patch_script}
+	#rm ${pkgs}
 
 	emergeOpts="--verbose-conflicts"
 	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts =zfs-9999 --nodeps
@@ -227,15 +227,13 @@ function locales()
 	export -f system
 	export -f patchProcessor
 	export -f getG2Profile
-	#export -f mirror
+	export -f mirror
 
 	dataset=""				#	the working dataset of the installation
 	directory=""			# 	the working directory of the prescribed dataset
 	profile=""				#	the build profile of the install
 	selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
 
-
-		
     for x in "$@"
     do
         case "${x}" in
@@ -279,20 +277,21 @@ function locales()
 #	NEEDS A MOUNTS ONLY PORTION.
 
 	#mount | grep ${directory}
-	buildup ${_profile} ${directory} ${dataset} ${_selection}
+	###buildup ${_profile} ${directory} ${dataset} ${_selection}
 	mounts ${directory}
 
-	patch_user ${directory} ${_profile}
-	patch_sys ${directory} ${_profile}
-	patch_portage ${directory} ${_profile}
+	###patch_user ${directory} ${_profile}
+	###patch_sys ${directory} ${_profile}
+	###patch_portage ${directory} ${_profile}
 
-	zfs_keys ${dataset}
-	echo "certificates ?"
+	###zfs_keys ${dataset}
+	###echo "certificates ?"
 
-	pkgProcessor ${_profile} ${directory} > ${directory}/package.list
-	patchSystem ${_profile} 'deploy' > ${directory}/patches.sh
+	pkgProcessor ${_profile} ${directory}
+
+	#patchProcessor ${_profile} ${directory}
 	
-	chroot ${directory} /bin/bash -c "locales ${_profile}"
+	####chroot ${directory} /bin/bash -c "locales ${_profile}"
 
 	#install_modules ${directory}	--- THIS NEEDS TO BE INTEGRATED IN TO UPDATE & INSTALL, DEPLOY IS USR SPACE ONLY, NOT BOOTENV
  	chroot ${directory} /bin/bash -c "system"
