@@ -5,4 +5,9 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
-clear_mounts $1
+pool=$1
+
+clear_mounts $(getZFSMountPoint ${pool})
+
+zpool export ${pool}
+

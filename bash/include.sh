@@ -112,6 +112,8 @@ patch_sys() {
 #zfs only
 function editboot() 
 {
+	# if the instance is already detected, it will be overwritten ${linenumber}, if not detected, it will write a new record
+
 	# INPUTS : ${x#*=} - dataset
 	local VERSION=$1
 	local DATASET=$2
@@ -235,25 +237,28 @@ function install_modules()
 {
 	local offset=$1
 	local kver="$(getKVER)"
-	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors http)"
+	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"
 
 	kver="${kver#*linux-}"
 
 	# DEFUNCT ?
-	if [[ -d ${offset}/lib/modules/${kver} ]];then exit; fi
+	#if [[ -d ${offset}/lib/modules/${kver} ]];then exit; fi
 
 	# INSTALL BOOT ENV
-	mget ${ksrc}${kver} ${offset}/boot/LINUX/
+	mget "${ksrc}${kver}" "${offset}/boot/LINUX/"
 
 	# INSTALL KERNEL MODULES
 	
-	ls ${offset} 2>&1
-	mget ${ksrc}${kver}/modules.tar.gz ${offset}/
-	echo "mget ${ksrc}${kver}/modules.tar.gz ${offset}/" 2>&1
-	ls ${offset} 2>&1
+	#ls ${offset} 2>&1
+	cp ${ksrc}${kver}/modules.tar.gz ${offset}/
+	#echo "mget ${ksrc}${kver}/modules.tar.gz ${offset}/" 2>&1
+	#ls ${offset} 2>&1
 
-	pv $offset/modules.tar.gz | tar xzf - -C ${offset}
-	rm ${offset}/modules.tar.gz	
+	pv "$offset/modules.tar.gz" | tar xzf - -C ${offset}/
+
+sleep 100
+
+	rm "${offset}/modules.tar.gz"	
 
 
 }
@@ -286,16 +291,16 @@ function decompress() {
 
 function getG2Profile() {
 	# assumes that .../amd64/17.X/... ; X will be preceeded by a decimal
-	local mountpoint=$1
+	local _mountpoint=$1
 	local _profile=""
 	local result=""
 
 	# if a directory exists, it is implied that this is the root, else, it's either predefined or implied to be self
-	if [[ -n "$(stat ${mountpoint} 2>/dev/null)" && -d ${mountpoint} ]]
+	if [[ -n "$(stat ${_mountpoint} 2>/dev/null)" && -d ${_mountpoint} ]]
 	then
-		result="$(chroot $mountpoint /usr/bin/eselect profile show | tail -n1)"
+		result="$(chroot $_mountpoint /usr/bin/eselect profile show | tail -n1)"
 	else
-		if [[ -z ${mountpoint} ]]		# if no mountpoint, implied to use local machine, else result is already defined
+		if [[ -z ${_mountpoint} ]]		# if no mountpoint, implied to use local machine, else result is already defined
 		then
 			result="$(/usr/bin/eselect profile show | tail -n1)"
 		else

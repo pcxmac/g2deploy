@@ -11,15 +11,6 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
-#
-#	MODULARIZE SETUPBOOT, ATTEMPT TO FIND REUSABLE CODE AND REPOSIT IN TO INCLUDE.SH
-#
-#	ADD MAKE.CONF CUSTOMIZATION (NPROCS,etc...) as a >module<.
-#
-#	
-#	
-#	
-
 # NEED TO BREAK THIS FUNCTION DOWN IN TO SMALLER PARTS
 function setup_boot()	
 {
@@ -72,7 +63,7 @@ function setup_boot()
 						spath_root="$(echo ${spath} | grep "subvol=/" | head -n 1 | awk '{print $3}')"
 						spath_subvol="$(echo ${spath} | grep "subvol=/${sdataset}" | head -n 1 | awk '{print $3}')"
 						if [[ -n ${spath_subvol} ]]; then spath=${spath_subvol}; else spath="${spath_root}/${sdataset}"; fi
-						sresult="$(ssh ${shost} "btrfs filesystem show ${spath} | grep 'uuid'")"
+						#sresult="$(ssh ${shost} "btrfs filesystem show ${spath} | grep 'uuid'")"
 					else
 						spath="$(blkid | grep ${spool} | grep 'btrfs')"
 						spath="$(echo ${spath} | awk '{print $1}' | tr -d ':')"
@@ -80,7 +71,7 @@ function setup_boot()
 						spath_root="$(echo ${spath} | grep "subvol=/" | head -n 1 | awk '{print $3}')"
 						spath_subvol="$(echo ${spath} | grep "subvol=/${sdataset}" | head -n 1 | awk '{print $3}')"
 						if [[ -n ${spath_subvol} ]]; then spath=${spath_subvol}; else spath="${spath_root}/${sdataset}"; fi
-						sresult="$(btrfs filesystem show ${spath} | grep 'uuid')"
+						#sresult="$(btrfs filesystem show ${spath} | grep 'uuid')"
 					fi
 				;;
 				ssh)
@@ -175,9 +166,11 @@ function setup_boot()
 			#	
 			#	
 
-			if [[ ! -d ${dpath} ]]
+			if [[ ! -d ${dpath} && ${dtype} != "zfs" ]]
 			then 
 				mkdir -p ${dpath}
+			elif [[ -d ${dpath} && ${dtype} == "zfs" ]]
+				rm ${dpath} -R
 			fi
 
 			case ${dtype} in
@@ -194,40 +187,40 @@ function setup_boot()
 						-O encryption=aes-256-gcm \
 						-O keyformat=hex \
 						-O keylocation=file:///srv/crypto/zfs.key \
-						-O mountpoint=${dpath} ${dpool} \
-						$(echo "${parts}" | grep '.3')
+						-O mountpoint="${dpath}" "${dpool}" \
+						"$(echo "${parts}" | grep '.3')"
 				;;
 				btrfs)
-					mount | grep ${disk}
-					mkfs.btrfs $(echo "${parts}" | grep '.3') -L ${dpool} -f
-					btrfs subvolume create ${dpath}
-					mount -t ${dtype} $(echo "${parts}" | grep '.3') ${dpath}
+					mount | grep "${disk}"
+					mkfs.btrfs "$(echo "${parts}" | grep '.3')" -L "${dpool}" -f
+					btrfs subvolume create "${dpath}"
+					mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
 				;;
 				xfs)
-					mkfs.xfs $(echo "${parts}" | grep '.3') -L ${ddataset} -f
-					mount -t ${dtype} $(echo "${parts}" | grep '.3') ${dpath}
+					mkfs.xfs "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -f
+					mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
 				;;
 				ntfs)
-					mkfs.ntfs $(echo "${parts}" | grep '.3') -L ${ddataset} -f
-					mount -t ${dtype} $(echo "${parts}" | grep '.3') ${dpath}
+					mkfs.ntfs "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -f
+					mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
 				;;
 				ext4)
-					mkfs.ext4 $(echo "${parts}" | grep '.3') -L ${ddataset} -F
-					mount -t ${dtype} $(echo "${parts}" | grep '.3') ${dpath}
+					mkfs.ext4 "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -F
+					mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
 				;;
 			esac
 
-			if [[ ${dtype} == ${stype} ]] 
+			if [[ ${dtype} == "${stype}" ]] 
 			then
 				case ${stype} in
 					zfs)
-						if [[ -n ${shost} ]]; then	ssh ${shost} zfs send ${source} | pv | zfs recv -F ${destination}
-						else 									 zfs send ${source} | pv | zfs recv -F ${destination}
+						if [[ -n ${shost} ]]; then	ssh "${shost}" zfs send ${source} | pv | zfs recv -F "${destination}"
+						else 									 zfs send "${source}" | pv | zfs recv -F "${destination}"
 						fi
 					;;
 					btrfs)
-						if [[ -n ${shost} ]]; then	ssh ${shost} btrfs send ${spath} | pv | btrfs receive ${dpath}
-						else									 btrfs send ${spath} | pv | btrfs receive ${dpath}
+						if [[ -n ${shost} ]]; then	ssh "${shost}" btrfs send ${spath} | pv | btrfs receive "${dpath}"
+						else									 btrfs send "${spath}" | pv | btrfs receive "${dpath}"
 						fi
 					;;
 				esac
@@ -249,28 +242,35 @@ function setup_boot()
 			fi
 
 			#dstDir="$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')/${ddataset}"
-			boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
+			boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)/boot/*"	
 			dstDir="${dpath}/${ddataset}"
 			echo "----------------------------------------------------------------------------------"
-			echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
+			echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)/boot/*"
 			echo "dst Dir = ${dstDir} :: ${boot_src}"
-
+sleep 20
 			#boot_src="ftp://10.1.0.1/patchfiles/boot/*"
 			if [[ ! -d ${dstDir} ]]; then mkdir -p ${dstDir}; fi
 			mount "$(echo "${parts}" | grep '.2')" ${dstDir}/boot
 			mget ${boot_src} ${dstDir}/boot
-			sleep 5
+sleep 10
 			kversion=$(getKVER)
 			kversion=${kversion#*linux-}
 			echo "KVERSION = ${kversion}" 2>&1
+
+echo "installing modules ..."
+sleep 10
 			install_modules ${dstDir}			# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
+
+echo "editing boot"
+sleep 10
 			editboot ${kversion} "${dpool}/${ddataset}"
+
+echo "done..."
 			umount ${dstDir}/boot
  }
 
 function add_to()	
 {
-			#ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"
 			kver="$(getKVER)"
 			kver="${kver#*linux-}"
 
@@ -319,7 +319,7 @@ function add_to()
 						spath_root="$(echo ${spath} | grep "subvol=/" | head -n 1 | awk '{print $3}')"
 						spath_subvol="$(echo ${spath} | grep "subvol=/${sdataset}" | head -n 1 | awk '{print $3}')"
 						if [[ -n ${spath_subvol} ]]; then spath=${spath_subvol}; else spath="${spath_root}/${sdataset}"; fi
-						sresult="$(ssh ${shost} "btrfs filesystem show ${spath} | grep 'uuid'")"
+						#sresult="$(ssh ${shost} "btrfs filesystem show ${spath} | grep 'uuid'")"
 					else
 						spath="$(blkid | grep ${spool} | grep 'btrfs')"
 						spath="$(echo ${spath} | awk '{print $1}' | tr -d ':')"
@@ -327,31 +327,10 @@ function add_to()
 						spath_root="$(echo ${spath} | grep "subvol=/" | head -n 1 | awk '{print $3}')"
 						spath_subvol="$(echo ${spath} | grep "subvol=/${sdataset}" | head -n 1 | awk '{print $3}')"
 						if [[ -n ${spath_subvol} ]]; then spath=${spath_subvol}; else spath="${spath_root}/${sdataset}"; fi
-						sresult="$(btrfs filesystem show ${spath} | grep 'uuid')"
+						#sresult="$(btrfs filesystem show ${spath} | grep 'uuid')"
 					fi
 				;;
-				ssh)
-					source=${shost#*:}
-					spool=${source}
-					shost=${shost%:*}
-					shost="$(echo $shost | grep -v '/' | grep "[[:alnum:]]\+@[[:alnum:]]\+")"
-						spath="$(ssh ${shost} test ! -d ${source} || echo ${source})"
-				;;
-				ext4|xfs|ntfs)
-					source=${shost#*:}
-					spool=${source}
-					shost=""
-					spath=${source}
-				;;
 			esac
-
-			#
-			#	ADD SUPPORT FOR CONFIGS, MORE XFS FEATUERS ... AND POSSIBLY DEPRICATE NTFS
-			#
-			#	ONLY SUPPORTS ZFS !!!
-			#
-			#	NEED TO TEAR AWAY the CONST /srv/... needs to be more dynamic/temporal and assignable.
-
 
 			destination_url=$2				# DESTINATION
 			dtype=${destination_url%://*}	# example :	zfs:///dev/sda:/pool/dataset ; ntfs:///dev/sdX:/mnt/sdX ; config:///path/to/config
@@ -377,14 +356,6 @@ function add_to()
 					dhost="${dhost%:*}"
 					dpath="/srv/btrfs/${dpool}/${ddataset}"
 				;;
-				ext4|xfs|ntfs)
-					destination=${dhost#*:}
-					dpool=${destination%/*}
-					ddataset=${destination##*/}
-					ddataset=${ddataset%@*}
-					dhost="${dhost%:*}"
-					dpath=${destination}
-				;;
 			esac
 
 			echo "dhost = ${dhost}" 2>&1
@@ -392,89 +363,48 @@ function add_to()
 
 			disk=${dhost}
 
+			echo "source = ${source} | stype = ${stype} | shost = ${shost} | pool = ${spool} | sdataset = ${sdataset} | ssnapshot =  ${ssnapshot} | root_path = ${root_path} | spath_root = ${spath_root} | spath_subvol = ${spath_subvol}"
+			echo "destination = ${destination} | Dtype = ${dtype} | Dhost = ${dhost} | dpool = ${dpool} | ddataset = ${ddataset} | dpath = ${dpath}"
+
+			###  IF [[ ${dhost} == ${destination} ]] then, this is being written to existing pool, check pool exists, then skip to [send]
+
+			sleep 100
+
 			clear_mounts ${disk}
 			sync
-#			sgdisk -Z ${disk}
-#			wipefs -af ${disk}
-#			partprobe
-#			sync
 
-			# floating schemas + Oldap = dynamic builds
-#			sgdisk --new 1:0:+32M -t 1:EF02 ${disk}
-#			sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
-#			sgdisk --new 3:0 -t 3:8300 ${disk}
-
-#			clear_mounts ${disk}
-#			partprobe
-#			sync
-
-#			parts="$(ls -d /dev/* | grep "${disk}")"
-#			wipefs -af "$(echo "${parts}" | grep '.2')"
-#			wipefs -af "$(echo "${parts}" | grep '.3')"
-#			mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
-
-			#	
-			#	if a directory + contents exists @ mountpoint, this will fail, please check for potential collision and redress w/ user
-			#	
-			#	IP ADDRESSES NEED A UNIVERSAL N.DOMAIN PTR
-			#	
-			#	AUTOFS MODULE FOR VFAT, (BOOT DISK -- /boot)
-			#	
-			#	
-
-			if [[ ! -d ${dpath} ]]
+			if [[ ! -d ${dpath} && ${dtype} != "zfs" ]]
 			then 
 				mkdir -p ${dpath}
 			fi
 
 			case ${dtype} in
 				zfs)
-#					options="-f"
-					echo "zfs !"
-					# zpool create ${options} \
-					# 	-O acltype=posixacl \
-					# 	-O compression=lz4 \
-					# 	-O dnodesize=auto \
-					# 	-O normalization=formD \
-					# 	-O relatime=on \
-					# 	-O xattr=sa \
-					# 	-O encryption=aes-256-gcm \
-					# 	-O keyformat=hex \
-					# 	-O keylocation=file:///srv/crypto/zfs.key \
-					# 	-O mountpoint=${dpath} ${dpool} \
-					# 	$(echo "${parts}" | grep '.3')
+					if [[ -z "$(zpool list | grep ${dpool} | grep 'ONLINE')" ]]
+					then
+						zpool import ${dpool}
+						zfs load-key ${dpool}
+						zfs mount ${dpool} 
+					fi
 				;;
 				btrfs)
-#					mount | grep ${disk}
-#					mkfs.btrfs $(echo "${parts}" | grep '.3') -L ${dpool} -f
 					btrfs subvolume create ${dpath}
 					mount -t ${dtype} $(echo "${parts}" | grep '.3') ${dpath}
 				;;
-				xfs)
-#					mkfs.xfs $(echo "${parts}" | grep '.3') -L ${ddataset} -f
-					mount -t ${dtype} $(echo "${parts}" | grep '.3') ${dpath}
-				;;
-				ntfs)
-#					mkfs.ntfs $(echo "${parts}" | grep '.3') -L ${ddataset} -f
-					mount -t ${dtype} $(echo "${parts}" | grep '.3') ${dpath}
-				;;
-				ext4)
-#					mkfs.ext4 $(echo "${parts}" | grep '.3') -L ${ddataset} -F
-					mount -t ${dtype} $(echo "${parts}" | grep '.3') ${dpath}
-				;;
+				
 			esac
 
 			if [[ ${dtype} == ${stype} ]] 
 			then
 				case ${stype} in
 					zfs)
-						if [[ -n ${shost} ]]; then	ssh ${shost} zfs send ${source} | pv | zfs recv -F ${destination}
-						else 									 zfs send ${source} | pv | zfs recv -F ${destination}
+						if [[ -n ${shost} ]]; then	ssh "${shost}" zfs send ${source} | pv | zfs recv -F "${destination}"
+						else 									 zfs send "${source}" | pv | zfs recv -F "${destination}"
 						fi
 					;;
 					btrfs)
-						if [[ -n ${shost} ]]; then	ssh ${shost} btrfs send ${spath} | pv | btrfs receive ${dpath}
-						else									 btrfs send ${spath} | pv | btrfs receive ${dpath}
+						if [[ -n ${shost} ]]; then	ssh "${shost}" btrfs send ${spath} | pv | btrfs receive "${dpath}"
+						else									 btrfs send "${spath}" | pv | btrfs receive "${dpath}"
 						fi
 					;;
 				esac
@@ -484,13 +414,13 @@ function add_to()
 						url="${stype}://${shost}:${spath}/"
 						url=${url#*://}
 						url=${url#*:/}
-						mget ${spath}/ ${dpath}
+						mget "${spath}/" "${dpath}"
 					;;
 					*)
 						url="ssh://${shost}:${spath}/"
 						url=${url#*://}
 						url=${url#*:/}
-						mget ssh://${shost}:${spath}/ ${dpath}
+						mget "ssh://${shost}:${spath}/" "${dpath}"
 					;;
 				esac
 			fi
@@ -503,16 +433,16 @@ function add_to()
 			echo "dst Dir = ${dstDir} :: ${boot_src}"
 
 			#boot_src="ftp://10.1.0.1/patchfiles/boot/*"
-			if [[ ! -d ${dstDir} ]]; then mkdir -p ${dstDir}; fi
-			mount "$(echo "${parts}" | grep '.2')" ${dstDir}/boot
-			mget ${boot_src} ${dstDir}/boot
+			if [[ ! -d ${dstDir} ]]; then mkdir -p "${dstDir}"; fi
+			mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"
+			mget "${boot_src}" "${dstDir}/boot"
 			sleep 5
 			kversion=$(getKVER)
 			kversion=${kversion#*linux-}
 			echo "KVERSION = ${kversion}" 2>&1
-			install_modules ${dstDir}			# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
-			editboot ${kversion} "${dpool}/${ddataset}"
-			umount ${dstDir}/boot
+			install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
+			editboot "${kversion}" "${dpool}/${ddataset}"
+			umount "${dstDir}/boot"
  }
 
 
@@ -541,9 +471,12 @@ function add_to()
 				setup_boot ${_source} ${_destination}
 			
 			;;
+			# only for COW F/Sytems
 			add=*)
 				_destination=${x#*=}
 				add_to ${_source} ${_destination}
+			;;
+			# update, see update.sh (location) (boot disk)
 		esac
 	done
 
