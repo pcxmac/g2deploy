@@ -239,22 +239,24 @@ function install_modules()
 	local kver="$(getKVER)"
 	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"
 
-	kver="${kver#*linux-}"
+	echo "kver="${kver#*linux-}"" 2>&1
 
 	# DEFUNCT ?
 	#if [[ -d ${offset}/lib/modules/${kver} ]];then exit; fi
 
 	# INSTALL BOOT ENV
-	mget "${ksrc}${kver}" "${offset}/boot/LINUX/"
+	echo "mget "${ksrc}${kver}" "${offset}/boot/LINUX/"" 2>&1
 
 	# INSTALL KERNEL MODULES
 	
 	#ls ${offset} 2>&1
-	cp ${ksrc}${kver}/modules.tar.gz ${offset}/
+#	cp ${ksrc}${kver}/modules.tar.gz ${offset}/
 	#echo "mget ${ksrc}${kver}/modules.tar.gz ${offset}/" 2>&1
 	#ls ${offset} 2>&1
 
-	pv "$offset/modules.tar.gz" | tar xzf - -C ${offset}/
+	echo "pv "${offset}/modules.tar.gz" | tar xzf - -C ${offset}/" 2>&1
+
+
 
 sleep 100
 

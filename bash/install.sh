@@ -170,6 +170,7 @@ function setup_boot()
 			then 
 				mkdir -p ${dpath}
 			elif [[ -d ${dpath} && ${dtype} == "zfs" ]]
+			then
 				rm ${dpath} -R
 			fi
 
@@ -454,7 +455,7 @@ function add_to()
 	selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
 
 
-	for x in $@
+	for x in "$@"
 	do
 		case "${x}" in
 			work=*)
@@ -463,7 +464,7 @@ function add_to()
 		esac
 	done
 
-	for x in $@
+	for x in "$@"
 	do
 		case "${x}" in
 			boot=*)
