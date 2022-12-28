@@ -196,8 +196,6 @@ function locales()
 	pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
 	patchSystem "${_profile}" 'deploy' > "${directory}/patches.sh"
 
-sleep 10
-
 	chroot "${directory}" /bin/bash -c "locales ${_profile}"
 
  	chroot "${directory}" /bin/bash -c "system"
