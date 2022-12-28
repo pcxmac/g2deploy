@@ -45,7 +45,7 @@
 
 ###
 ###  [ BACKEND SPEC. ]
-  /var/lib/portage 
+  {host.cfg::pkgServer.root} 
 ```
   ├── binpkgs                   locally built, on build server, or built through sshfs, can be clone, (and snapshotted to preserve 'versioning' ?)
   ├── kernels                   kernel repo for distribution, *current, and *depreciated

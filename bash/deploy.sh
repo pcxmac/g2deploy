@@ -86,7 +86,7 @@ function system()
 
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 	echo "POST INSTALL UPDATE !!!"
-	emerge -b -uDN --with-bdeps=y @world --ask=n "${emergeOpts}"
+	emerge -b -uDN --with-bdeps=y @world --ask=n ${emergeOpts}
 
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
