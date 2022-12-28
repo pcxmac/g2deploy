@@ -1,9 +1,7 @@
 ###HOW TO USE: (PRE-RELEASE < v0.1) | { v1.x = last stand alone implementation } | ZFS >primary target<
 ##### <u>SIMPLE LOCAL DEPLOYMENT ... LOCAL ONLY.</u>
   <u>./deploy.sh</u> <b>build=plasma work=zpool/plasma deploy</b>\
-  <span style="color:red">(not yet implemented) 
-  (concept-btrfs) ./deploy build=plasma work=btrfs_mount/subvol\
-  (concept-ext4,...) ./deploy build=plasma work=/path/to/rootfs deploy </span>
+  
 ###
 ##### <u>UPDATE USR SPACE FOR POOL/SET</u>
 
