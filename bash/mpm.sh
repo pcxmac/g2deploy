@@ -1,6 +1,8 @@
 #!/bin/bash
 #[ $# -ge 1 -a -f "$1" ] && input="$1" || input="-"
 
+# basic script for building 'meta packages' for gentoo, basically a bunch of helpers and meta-parameters. 
+
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
