@@ -7,7 +7,6 @@
 
 source ${SCRIPT_DIR}/bash/mget.sh
 
-
 tStamp() {
 	echo "0x$("obase=16; $(date +%s)" | bc)"
 }
@@ -30,10 +29,10 @@ function patchSystem()
 			curl "${Purl}" --silent | sed '/^#/d'
 		;;
 		update)
-				echo "update"
+				echo "updates..."
 		;;
 		fix=*)
-				echo "fix"
+				echo "fixes..."
 		;;
 	esac
 }
@@ -98,6 +97,7 @@ patchFiles_sys() {
 	#echo "PATCH SYS - ${_profile}"
 
 	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
+
 	mget "${psrc}/etc/" "${offset}/etc/" 
 	mget "${psrc}/var/" "${offset}/var/" 
 	mget "${psrc}/usr/" "${offset}/usr/"
@@ -155,16 +155,21 @@ function editboot()
 
 function clear_mounts()
 {
-	local offset="$(echo "$1" | sed 's:/*$::')"
-	local procs="$(lsof "${offset}" 2>/dev/null | sed '1d' | awk '{print $2}' | uniq)" 
-    local dir="$(echo "${offset}" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
-	local output="$(cat /proc/mounts | grep "$dir" | wc -l)"
+	local offset
+	local procs
+    local dir	
+	local output
+
+	offset="$(echo "$1" | sed 's:/*$::')"
+	procs="$(lsof "${offset}" 2>/dev/null | sed '1d' | awk '{print $2}' | uniq)" 
+    dir="$(echo "${offset}" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
+	output="$(cat /proc/mounts | grep "$dir" | wc -l)"
 
 	if [[ -z ${offset} ]];then exit; fi	# this will break the local machine if it attempts to unmount nothing.
 
 	for process in ${procs}; do kill -9 "${process}"; done
 
-	if [[ -n "$(echo "$dir" | grep '/dev/')" ]]
+	if [[ -n "$(echo "${dir}" | grep '/dev/')" ]]
 	then
 		dir="${dir}"
 	else
@@ -241,10 +246,10 @@ function install_modules()
 	kver="${kver#*linux-}"
 
 	# INSTALL BOOT ENV
-	echo "mget "${ksrc}${kver}/" "${offset}/boot/LINUX/"" 2>&1
+	#echo "mget "${ksrc}${kver}/" "${offset}/boot/LINUX/"" 2>&1
 	mget "${ksrc}${kver}" "${offset}/boot/LINUX/"
 	# INSTALL KERNEL MODULES
-	echo "do I see this ?"
+	#echo "do I see this ?"
 	mget "${ksrc}${kver}/modules.tar.gz" "${offset}/"
 	pv "${offset}/modules.tar.gz" | tar xzf - -C "${offset}/"
 	rm "${offset}/modules.tar.gz"	

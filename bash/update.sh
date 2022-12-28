@@ -54,7 +54,7 @@ function update_runtime() {
 	echo "EMERGE MISSING PACKAGES"
 	if [[ -f /package.list ]]
 	then
-		emerge "${emergeOpts}" $(cat /package.list)
+		emerge ${emergeOpts} $(cat /package.list)
 		rm /package.list
 	fi
 

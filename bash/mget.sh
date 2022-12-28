@@ -21,15 +21,10 @@ function getRSYNC()
 	local rCode=""
 	local pause=60
 	local uri=""
-	local destination="${2:?}"
+	local destination="${2:?}"			#  there should always be a destination for rsync, this method does not support streaming
 
 	host="${host#*://}"
-	#local local_move="$(echo ${host} | grep '^/')"
-
-	# will be null if local_move 
 	host="${host%%/*}"
-
-	# ALLOW LOCAL RSYNC w/ rsync:/// , no host condition.
 
 	while [[ "${waiting}" == 1 && -n "${host}" ]]
 	do
@@ -46,8 +41,8 @@ function getRSYNC()
 				if [[ -n ${host} ]]
 				then
 					rsync -a --no-motd --info=progress2 --rsync-path="sudo rsync" "$@" 
-				else
-					rsync -a --no-motd --info=progress2 --rsync-path="sudo rsync" "${@#*rsync://}"
+				#else
+					#rsync -a --no-motd --info=progress2 --rsync-path="sudo rsync" "${@#*rsync://}"
 				fi
 			fi
 			waiting=0
@@ -67,13 +62,12 @@ function getRSYNC()
 	then
 			rsync -a --no-motd --info=progress2 --rsync-path="sudo rsync" "${@#*rsync://}" 
 	fi
-	#echo $rCode
 }
 
 
 function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 {
-	local destination="${2:?}"
+	local destination="${2}"		# empty if streaming/serial output requested i
 	local url="${1:?}"
 	local waiting=1
 	local httpCode=""
@@ -92,16 +86,12 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 			fi
 			waiting=0
 		else
-			#ipCheck="$(ping ${url} -c 3 | grep "0 received")"
-			#if [[ -n ${ipCheck} ]];then echo "."; fi
 			waiting=1
 			sleep ${pause}
 			pause=$((pause-1))
 			if [[ ${pause} == 0 ]]; then waiting=0; fi
 		fi
 	done
-	# better not to echo code, for streaming
-	#echo $ftpCode
 }
 
 function getFTP()
@@ -125,30 +115,23 @@ function getFTP()
 			fi
 			waiting=0
 		else
-			#ipCheck="$(ping ${url} -c 3 | grep "0 received")"
-			#if [[ -n ${ipCheck} ]];then echo "."; fi
 			waiting=1
 			sleep ${pause}
 			pause=$((pause-1))
 			if [[ ${pause} == 0 ]]; then waiting=0; fi
 		fi
 	done
-	# better not to echo code, for streaming
-	#echo $ftpCode
+
 }
 
 function mget()
 {
 
-	#local url="$(echo "$1" | tr -d '*')"			# source_URL
-	local destination="${2:?}"	# destination_FS
-	#local args=$3
+	local destination="${2}"	# destination_FS, can be empty, stream output (ie no output file specified)
 	local offset
 	local host
 	local _source
 	local url="${1:?}" # source_URL
-
-	echo "FUCK THIS SHIT !!!!" 2>&1
 
 	case ${url%://*} in
 		# local rsync only
@@ -157,11 +140,12 @@ function mget()
 			then
 				echo "$(getFTP ${url})"
 			else
+				echo "getFTP ${url}"	> ${SCRIPT_DIR}/bash/output.log
 				getFTP "${url}" "${destination}"
-				mv "${destination}/${url#*://}" "${destination}/"
+				mv ${destination}/${url#*://} ${destination}/
 				url=${url#*://}
 				url=${url%%/*}
-				rm "${destination:?}/${url:?}" -R
+				rm ${destination:?}/${url:?} -R
 			fi
 		;;
 		http*)
@@ -169,11 +153,12 @@ function mget()
 			then
 				echo "$(getHTTP ${url})"
 			else
+				echo "getHTTP ${url}"	> ${SCRIPT_DIR}/bash/output.log
 				getHTTP "${url}" "${destination}" 
-				mv "${destination%/*}/${url#*://}" "${destination%/*}"
+				mv ${destination%/*}/${url#*://} ${destination%/*}
 				url=${url#*://}
 				url=${url%%/*}
-				rm "${destination%/*}/${url:?}" -R 
+				rm ${destination%/*}/${url:?} -R 
 			fi
 		;;
 		# local download only
@@ -183,39 +168,25 @@ function mget()
 			host=${host%:/*}
 			offset=$(echo "$_source" | cut -d "/" -f1)
 
-            # getSSH ${host} ${destination} 
-            # 
+			echo "ssh "${host}" "tar cf - /${_source}/" | pv --timer --rate | tar xf - -C "${destination}/"" > ${SCRIPT_DIR}/bash/output.log
 
 			ssh "${host}" "tar cf - /${_source}/" | pv --timer --rate | tar xf - -C "${destination}/"
-			mv "${destination}/${_source}" "${destination}/__temp"
-			rm "${destination:?}/${offset:?}" -R
+			mv ${destination}/${_source} ${destination}/__temp
+			rm ${destination:?}/${offset:?} -R
 			# move would try to replace existing folders, and throw errors
-			cp "${destination}/__temp/*" "${destination}" -Rp
-			rm "${destination}/__temp" -R
+			cp ${destination}/__temp/* ${destination} -Rp
+			rm ${destination}/__temp -R
 		;;
 		rsync|file|*)
 			if [[ -z ${destination} ]]
 			then
 				echo "$(getRSYNC "$*")"
 			else
+				echo "getRSYNC "$*"" > ${SCRIPT_DIR}/bash/output.log
 				#echo "$@" > "${SCRIPT_DIR}/bash/output.log"
 	            getRSYNC "$@"  # ${url} ${destination} ${args}
 			fi
 		;;
-		# local file move only
-		#file|*)
-		#	host=${url#*://}
-		#	_source=${host#*:/}
-		#	host=${host%:/*}
-		#	if [[ ! -d "${url#*://}" ]] && [[ ! -f "${url#*://}" ]]; then exit; fi
-		#	if [[ ! -d "${destination}" ]]; then mkdir -p "${destination}"; fi
-		#	tar cf - /${_source} | pv --timer --rate | tar xf - -C ${destination}/
-		#	mv ${destination}/${_source} ${destination}/__temp
-		#	offset=$(echo "$_source" | cut -d "/" -f2)
-		#	rm ${destination}/${offset} -R
-		#	mv ${destination}/__temp/* ${destination}
-		#	rm ${destination}/__temp -R
-		#;;
 	esac
 }
 

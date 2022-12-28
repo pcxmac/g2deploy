@@ -44,17 +44,16 @@ function users()
 	# CYCLE THROUGH USERS ?
 	useradd sysop
 	sudo sh -c 'echo sysop:P@$$w0rd | chpasswd' 2>/dev/null
-	echo "home : sysop"
+	#echo "home : sysop"
 	usermod --home /home/sysop sysop
-	echo "wheel : sysop"
+	#echo "wheel : sysop"
 	usermod -a -G wheel sysop
-	echo "shell : sysop"
+	#echo "shell : sysop"
 	usermod --shell /bin/zsh sysop
 	homedir="$(eval echo ~sysop)"
 	chown sysop:sysop "${homedir}" -R 2>/dev/null
-	echo "homedir"
+	#echo "homedir"
 }
-
 
 function buildup()
 {
@@ -74,10 +73,11 @@ function buildup()
 
 	if [[ ${count} -gt 1 ]]
 	then
-		rm -rv "${offset:?}/*" | pv -l -s "${count}" > /dev/null
+		rm -rv ${offset:?}/* | pv -l -s "${count}" > /dev/null
 	else
 		echo -e "done "
 	fi
+
 	#echo "finished clear_fs ... ${offset}/" 2>&1
 
 	# file method does not work, redress later...
@@ -107,48 +107,49 @@ function buildup()
 	fileasc="${fileasc##*/}"
 	filexz="${filexz##*/}"
 
-	gpg --verify "$offset/$fileasc"
-	rm "$offset/$fileasc"
+	gpg --verify "${offset}/${fileasc}"
+	rm ${offset}/${fileasc}
 
-	echo "decompressing $filexz...@ $offset" 2>&1
-	decompress "$offset/$filexz" "$offset"
-	rm "$offset/$filexz"
+	#echo "decompressing ${filexz}...@ ${offset}" 2>&1
+	decompress "${offset}/${filexz}" "${offset}"
+	rm ${offset}/${filexz}
 
-    echo "setting up mounts"
+    #echo "setting up mounts"
 	mkdir -p "${offset}/var/lib/portage/binpkgs"
 	mkdir -p "${offset}/var/lib/portage/distfiles"
 	mkdir -p "${offset}/srv/crypto/"
 	mkdir -p "${offset}/var/lib/portage/repos/gentoo"
 }
 
-
 function system()
 {
 	#local pkgs="/package.list"
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
-	export emergeOpts
+	#export emergeOpts
 
 	echo "ISSUING UPDATES"
-	emerge "$emergeOpts" -b -uDN --with-bdeps=y @world --ask=n
+	emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n
 
 	echo "PATCHING UPDATES"
 	# INJECT POINT FOR PATCH PROCESSOR
 	sh < /patches.sh
 	rm /patches.sh
 
+	sleep 10
+
 	echo "EMERGE PROFILE PACKAGES"
-	emerge "${emergeOpts}" "$(cat /package.list)"
+	emerge ${emergeOpts} $(cat /package.list)
 	rm /package.list
 
 	emergeOpts="--verbose-conflicts"
-	FEATURES="-getbinpkg -buildpkg" emerge $emergeOpts =zfs-9999 --nodeps
-
-
+	FEATURES="-getbinpkg -buildpkg"
+	
+	emerge ${emergeOpts} =zfs-9999 --nodeps
 
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 	echo "POST INSTALL UPDATE !!!"
-	emerge -b -uDN --with-bdeps=y @world --ask=n "$emergeOpts"
+	emerge -b -uDN --with-bdeps=y @world --ask=n "${emergeOpts}"
 
 	#	
 	#	
@@ -258,7 +259,7 @@ function locales()
 
 	echo "DIRECTORY == ${directory}"
 
-	if [[ -z "${directory}" ]];then echo "Non Existant Work Location for $dataset"; exit; fi
+	if [[ -z "${directory}" ]];then echo "Non Existant Work Location for ${dataset}"; exit; fi
 
 	for x in "$@"
     do
@@ -273,7 +274,7 @@ function locales()
         esac
     done
 
-	if [[ -z "${_profile}" ]];then echo "profile does not exist for $_selection"; exit; fi
+	if [[ -z "${_profile}" ]];then echo "profile does not exist for ${_selection}"; exit; fi
 	clear_mounts "${directory}"
 
 #	NEEDS A MOUNTS ONLY PORTION.
@@ -287,10 +288,13 @@ function locales()
 	patchFiles_portage "${directory}" "${_profile}"
 
 	zfs_keys "${dataset}"
-	echo "certificates ?"
+	#echo "certificates ?"
 
 	pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
 	patchSystem "${_profile}" 'deploy' > "${directory}/patches.sh"
+
+sleep 10
+
 	chroot "${directory}" /bin/bash -c "locales ${_profile}"
 
 	#install_modules ${directory}	--- THIS NEEDS TO BE INTEGRATED IN TO UPDATE & INSTALL, DEPLOY IS USR SPACE ONLY, NOT BOOTENV

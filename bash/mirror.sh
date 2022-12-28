@@ -16,7 +16,7 @@
 #
 
 
-	profile="${3:?}"
+	profile="${3}"				# parameter 3 can be null, and is handled subsequently.
 	type="${2:?}"
 	mirror="${1:?}"
 
