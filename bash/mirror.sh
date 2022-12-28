@@ -16,9 +16,9 @@
 #
 
 
-	profile="$3"
-	type="$2"
-	mirror="$1"
+	profile="${3:?}"
+	type="${2:?}"
+	mirror="${1:?}"
 
 	release_base_string=""
 	serversList="invalid"
@@ -34,7 +34,7 @@
 	esac
 
 	case "${mirror##*/}" in
-		bin*|pack*|kernel*|release*|snaps*|dist*|repos*|patch*|meta*)		serversList="$mirror"				;;
+		bin*|pack*|kernel*|release*|snaps*|dist*|repos*|patch*|meta*)		serversList="${mirror}"				;;
 		*)															echo "invalid input";exit		;;
 	esac
 
@@ -46,13 +46,13 @@
 				file)
 					case "${mirror##*/}" in
 						release*)
-							if [[ -n "$release_base_string" ]];	then
-								locationStr="$release_base_string"
+							if [[ -n "${release_base_string}" ]];	then
+								locationStr="${release_base_string}"
 								urlBase="${server#*://}${locationStr}"
 								selectStr="${locationStr#*current-*}"
 								selectStr="${selectStr%*/}"
-								urlCurrent_xz="$(ls $urlBase | grep "$selectStr" | grep ".xz$")"
-								urlCurrent_asc="$(ls $urlBase | grep "$selectStr" | grep ".asc$")"
+								urlCurrent_xz="$(ls ${urlBase} | grep "${selectStr}" | grep ".xz$")"
+								urlCurrent_asc="$(ls ${urlBase} | grep "${selectStr}" | grep ".asc$")"
 								urlBase="${server}${locationStr}"
 								if [[ -n $urlCurrent_xz ]];	then
 									printf "${urlBase}${urlCurrent_xz}\n"
@@ -60,16 +60,16 @@
 									exit
 								fi
 							else
-								if [[ ${type} == ${server%://*} ]]; then echo "${server}"; exit; fi
+								if [[ ${type} == "${server%://*}" ]]; then echo "${server}"; exit; fi
 							fi
 						;;
 						bin*|pack*|kernel*|dist*|repos*|snaps*|patch*|meta*)
-							if [[ ${type} == ${server%://*} ]]; then echo "${server}"; exit; fi
+							if [[ ${type} == "${server%://*}" ]]; then echo "${server}"; exit; fi
 						;;
 					esac
 				;;
 			esac
-		done < <(cat $serversList | shuf)
+		done < <(cat ${serversList} | shuf)
 	fi
 
     # {WEB}://
@@ -89,20 +89,20 @@
 						tld="${host##*.}"
 						tld="${tld%%/*}"
 						hostname="${host%${tld}*}${tld}"
-						dir=${host##*${tld}}
-						dir=${dir#*/}
-						dir=${dir%releases/*}
+						dir="${host##*${tld}}"
+						dir="${dir#*/}"
+						dir="${dir%releases/*}"
 						selectStr="${release_base_string#*current-}"
 						selectStr="${selectStr%*/}"
-						urlCurrent_xz="$(rsync -n ${hostname}::${dir}${release_base_string} | awk '{print $5}' | sed -e 's/<[^>]*>//g' | grep "$selectStr" | grep ".xz$")"
-						urlCurrent_asc="$(rsync -n ${hostname}::${dir}${release_base_string} | awk '{print $5}' | sed -e 's/<[^>]*>//g' | grep "$selectStr" | grep ".asc$")"
+						urlCurrent_xz="$(rsync -n ${hostname}::${dir}${release_base_string} | awk '{print $5}' | sed -e 's/<[^>]*>//g' | grep "${selectStr}" | grep ".xz$")"
+						urlCurrent_asc="$(rsync -n ${hostname}::${dir}${release_base_string} | awk '{print $5}' | sed -e 's/<[^>]*>//g' | grep "${selectSt}" | grep ".asc$")"
 						printf "${server%releases/*}${release_base_string}${urlCurrent_xz}\n"
 						printf "${server%releases/*}${release_base_string}${urlCurrent_asc}\n"
 						exit
 					fi
 				;;
 				bin*|pack*|kernel*|dist*|repos*|snaps*|patch*|meta*)
-					if [[ ${type} == ${server%://*} ]]; then echo "${server}"; exit; fi
+					if [[ ${type} == "${server%://*}" ]]; then echo "${server}"; exit; fi
 				;;
 			esac
        	fi
@@ -111,18 +111,18 @@
 			case "${mirror##*/}" in
 				release*)
 					locationStr="${release_base_string}"
-					urlBase="$server/$locationStr"
+					urlBase="${server}/${locationStr}"
 					selectStr="${locationStr#*current-*}"
 					selectStr="${selectStr%*/}"
 					#echo "${selectStr} | ${urlBase} | ${locationStr}" 2>&1
 					# filter for curl content, and grep'ing through mangled URLs, ie last few characters are missing or distorted
-					urlCurrent="$(curl -s $urlBase --silent | grep "$selectStr" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"
-					urlCurrent="$(echo $urlCurrent | awk '{print $1}' | head -n 1 )"
+					urlCurrent="$(curl -s ${urlBase} --silent | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"
+					urlCurrent="$(echo ${urlCurrent} | awk '{print $1}' | head -n 1 )"
 					urlCurrent="${urlCurrent%.t*}"
 					#echo "$(curl -s $urlBase --silent | grep "$selectStr")" 2>&1
 					#echo "release - ${release_base_string} | urlCurrent = ${urlCurrent}" 2>&1
 					if [[ "${release_base_string}" != "invalid" ]]; then
-						if [[ -n $urlCurrent ]];	then	
+						if [[ -n ${urlCurrent} ]];	then	
 							printf "${urlBase}${urlCurrent}.tar.xz\n"
 							printf "${urlBase}${urlCurrent}.tar.xz.asc\n"
 							exit
@@ -130,8 +130,8 @@
 					fi
 				;;
 				bin*|pack*|kernel*|dist*|repos*|snaps*|patch*|meta*)
-					if [[ ${type} == ${server%://*} ]]; then echo "${server}"; exit; fi
+					if [[ ${type} == "${server%://*}" ]]; then echo "${server}"; exit; fi
 				;;
 			esac
 		fi
-	done < <(cat $serversList | shuf)
+	done < <(cat ${serversList} | shuf)
