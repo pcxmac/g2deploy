@@ -51,7 +51,7 @@ function users()
 	echo "shell : sysop"
 	usermod --shell /bin/zsh sysop
 	homedir="$(eval echo ~sysop)"
-	chown sysop:sysop ${homedir} -R 2>/dev/null
+	chown sysop:sysop "${homedir}" -R 2>/dev/null
 	echo "homedir"
 }
 
@@ -59,29 +59,29 @@ function users()
 function buildup()
 {
     #echo "getting stage 3"
-	local profile=$1
-	local offset=$2
-	#local dSet=$3
-	local selection=$4
+	#local profile="${1:?}"
+	local offset="${2:?}"
+	#local dSet="${3:?}"
+	local selection="${4:?}"
 
 	#setExists=
 	#snapshot="$(zfs list -o name -t snapshot | sed '1d' | grep '${dSet}')"
 
 	# VERIFY ZFS MOUNT IS in DF
-	echo "prepfs ~ ${offset}/" 2>&1
-	echo "deleting old files (calculating...)" 2>&1
-	count="$(find ${offset}/ | wc -l)"
+	#echo "prepfs ~ ${offset}/" 2>&1
+	#echo "deleting old files (calculating...)" 2>&1
+	count="$(find "${offset}/" | wc -l)"
 
 	if [[ ${count} -gt 1 ]]
 	then
-		rm -rv ${offset}/* | pv -l -s ${count} 2>&1 > /dev/null
+		rm -rv "${offset:?}/*" | pv -l -s "${count}" > /dev/null
 	else
 		echo -e "done "
 	fi
-	echo "finished clear_fs ... ${offset}/" 2>&1
+	#echo "finished clear_fs ... ${offset}/" 2>&1
 
 	# file method does not work, redress later...
-	files="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/releases.mirrors http ${selection})"
+	files="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/releases.mirrors" http "${selection}")"
 	filexz="$(echo "${files}" | grep '.xz$')"
 	fileasc="$(echo "${files}" | grep '.asc$')"
 	serverType="${filexz%//*}"
@@ -91,46 +91,46 @@ function buildup()
 
 	case ${serverType%//*} in
 		"file:/")
-			echo "LOCAL FILE TRANSFER ... " 2>&1
-			mget ${filexz#*//} ${offset}/
-			mget ${fileasc#*//} ${offset}/
+			#echo "LOCAL FILE TRANSFER ... " 2>&1
+			mget "${filexz#*//}" "${offset}/"
+			mget "${fileasc#*//}" "${offset}/"
 		;;
 		"http:"|"rsync:")
-			echo "REMOTE FILE TRANSFER - ${serverType%//*}//" 2>&1
-			echo "fetching ${filexz}..." 2>&1
-			mget ${filexz} ${offset}/
-			echo "fetching ${fileasc}..." 2>&1
-			mget ${fileasc} ${offset}/
+			#echo "REMOTE FILE TRANSFER - ${serverType%//*}//" 2>&1
+			#echo "fetching ${filexz}..." 2>&1
+			mget "${filexz}" "${offset}/"
+			#echo "fetching ${fileasc}..." 2>&1
+			mget "${fileasc}" "${offset}/"
 		;;
 	esac
 
-	fileasc=${fileasc##*/}
-	filexz=${filexz##*/}
+	fileasc="${fileasc##*/}"
+	filexz="${filexz##*/}"
 
-	gpg --verify $offset/$fileasc
-	rm $offset/$fileasc
+	gpg --verify "$offset/$fileasc"
+	rm "$offset/$fileasc"
 
 	echo "decompressing $filexz...@ $offset" 2>&1
-	decompress $offset/$filexz $offset
-	rm $offset/$filexz
+	decompress "$offset/$filexz" "$offset"
+	rm "$offset/$filexz"
 
     echo "setting up mounts"
-	mkdir -p ${offset}/var/lib/portage/binpkgs
-	mkdir -p ${offset}/var/lib/portage/distfiles
-	mkdir -p ${offset}/srv/crypto/
-	mkdir -p ${offset}/var/lib/portage/repos/gentoo
+	mkdir -p "${offset}/var/lib/portage/binpkgs"
+	mkdir -p "${offset}/var/lib/portage/distfiles"
+	mkdir -p "${offset}/srv/crypto/"
+	mkdir -p "${offset}/var/lib/portage/repos/gentoo"
 }
 
 
 function system()
 {
-	local pkgs="/package.list"
+	#local pkgs="/package.list"
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
 	export emergeOpts
 
 	echo "ISSUING UPDATES"
-	emerge $emergeOpts -b -uDN --with-bdeps=y @world --ask=n
+	emerge "$emergeOpts" -b -uDN --with-bdeps=y @world --ask=n
 
 	echo "PATCHING UPDATES"
 	# INJECT POINT FOR PATCH PROCESSOR
@@ -138,7 +138,7 @@ function system()
 	rm /patches.sh
 
 	echo "EMERGE PROFILE PACKAGES"
-	emerge ${emergeOpts} $(cat /package.list)
+	emerge "${emergeOpts}" "$(cat /package.list)"
 	rm /package.list
 
 	emergeOpts="--verbose-conflicts"
@@ -148,7 +148,7 @@ function system()
 
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 	echo "POST INSTALL UPDATE !!!"
-	emerge -b -uDN --with-bdeps=y @world --ask=n $emergeOpts
+	emerge -b -uDN --with-bdeps=y @world --ask=n "$emergeOpts"
 
 	#	
 	#	
@@ -171,8 +171,8 @@ function system()
 
 function services()
 {
-	local lineNum=0
-	local service_list=$1
+	#local lineNum=0
+	local service_list="${1:?}"
 
 	bash <(curl "${service_list}" --silent)
 }
@@ -180,7 +180,7 @@ function services()
 function locales()
 {
 
-    local key=$1
+    local key="${1:?}"
 	locale-gen -A
 	eselect locale set en_US.utf8
 
@@ -231,7 +231,7 @@ function locales()
 
 	dataset=""				#	the working dataset of the installation
 	directory=""			# 	the working directory of the prescribed dataset
-	profile=""				#	the build profile of the install
+	#profile=""				#	the build profile of the install
 	selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
 
 
@@ -246,7 +246,7 @@ function locales()
 				then	
 					echo "${directory}..."
         	        dataset="${x#*=}"
-					if [[ -n "$(zfs list -t snapshot | \grep "${dataset}@safe")" ]];then zfs destroy ${dataset}@safe; echo "deleting ${dataset}@safe";fi
+					if [[ -n "$(zfs list -t snapshot | \grep "${dataset}@safe")" ]];then zfs destroy "${dataset}@safe"; echo "deleting ${dataset}@safe";fi
 				else
 					echo "dataset does not exist, exiting."
 					exit
@@ -267,37 +267,36 @@ function locales()
         case "${x}" in
             build=*)
 				_selection="${x#*=}"
-				_profile="$(getG2Profile ${x#*=})"
+				_profile="$(getG2Profile "${x#*=}")"
 				echo "PROFILE = ${_profile}"
             ;;
         esac
     done
 
 	if [[ -z "${_profile}" ]];then echo "profile does not exist for $_selection"; exit; fi
-	clear_mounts ${directory}
+	clear_mounts "${directory}"
 
 #	NEEDS A MOUNTS ONLY PORTION.
 
 	#mount | grep ${directory}
-	buildup ${_profile} ${directory} ${dataset} ${_selection}
-	mounts ${directory}
+	buildup "${_profile}" "${directory}" "${dataset}" "${_selection}"
+	mounts "${directory}"
 
-	patch_user ${directory} ${_profile}
-	patch_sys ${directory} ${_profile}
-	patch_portage ${directory} ${_profile}
+	patchFiles_user "${directory}" "${_profile}"
+	patchFiles_sys "${directory}" "${_profile}"
+	patchFiles_portage "${directory}" "${_profile}"
 
-	zfs_keys ${dataset}
+	zfs_keys "${dataset}"
 	echo "certificates ?"
 
-	pkgProcessor ${_profile} ${directory} > ${directory}/package.list
-	patchSystem ${_profile} 'deploy' > ${directory}/patches.sh
-	
-	chroot ${directory} /bin/bash -c "locales ${_profile}"
+	pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
+	patchSystem "${_profile}" 'deploy' > "${directory}/patches.sh"
+	chroot "${directory}" /bin/bash -c "locales ${_profile}"
 
 	#install_modules ${directory}	--- THIS NEEDS TO BE INTEGRATED IN TO UPDATE & INSTALL, DEPLOY IS USR SPACE ONLY, NOT BOOTENV
- 	chroot ${directory} /bin/bash -c "system"
-	chroot ${directory} /bin/bash -c "users ${_profile}"
-	services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
+ 	chroot "${directory}" /bin/bash -c "system"
+	chroot "${directory}" /bin/bash -c "users ${_profile}"
+	services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/package.mirrors" http)/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
 
 	echo "services URL = ${services_URL}"
 
@@ -307,8 +306,8 @@ function locales()
 	#	
 	#	
 
-	chroot ${directory} /bin/bash -c "services ${services_URL}"
-	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key ${dataset}
-	clear_mounts ${directory}
-	chown root:root ${directory}
-	zfs snapshot ${dataset}@safe
+	chroot "${directory}" /bin/bash -c "services ${services_URL}"
+	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key "${dataset}"
+	clear_mounts "${directory}"
+	chown root:root "${directory}"
+	zfs snapshot "${dataset}@safe"

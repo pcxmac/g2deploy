@@ -1,6 +1,6 @@
 
 #!/bin/bash
-SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
+SCRIPT_DIR="$(realpath "${BASH_SOURCE:-$0}")"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
     # INPUTS
@@ -54,7 +54,7 @@ function update_runtime() {
 	echo "EMERGE MISSING PACKAGES"
 	if [[ -f /package.list ]]
 	then
-		emerge ${emergeOpts} $(cat /package.list)
+		emerge "${emergeOpts}" $(cat /package.list)
 		rm /package.list
 	fi
 
@@ -67,7 +67,7 @@ function update_runtime() {
 		emerge portage --oneshot --ask=n
 	fi
 		
-	sudo emerge -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y ${exclude_atoms}
+	sudo emerge -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y "${exclude_atoms}"
 	eselect news read new
 	
 }
@@ -77,15 +77,15 @@ export -f update_runtime
 
 # DESIGNATE A WORKING DIRECTORY TO
 
-for x in $@
+for x in "$@"
 do
 	case "${x}" in
 		work=*)
-			directory="$(getZFSMountPoint ${x#*=})"
+			directory="$(getZFSMountPoint "${x#*=}")"
 			rootDS="$(df / | tail -n 1 | awk '{print $1}')"
-			target="$(getZFSMountPoint ${rootDS})"
+			target="$(getZFSMountPoint "${rootDS}")"
 
-			if [[ ${directory} == ${target} ]]
+			if [[ ${directory} == "${target}" ]]
 			then
 				echo "cannot update mounted root file system (ZFS) !"
 				echo "**${directory}** ?? **${target}**"
@@ -93,7 +93,7 @@ do
 			else
 				echo "shazaam!"
 				dataset="${x#*=}"
-				_profile="$(getG2Profile ${directory})"
+				_profile="$(getG2Profile "${directory}")"
 			fi
 		;;
 	esac
@@ -114,16 +114,16 @@ echo "PROFILE -- $_profile"
 #	selinux = ???
 #
 
-echo ${directory}
+echo "${directory}"
 
 if [[ ! -d ${directory} ]];then exit; fi
 
-clear_mounts ${directory}
+clear_mounts "${directory}"
 
 kversion=$(getKVER)
 kversion=${kversion#*linux-}
 
-mounts ${directory}
+mounts "${directory}"
 
 # update
 for x in $@
@@ -134,37 +134,36 @@ do
 			#patchProcessor ${directory} ${profile}
 			# zfs only
 			rootDS="$(df / | tail -n 1 | awk '{print $1}')"
-			target="$(getZFSMountPoint ${rootDS})"
+			target="$(getZFSMountPoint "${rootDS}")"
 
-			patch_portage ${directory} ${_profile}
+			patchFiles_portage "${directory} ${_profile}"
 
-			pkgProcessor ${_profile} ${directory} > ${directory}/package.list
-			patchSystem ${_profile} 'update' > ${directory}/patches.sh
+			pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
+			patchSystem "${_profile}" 'update' > "${directory}/patches.sh"
 
-			chroot ${directory} /bin/bash -c "update_runtime"
+			chroot "${directory}" /bin/bash -c "update_runtime"
 			# patch over new software files, if required.
-			patch_sys ${directory} ${_profile}
-
+			patchFiles_sys "${directory}" "${_profile}"
 	;;
 	esac
 done
 
-for x in $@
+for x in "$@"
 do
 	case "${x}" in
 		bootpart=*)
 			efi_part="${x#*=}"
-			type_part="$(blkid ${efi_part})"
+			type_part="$(blkid "${efi_part}")"
 			if [[ ${type_part} == *"TYPE=\"vfat\""* ]];
 			then
 				echo "update boot ! @ ${efi_part} @ ${dataset} :: ${directory} >> + $(getKVER)"
 				# IS THIS WORKING ?? NOT UPDATING BOOT RECORD ON DIFFERENT SETS
 
 				echo "mount ${efi_part} ${directory}/boot"
-				mount ${efi_part} ${directory}/boot
+				mount "${efi_part}" "${directory}/boot"
 				echo "....."
-				editboot ${kversion} "${dataset}"
-				install_modules ${directory}
+				editboot "${kversion}" "${dataset}"
+				install_modules "${directory}"
 			else
 				echo "no mas"
 			fi
@@ -172,4 +171,4 @@ do
 	esac
 done
 
-clear_mounts ${directory}
+clear_mounts "${directory}"

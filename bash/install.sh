@@ -243,30 +243,24 @@ function setup_boot()
 			fi
 
 			#dstDir="$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')/${ddataset}"
-			boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)/boot/*"	
+			boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
 			dstDir="${dpath}/${ddataset}"
 			echo "----------------------------------------------------------------------------------"
-			echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)/boot/*"
+			echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
 			echo "dst Dir = ${dstDir} :: ${boot_src}"
-sleep 20
 			#boot_src="ftp://10.1.0.1/patchfiles/boot/*"
 			if [[ ! -d ${dstDir} ]]; then mkdir -p ${dstDir}; fi
 			mount "$(echo "${parts}" | grep '.2')" ${dstDir}/boot
 			mget ${boot_src} ${dstDir}/boot
-sleep 10
 			kversion=$(getKVER)
 			kversion=${kversion#*linux-}
 			echo "KVERSION = ${kversion}" 2>&1
 
-echo "installing modules ..."
-sleep 10
+			echo "installing modules ..."
 			install_modules ${dstDir}			# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
 
-echo "editing boot"
-sleep 10
+			echo "editing boot"
 			editboot ${kversion} "${dpool}/${ddataset}"
-
-echo "done..."
 			umount ${dstDir}/boot
  }
 
