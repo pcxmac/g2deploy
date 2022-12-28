@@ -15,10 +15,6 @@
 #
 #       https://www.gentoo.org/glep/glep-0074.html (MANIFESTS)   
 #       
-#       
-
-
-# DO I NEED TO KILL RSYNC OR LIGHTTPD ?
 
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
@@ -29,7 +25,6 @@ echo "################################# [ REPOS ] ##############################
 URL="rsync://rsync.us.gentoo.org/gentoo-portage/"
 echo -e "SYNCING w/ ***$URL*** [REPOS]"
 
-# overcome sticky unverified download quarantine issue which occassionally props up (rsync)
 unverified="none"
 testCase="$(emerge --info | grep 'location:' | awk '{print $2}')/.tmp-unverified-download-quarantine"
 #while [[ -n ${unverified} ]]
@@ -68,9 +63,6 @@ echo "updating mlocate-db"
 hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | /usr/bin/awk '{print $8}')"
 hostip="$(/bin/ip --brief address show dev ${hostip} | /usr/bin/awk '{print $3}')"
 
-# IMPORT meta-profile-package-patch data in to git repo, for tracking config changes (single user)
-# in the future, a multi-user mode approach will be required to handle multiple systems/users/packages/profiles
-
 pkgHOST="$(scanConfig ${SCRIPT_DIR}/config/host.cfg pkgserver host)"
 
 mget "rsync://${pkgHOST}/gentoo/meta/*"		    "${SCRIPT_DIR}/meta/"
@@ -85,19 +77,10 @@ chown "${owner}:${group}" "${SCRIPT_DIR}/meta" -R			1>/dev/null
 chown "${owner}:${group}" "${SCRIPT_DIR}/profiles" -R		1>/dev/null
 chown "${owner}:${group}" "${SCRIPT_DIR}/packages" -R		1>/dev/null
 
-# sync repo from git source
 
 repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
 
-# type of meta data to crunch - GLSA / REPO / NEWS / DTD / ...
-
-# MANUAL BUILD OF REPO
-
 repo="/var/lib/portage/repository/*"
-
-#if [[ ! -d ${repo} ]]; then git -C ${repo%/*} clone ${repoServer}; fi
-#git -C ${repo} fetch --all
-#git -C ${repo} pull
 
 for x in $(ls "${repo%/*}")
 do

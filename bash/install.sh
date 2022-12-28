@@ -1,17 +1,10 @@
 #!/bin/bash
 
-    # INPUTS    
-    #           WORK=chroot offset		- working directory for install, skip if exists (DEPLOY).
-	#			BOOT=/dev/sdX			- install to boot device, after generating image
-	#			
-	#		
-
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
-# NEED TO BREAK THIS FUNCTION DOWN IN TO SMALLER PARTS
 function setup_boot()	
 {
 			#ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"
@@ -63,7 +56,6 @@ function setup_boot()
 						spath_root="$(echo ${spath} | grep "subvol=/" | head -n 1 | awk '{print $3}')"
 						spath_subvol="$(echo ${spath} | grep "subvol=/${sdataset}" | head -n 1 | awk '{print $3}')"
 						if [[ -n ${spath_subvol} ]]; then spath=${spath_subvol}; else spath="${spath_root}/${sdataset}"; fi
-						#sresult="$(ssh ${shost} "btrfs filesystem show ${spath} | grep 'uuid'")"
 					else
 						spath="$(blkid | grep ${spool} | grep 'btrfs')"
 						spath="$(echo ${spath} | awk '{print $1}' | tr -d ':')"
@@ -71,7 +63,6 @@ function setup_boot()
 						spath_root="$(echo ${spath} | grep "subvol=/" | head -n 1 | awk '{print $3}')"
 						spath_subvol="$(echo ${spath} | grep "subvol=/${sdataset}" | head -n 1 | awk '{print $3}')"
 						if [[ -n ${spath_subvol} ]]; then spath=${spath_subvol}; else spath="${spath_root}/${sdataset}"; fi
-						#sresult="$(btrfs filesystem show ${spath} | grep 'uuid')"
 					fi
 				;;
 				ssh)
@@ -88,14 +79,6 @@ function setup_boot()
 					spath=${source}
 				;;
 			esac
-
-			#
-			#	ADD SUPPORT FOR CONFIGS, MORE XFS FEATUERS ... AND POSSIBLY DEPRICATE NTFS
-			#
-			#	ONLY SUPPORTS ZFS !!!
-			#
-			#	NEED TO TEAR AWAY the CONST /srv/... needs to be more dynamic/temporal and assignable.
-
 
 			destination_url=$2				# DESTINATION
 			dtype=${destination_url%://*}	# example :	zfs:///dev/sda:/pool/dataset ; ntfs:///dev/sdX:/mnt/sdX ; config:///path/to/config
@@ -143,7 +126,6 @@ function setup_boot()
 			partprobe
 			sync
 
-			# floating schemas + Oldap = dynamic builds
 			sgdisk --new 1:0:+32M -t 1:EF02 ${disk}
 			sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
 			sgdisk --new 3:0 -t 3:8300 ${disk}
@@ -156,15 +138,6 @@ function setup_boot()
 			wipefs -af "$(echo "${parts}" | grep '.2')"
 			wipefs -af "$(echo "${parts}" | grep '.3')"
 			mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
-
-			#	
-			#	if a directory + contents exists @ mountpoint, this will fail, please check for potential collision and redress w/ user
-			#	
-			#	IP ADDRESSES NEED A UNIVERSAL N.DOMAIN PTR
-			#	
-			#	AUTOFS MODULE FOR VFAT, (BOOT DISK -- /boot)
-			#	
-			#	
 
 			if [[ ! -d ${dpath} && ${dtype} != "zfs" ]]
 			then 
@@ -242,13 +215,12 @@ function setup_boot()
 				esac
 			fi
 
-			#dstDir="$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')/${ddataset}"
 			boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
 			dstDir="${dpath}/${ddataset}"
 			echo "----------------------------------------------------------------------------------"
 			echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
 			echo "dst Dir = ${dstDir} :: ${boot_src}"
-			#boot_src="ftp://10.1.0.1/patchfiles/boot/*"
+
 			if [[ ! -d ${dstDir} ]]; then mkdir -p ${dstDir}; fi
 			mount "$(echo "${parts}" | grep '.2')" ${dstDir}/boot
 			mget ${boot_src} ${dstDir}/boot
@@ -314,7 +286,6 @@ function add_to()
 						spath_root="$(echo ${spath} | grep "subvol=/" | head -n 1 | awk '{print $3}')"
 						spath_subvol="$(echo ${spath} | grep "subvol=/${sdataset}" | head -n 1 | awk '{print $3}')"
 						if [[ -n ${spath_subvol} ]]; then spath=${spath_subvol}; else spath="${spath_root}/${sdataset}"; fi
-						#sresult="$(ssh ${shost} "btrfs filesystem show ${spath} | grep 'uuid'")"
 					else
 						spath="$(blkid | grep ${spool} | grep 'btrfs')"
 						spath="$(echo ${spath} | awk '{print $1}' | tr -d ':')"
@@ -322,7 +293,6 @@ function add_to()
 						spath_root="$(echo ${spath} | grep "subvol=/" | head -n 1 | awk '{print $3}')"
 						spath_subvol="$(echo ${spath} | grep "subvol=/${sdataset}" | head -n 1 | awk '{print $3}')"
 						if [[ -n ${spath_subvol} ]]; then spath=${spath_subvol}; else spath="${spath_root}/${sdataset}"; fi
-						#sresult="$(btrfs filesystem show ${spath} | grep 'uuid')"
 					fi
 				;;
 			esac
@@ -360,10 +330,6 @@ function add_to()
 
 			echo "source = ${source} | stype = ${stype} | shost = ${shost} | pool = ${spool} | sdataset = ${sdataset} | ssnapshot =  ${ssnapshot} | root_path = ${root_path} | spath_root = ${spath_root} | spath_subvol = ${spath_subvol}"
 			echo "destination = ${destination} | Dtype = ${dtype} | Dhost = ${dhost} | dpool = ${dpool} | ddataset = ${ddataset} | dpath = ${dpath}"
-
-			###  IF [[ ${dhost} == ${destination} ]] then, this is being written to existing pool, check pool exists, then skip to [send]
-
-			sleep 100
 
 			clear_mounts ${disk}
 			sync
@@ -420,14 +386,12 @@ function add_to()
 				esac
 			fi
 
-			#dstDir="$(zfs get mountpoint ${safe_src} 2>&1 | sed -n 2p | awk '{print $3}')/${ddataset}"
 			boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
 			dstDir="${dpath}/${ddataset}"
 			echo "----------------------------------------------------------------------------------"
 			echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
 			echo "dst Dir = ${dstDir} :: ${boot_src}"
 
-			#boot_src="ftp://10.1.0.1/patchfiles/boot/*"
 			if [[ ! -d ${dstDir} ]]; then mkdir -p "${dstDir}"; fi
 			mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"
 			mget "${boot_src}" "${dstDir}/boot"
@@ -439,9 +403,6 @@ function add_to()
 			editboot "${kversion}" "${dpool}/${ddataset}"
 			umount "${dstDir}/boot"
  }
-
-
-#########################################################################################################
 
 	dataset=""				#	the working dataset of the installation
 	directory=""			# 	the working directory of the prescribed dataset
@@ -466,12 +427,10 @@ function add_to()
 				setup_boot ${_source} ${_destination}
 			
 			;;
-			# only for COW F/Sytems
 			add=*)
 				_destination=${x#*=}
 				add_to ${_source} ${_destination}
 			;;
-			# update, see update.sh (location) (boot disk)
 		esac
 	done
 

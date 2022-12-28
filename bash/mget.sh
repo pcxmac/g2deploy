@@ -1,19 +1,10 @@
 #!/bin/bash
-#
-# MGET ISSUE, on HTTP MIRRORING PACKAGE.MIRRORS, THE SOURCE FILE CONVERTS TO A FOLDER (desired to be name of destination), THEN SOURCE FILE, OG. Where as I want just desired ... 
-#
-# ADD SUPPORT FOR STDOUT so as to PIPE to DECOMPRESSION ALGOs, etc...
-#
-#
-#
-#
 
 function getSSH()
 {
 	echo "getSSH"
 }
 
-# needs passwordless-authorized key to stream through getRSYNC
 function getRSYNC()
 {
 	local host="${*:?}"
@@ -28,7 +19,6 @@ function getRSYNC()
 
 	while [[ "${waiting}" == 1 && -n "${host}" ]]
 	do
-		# timout introduced because some rsync servers will take forever and a day while generating directory of shares
 		rCode="$(timeout 10 rsync -n "${host}":: 2>&1 | \grep 'Connection refused')"
         if [[ -z "${rCode}" ]]
 		then
@@ -37,12 +27,9 @@ function getRSYNC()
 				uri="${1:?}"
 				scp "${uri#*rsync://}" /dev/stdout
 			else
-				# local move ?
 				if [[ -n ${host} ]]
 				then
 					rsync -a --no-motd --info=progress2 --rsync-path="sudo rsync" "$@" 
-				#else
-					#rsync -a --no-motd --info=progress2 --rsync-path="sudo rsync" "${@#*rsync://}"
 				fi
 			fi
 			waiting=0
@@ -53,10 +40,6 @@ function getRSYNC()
 			if [[ ${pause} == 0 ]]; then waiting=0; fi
 		fi
 	done
-
-	# local move state, host="" & local_move = source $@ | rsync:/// is invalid according to rsync, so $@ must be pruned to reflect a hostless source
-	# ex. string for @$ = "rsync:///var/lib/portage/patchfiles/ /tmp/output/" 
-	# change to ${@rsync://#*/}
 
 	if [[ -z ${host} ]]
 	then
@@ -134,7 +117,7 @@ function mget()
 	local url="${1:?}" # source_URL
 
 	case ${url%://*} in
-		# local rsync only
+
 		ftp*)
 			if [[ -z ${destination} ]]
 			then
@@ -161,7 +144,7 @@ function mget()
 				rm ${destination%/*}/${url:?} -R 
 			fi
 		;;
-		# local download only
+
 		ssh)
 			host=${url#*://}
 			_source=${host#*:/}
@@ -173,7 +156,6 @@ function mget()
 			ssh "${host}" "tar cf - /${_source}/" | pv --timer --rate | tar xf - -C "${destination}/"
 			mv ${destination}/${_source} ${destination}/__temp
 			rm ${destination:?}/${offset:?} -R
-			# move would try to replace existing folders, and throw errors
 			cp ${destination}/__temp/* ${destination} -Rp
 			rm ${destination}/__temp -R
 		;;
@@ -183,17 +165,8 @@ function mget()
 				echo "$(getRSYNC "$*")"
 			else
 				echo "getRSYNC "$*"" > ${SCRIPT_DIR}/bash/output.log
-				#echo "$@" > "${SCRIPT_DIR}/bash/output.log"
 	            getRSYNC "$@"  # ${url} ${destination} ${args}
 			fi
 		;;
 	esac
 }
-
-
-# API_ENTRY		$src	$dst
-
-#if [[ $# -gt 0 ]]
-#then
-#	mget $1 $2
-#fi

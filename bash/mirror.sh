@@ -1,21 +1,5 @@
 #!/bin/bash
 
-#	ARGS: 	$MIRROR{ release, snapshots, distfiles, repos } [$TYPE = GET METHOD ] [ $PROFILE{ eselect* } | prefix_type (http/rsync...) | ]
-#	OUTPUT: [SCORED] [RANDOMIZED] MIRROR URL (file)
-#
-#	MIRROR:
-#			RELEASE		:	echo the URL for the .XZ and .ASC files (URI.xz|.asc)
-#			SNAPSHOTS	:	echo the URL for snapshot sync (system initialization) ... (file|rsync://)
-#			DISTFILES	:	echo the URL for distfile sync (file|rsync://)
-#			REPOS		:	echo the URL for repos sync (file|rsync://)
-#
-#
-#
-#
-#
-#
-
-
 	profile="${3}"				# parameter 3 can be null, and is handled subsequently.
 	type="${2:?}"
 	mirror="${1:?}"
@@ -72,7 +56,6 @@
 		done < <(cat ${serversList} | shuf)
 	fi
 
-    # {WEB}://
     while read -r server
     do
 		if [[ ${type} == "rsync" ]] && [[ ${server%://*} == "rsync" ]]
@@ -84,7 +67,6 @@
 						echo "${server}"
 						exit
 					else
-						# THIS IS FOR A SPECIFIC REFERENCE, not a general repo sync
 						host="${server#*://}"
 						tld="${host##*.}"
 						tld="${tld%%/*}"
@@ -114,13 +96,9 @@
 					urlBase="${server}/${locationStr}"
 					selectStr="${locationStr#*current-*}"
 					selectStr="${selectStr%*/}"
-					#echo "${selectStr} | ${urlBase} | ${locationStr}" 2>&1
-					# filter for curl content, and grep'ing through mangled URLs, ie last few characters are missing or distorted
 					urlCurrent="$(curl -s ${urlBase} --silent | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"
 					urlCurrent="$(echo ${urlCurrent} | awk '{print $1}' | head -n 1 )"
 					urlCurrent="${urlCurrent%.t*}"
-					#echo "$(curl -s $urlBase --silent | grep "$selectStr")" 2>&1
-					#echo "release - ${release_base_string} | urlCurrent = ${urlCurrent}" 2>&1
 					if [[ "${release_base_string}" != "invalid" ]]; then
 						if [[ -n ${urlCurrent} ]];	then	
 							printf "${urlBase}${urlCurrent}.tar.xz\n"

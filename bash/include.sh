@@ -1,9 +1,4 @@
 #!/bin/bash
-#	Eventually mirrors will be invoked through http / passed two args, and yielded a return text / curl
-#
-#	needs to be slimmed down, patches will become specific to each invokee, but the functionality will be captured
-#	in smaller functions : patch_files ; patch_portage ; patch_user ; patch_sys
-#
 
 source ${SCRIPT_DIR}/bash/mget.sh
 
@@ -11,12 +6,8 @@ tStamp() {
 	echo "0x$("obase=16; $(date +%s)" | bc)"
 }
 
-
-# outputs a stream of text to be executed by #!/bin/bash
 function patchSystem()	
 {
-	# PROFILE	 	$1
-	# PATCH TYPE 	$2
 
     local profile="${1:?}"
 	local type="${2:?}"
@@ -45,9 +36,6 @@ patchFiles_portage() {
 	common_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common" | sed 's/ //g' | sed "s/\"/'/g")"
 	spec_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${_profile}" | sed 's/ //g' | sed "s/\"/'/g")"
 
-	#echo "common_conf = ${common_URI}.conf" 2>&1
-	#echo "spec_conf = ${spec_URI}" 2>&1
-
 	if [[ -d ${offset}/etc/portage/package.license ]];then rm "${offset}/etc/portage/package.license" -R; fi
 	if [[ -d ${offset}/etc/portage/package.use ]];then rm "${offset}/etc/portage/package.use" -R; fi
 	if [[ -d ${offset}/etc/portage/package.mask ]];then rm  "${offset}/etc/portage/package.mask" -R;fi
@@ -58,7 +46,6 @@ patchFiles_portage() {
 	echo -e "$(mget ${common_URI}.mask)\n$(mget ${spec_URI}.mask)" > ${offset}/etc/portage/package.mask
 	echo -e "$(mget ${common_URI}.license)\n$(mget ${spec_URI}.license)" > ${offset}/etc/portage/package.license
 
-	# THIS NEEDS TO BE MOVED TO THE INSTALLER.SH
 	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf
 
 	while read -r line; do
@@ -94,24 +81,19 @@ patchFiles_sys() {
     local offset="${1:?}"
 	local _profile="${2:?}"
 
-	#echo "PATCH SYS - ${_profile}"
-
 	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
 
 	mget "${psrc}/etc/" "${offset}/etc/" 
 	mget "${psrc}/var/" "${offset}/var/" 
 	mget "${psrc}/usr/" "${offset}/usr/"
-	# this operation tends to rewrite the root directory w/ portage ownership, not sure how to overwrite rsync behavior in getRSYNC
+
 	mget "${psrc}/" "${offset}/ --exclude='*/'"
 	chown root:root /* 
 }
 
-#zfs only
 function editboot() 
 {
-	# if the instance is already detected, it will be overwritten ${linenumber}, if not detected, it will write a new record
 
-	# INPUTS : ${x#*=} - dataset
 	local VERSION="${1:?}"
 	local DATASET="${2:?}"
 	local offset="$(getZFSMountPoint "${DATASET}")/boot"
@@ -122,16 +104,8 @@ function editboot()
 	local loadL
 	local initrdL
 
-	#echo "version = ${VERSION}" 2>&1
-	#echo "dataset = ${DATASET}" 2>&1
-	#echo "offset = ${offset}" 2>&1
-	#echo "pool = ${POOL}" 2>&1
-	#echo "uuid = ${UUID}" 2>&1
-	#echo "line number = ${line_number}" 2>&1
-
 	sed -i "/default_selection/c default_selection ${DATASET}" "${offset}/EFI/boot/refind.conf"
 
-	# EDIT EXISTING RECORD
 	if [[ -n "${line_number}" ]]
 	then
 		menuL="$((line_number-5))"
@@ -140,7 +114,6 @@ function editboot()
 		sed -i "${menuL}s|menuentry.*|menuentry \"Gentoo Linux ${VERSION} ${DATASET}\" |" ${offset}/EFI/boot/refind.conf
 		sed -i "${loadL}s|loader.*|loader \\/linux\\/${VERSION}\\/vmlinuz|" ${offset}/EFI/boot/refind.conf
 		sed -i "${initrdL}s|initrd.*|initrd \\/linux\\/${VERSION}\\/initramfs|" ${offset}/EFI/boot/refind.conf
-	# ADD TO BOOT SPEC
 	else
 		echo "menuentry \"Gentoo Linux $VERSION $DATASET\"" >> "${offset}/EFI/boot/refind.conf"
 		echo '{' >> "${offset}/EFI/boot/refind.conf"
@@ -188,29 +161,26 @@ function clear_mounts()
 
 function mounts()
 {
-    #echo "getting stage 3"
 	local offset="${1:?}"
 	local mSize="$(cat /proc/meminfo | column -t | grep 'MemFree' | awk '{print $2}')"
 	mSize="${mSize}K"
 
-	# MOUNTS
 	echo "msize = $mSize"
 	mount -t proc proc "${offset}/proc"
 	mount --rbind /sys "${offset}/sys"
 	mount --make-rslave "${offset}/sys"
 	mount --rbind /dev "${offset}/dev"
 	mount --make-rslave "${offset}/dev"
-	# because autofs doesn't work right in a chroot ...
+
 	mount -t tmpfs -o size=$mSize tmpfs "${offset}/tmp"
 	mount -t tmpfs tmpfs "${offset}/var/tmp"
 	mount -t tmpfs tmpfs "${offset}/run"
 	echo "attempting to mount binpkgs..."  2>&1
-	# this is to build in new packages for future installs, not always present
+
 	mount --bind /var/lib/portage/binpkgs "${offset}/var/lib/portage/binpkgs"
-	#ls ${offset}/var/lib/portage/binpkgs
+
 }
 
-# NEEDS TO STREAM IN TO CHROOT, NOT PLACE FILE IN ROOT of DIRECTORY
 function pkgProcessor()
 {
     local profile="${1:?}"
@@ -218,9 +188,6 @@ function pkgProcessor()
 	local diffPkgs=""
 	local iBase=""
 	local allPkgs=""
-
-	#echo $profile 2>&1
-	#echo $offset 2>&1
 
 	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.pkgs" | sed 's/ //g')"
 	commonPkgs="$(curl $url --silent)"
@@ -230,8 +197,6 @@ function pkgProcessor()
 	iBase="$(chroot "${offset}" /usr/bin/qlist -I)"
 	iBase="$(echo "${iBase}" | uniq | sort)"
 
-	#diffPkgs="$iBase"
-	#diffPkgs="$(comm -13 <(echo "${iBase}") <(echo "${allPkgs}"))"
 	diffPkgs="$(awk 'FNR==NR {a[$0]++; next} !($0 in a)' <(echo "${iBase}") <(echo "${allPkgs}"))"
 	echo "${diffPkgs}" | sed '/^#/d' | sed '/^$/d'
 }
@@ -245,11 +210,9 @@ function install_modules()
 
 	kver="${kver#*linux-}"
 
-	# INSTALL BOOT ENV
-	#echo "mget "${ksrc}${kver}/" "${offset}/boot/LINUX/"" 2>&1
+
 	mget "${ksrc}${kver}" "${offset}/boot/LINUX/"
-	# INSTALL KERNEL MODULES
-	#echo "do I see this ?"
+
 	mget "${ksrc}${kver}/modules.tar.gz" "${offset}/"
 	pv "${offset}/modules.tar.gz" | tar xzf - -C "${offset}/"
 	rm "${offset}/modules.tar.gz"	
@@ -257,10 +220,6 @@ function install_modules()
 
 function getKVER() 
 {
-	# used when kernel source is alongside kernel boot spec folder
-	#local kver="$(curl ${url_kernel} | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep '.tar.gz$')"
-	#kver=${kver%.tar.gz*}
-	# used for kernel boot spec folder
 	local url_kernel="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/kernel.mirrors" ftp)"
 	local kver="$(curl "$url_kernel" --silent | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep "\-gentoo")"
 	kver="linux-${kver}"
@@ -282,12 +241,11 @@ function decompress() {
 }
 
 function getG2Profile() {
-	# assumes that .../amd64/17.X/... ; X will be preceeded by a decimal
+
 	local _mountpoint="${1:?}"
 	local _profile=""
 	local result=""
 
-	# if a directory exists, it is implied that this is the root, else, it's either predefined or implied to be self
 	if [[ -n "$(stat "${_mountpoint}" 2>/dev/null)" && -d "${_mountpoint}" ]]
 	then
 		result="$(chroot "${_mountpoint}" /usr/bin/eselect profile show | tail -n1)"
@@ -354,26 +312,22 @@ function compress_list() {
 	local src="${1:?}"
 	local dst="${2:?}"
 	
-	#echo "compressing LIST @ $src $dst"
 	tar cfz - -T "${src}" | (pv -p --timer --rate --bytes > "${dst}")
 }
 
 function rSync() {
 	local src="${1:?}"
 	local dst="${2:?}"
+
 	echo "rsync from ${src} to ${dst}"
 	rsync -c -a -r -l -H -p --delete-before --info=progress2 "${src}" "${dst}"
 }
 
 function zfs_keys() 
 {
-	# ALL POOLS ON SYSTEM, FOR GENKERNEL
-	# pools="$(zpool list | awk '{print $1}') | sed '1 d')"
-	# THE POOL BEING DEPLOYED TO ... -- DEPLOYMENT SCRIPT
-	#limit pools to just the deployed pool / not valid for genkernel which would attach all pools & datasets
+
 	local dataset="${1:?}"
 	local offset="$(zfs get mountpoint "${dataset}" 2>&1 | sed -n 2p | awk '{print $3}')"
-	#local dset
 	local format
 	local location
 	local location_type
@@ -384,13 +338,10 @@ function zfs_keys()
 	
 	for i in ${pools}
 	do
-		# query datasets
 		listing="$(zfs list | grep "${i}/" | awk '{print $1}')"
-		#echo "$listing"
 
 		for j in ${listing}
 		do
-			#dSet="$(zpool get bootfs $i | awk '{print $3}' | sed -n '2 p')"
 			dSet="${j}"
 			if [ "${dSet}" == '-' ]
 			then
@@ -400,47 +351,29 @@ function zfs_keys()
 				format="$(zfs get keyformat "${dSet}" | awk '{print $3}' | sed -n '2 p')"
 				location="$(zfs get keylocation "${dSet}" | awk '{print $3}' | sed -n '2 p')"
 			fi
-			# if format == raw or hex & location is a valid file ... if not a valid file , complain
-			# ie, not none or passphrase, indicating no key or passphrase, thus implying partition or keyfile type
 			if [ "${format}" == 'raw' ] || [ "${format}" == 'hex' ]
 			then
-				# possible locations are : http/s, file:///, prompt, pkcs11:
-				# only concerned with file:///
 				location_type="${location%:///*}"
 				if [ "${location_type}" == 'file' ]
 				then
-					# if not, then probably https:/// ....
-					# put key file in to initramfs
 					_source="${location#*//}"
 					destination="${_source%/*}"
 					destination="${offset}${destination}"
 					mkdir -p "${destination}"
 					if test -f "${_source}"; then
-						#echo "copying $_source to $destination"
 						cp "${_source}" "${destination}"
-					#else
-						#echo "key not found for $j"
 					fi
-					#echo "coppied $_source to $destination for $j"
-				#else
-					#echo "nothing to do for $j ..."
 				fi
 			fi
 		done
 	done
 }
-# this command pulls one key value out of the host.cfg, in same folder
-
-# ARG LIST SYNTAX : host.sh pkgserver host; yields = (ex.) 10.1.0.1
 
 function findKeyValue() {
-
-	# header has pattern "^\[[a-z].*\]$"
 
 	local header="${1:?}"
 	local key="${2:?}"
 	local scan=0
-	#local cfgFile="$(cat "${config_file}")"
 
 	while read -r line
 	do
@@ -459,11 +392,8 @@ function findKeyValue() {
 	done < "${config_file}"
 }
 
-
-# args : $1 = config_file path $2 = server $3 = key
 function scanConfig() {
 
-	# could test for the file's existence, maybe later...
 	local config_file="${1:?}"
 	local server="${2:?}"
 	local key="${3:?}"
@@ -492,6 +422,5 @@ function scanConfig() {
 					exit
 					;;
 	esac
-
 	echo "${line#*=}"
 }
