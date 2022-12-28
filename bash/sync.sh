@@ -21,8 +21,8 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
-pkgHOST="$(scanConfig ${SCRIPT_DIR}/config/host.cfg pkgserver host)"
-pkgROOT="$(scanConfig ${SCRIPT_DIR}/config/host.cfg pkgserver root)"
+pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg pkgserver host)"
+pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg pkgserver root)"
 
 echo "################################# [ REPOS ] #####################################"
 URL="rsync://rsync.us.gentoo.org/gentoo-portage/"
@@ -40,8 +40,7 @@ testCase="$(emerge --info | grep 'location:' | awk '{print $2}')/.tmp-unverified
 #	sleep 30
 #done
 
-emerge --sync | tee /var/log/esync.log
-
+#emerge --sync | tee /var/log/esync.log
 
 echo "############################### [ SNAPSHOTS ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/snapshots.mirrors" rsync)"
@@ -52,6 +51,9 @@ echo "############################### [ RELEASES ] #############################
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/releases.mirrors" rsync only-sync)"
 echo -e "SYNCING w/ $URL \e[25,42m[RELEASES]\e[0m";sleep 1
 if [[ ! -d "${pkgROOT}"/releases ]]; then mkdir -p "${pkgROOT}"/releases; fi
+
+
+
 find "${pkgROOT}"/releases/ -type l -delete
 rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}${ARCH}" "${pkgROOT}"/releases | tee /var/log/esync.log
 

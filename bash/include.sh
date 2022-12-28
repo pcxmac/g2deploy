@@ -369,8 +369,9 @@ function zfs_keys()
 
 function findKeyValue() {
 
-	local header="${1:?}"
-	local key="${2:?}"
+	local config_file="${1:?}"
+	local header="${2:?}"
+	local key="${3:?}"
 	local scan=0
 
 	while read -r line
@@ -384,41 +385,8 @@ function findKeyValue() {
 			if [[ ${line%%=*} == "${key}" ]]
 			then
 				echo "${line#*=}"
-				break
+				exit
 			fi
 		fi
 	done < "${config_file}"
-}
-
-function scanConfig() {
-
-	local config_file="${1:?}"
-	local server="${2:?}"
-	local key="${3:?}"
-	local line=""
-
-	case ${server} in
-		pkgserver)
-					case ${key} in
-						host)
-							line="$(findKeyValue "${server}" "${key}")"
-							;;
-						*)	exit
-							;;
-					esac
-					;;
-		buildserver)
-					case ${key} in
-						host)
-							line="$(findKeyValue "${server}" "${key}")"
-							;;
-						*)	exit
-							;;
-					esac
-					;;
-		*)
-					exit
-					;;
-	esac
-	echo "${line#*=}"
 }
