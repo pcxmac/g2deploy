@@ -28,15 +28,15 @@
   <span style="color:blue">rsync://mirrors.rit.edu/gentoo/releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/stage3-amd64-hardened-openrc-20221225T170313Z.tar.xz</span>
   <span style="color:blue">rsync://mirrors.rit.edu/gentoo/releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/stage3-amd64-hardened-openrc-20221225T170313Z.tar.xz.asc</span>
 
-  <u>./mirror.sh</u> <b>../config/kernel.mirrors ftp</b>
-  <span style="color:blue">ftp://pkg.hypokrites.me/kernels/current/</span>
+  <u>./mirror.sh</u> <b>../config/kernel.mirrors ftp</b>\
+  <span style="color:blue">ftp://pkg.hypokrites.me/kernels/current/</span>\
 
 
-<u>./mirror.sh</u> <b>../config/package.mirrors http</b>
-<span style="color:blue">http://pkg.hypokrites.me/gentoo/packages</span>
+<u>./mirror.sh</u> <b>../config/package.mirrors http</b>\
+<span style="color:blue">http://pkg.hypokrites.me/gentoo/packages</span>\
 
-<u>./mirror.sh</u> <b>../config/distfiles.mirrors rsync</b>
-<span style="color:blue">rsync://mirror.csclub.uwaterloo.ca/gentoo-distfiles/distfiles</span>
+<u>./mirror.sh</u> <b>../config/distfiles.mirrors rsync</b>\
+<span style="color:blue">rsync://mirror.csclub.uwaterloo.ca/gentoo-distfiles/distfiles</span>\
 ####
 <span style="color:red"><b>*</b> : </span> which servers are enabled/disabled (commented out), are controlled by the *.mirrors files in ../config
 
