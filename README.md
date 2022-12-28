@@ -3,7 +3,7 @@
   <u>./deploy.sh</u> <b>build=plasma work=zpool/plasma deploy</b>\
   <span style="color:red">(not yet implemented) 
   (concept-btrfs) ./deploy build=plasma work=btrfs_mount/subvol\
-  (concept-ext4,...) ./deploy build=plasma work=/path/to/rootfs deploy </span>\
+  (concept-ext4,...) ./deploy build=plasma work=/path/to/rootfs deploy </span>
 ###
 ##### <u>UPDATE USR SPACE FOR POOL/SET</u>
 
@@ -14,18 +14,18 @@
 
   <u>./install.sh</u> <b>work=zfs://wSys/hardened@safe boot=zfs:///dev/sda:/usb/g1 </b><span style="color:green">(standard installation)</span>\
   <u>./install.sh</u> <b>work=zfs://root@10.1.0.1:/wSys/gnome@safe boot=zfs:///dev/nvme0n1:/saturn/g2 </b><span style="color:green">(convert nvme to zpool, new dataset) </span>\
-  <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe add=zfs://saturn/g2 (add to existing pool, add/modify boot record) </b><span style="color:red"> >TESTING< </span>\
+  <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe add=zfs://saturn/g2 (add to existing pool, add/modify boot record) </b><span style="color:red"> >TESTING< </span>
 ###
 ##### <u>MIRROR URL FOR TYPE OF RESOURCE + PROTOCOL </u>
   <u>./mirror.sh</u> <b>../config/patchfiles.mirrors rsync</b>\
   <span style="color:blue">ex. output => "rsync://pkg.hypokrites.me/gentoo/patchfiles" (URI for patchfiles rsync access) </span>
 
   <u>./mirror.sh</u> <b>../config/releases.mirrors http plasma</b> <span style="color:red"> (releases mirror requires 3 arguments, all others are type and protocol)</span>\
-  <span style="color:blue">http://pkg.hypokrites.me/gentoo/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/stage3-amd64-desktop-openrc-20221205T133149Z.tar.xz</span>
+  <span style="color:blue">http://pkg.hypokrites.me/gentoo/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/stage3-amd64-desktop-openrc-20221205T133149Z.tar.xz</span> \
   <span style="color:blue">http://pkg.hypokrites.me/gentoo/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/stage3-amd64-desktop-openrc-20221205T133149Z.tar.xz.asc</span>
 
   <u>./mirror.sh</u> <b>../config/releases.mirrors rsync hardened</b>\
-  <span style="color:blue">rsync://mirrors.rit.edu/gentoo/releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/stage3-amd64-hardened-openrc-20221225T170313Z.tar.xz</span>
+  <span style="color:blue">rsync://mirrors.rit.edu/gentoo/releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/stage3-amd64-hardened-openrc-20221225T170313Z.tar.xz</span> \
   <span style="color:blue">rsync://mirrors.rit.edu/gentoo/releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/stage3-amd64-hardened-openrc-20221225T170313Z.tar.xz.asc</span>
 
   <u>./mirror.sh</u> <b>../config/kernel.mirrors ftp</b>\
