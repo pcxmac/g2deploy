@@ -12,7 +12,7 @@
 
   <u>./install.sh</u> <b>work=zfs://wSys/hardened@safe boot=zfs:///dev/sda:/usb/g1 </b><span style="color:green">(standard installation)</span>\
   <u>./install.sh</u> <b>work=zfs://root@10.1.0.1:/wSys/gnome@safe boot=zfs:///dev/nvme0n1:/saturn/g2 </b><span style="color:green">(convert nvme to zpool, new dataset) </span>\
-  <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe add=zfs://saturn/g2 (add to existing pool, add/modify boot record) </b><span style="color:red"> >TESTING< </span>
+  <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe add=zfs://saturn/g2</b> <span style="color:green">(add to existing pool, add/modify boot record)</span> <span style="color:red"> >TESTING< </span>
 ###
 ##### <u>MIRROR URL FOR TYPE OF RESOURCE + PROTOCOL </u>
   <u>./mirror.sh</u> <b>../config/patchfiles.mirrors rsync</b>\
@@ -58,10 +58,10 @@
   ├── packages                  portage patch, and package configurations for profiles 17.X/...
   ├── patchfiles                system wide, generic patch files, independent of profile
   ├── profiles                  machine (virtual/hardware) based profiles, for purpose driven, domain name based 
-  ├── releases                  synchronized too, via esync.sh
-  ├── repos                     synchronized too, via esync.sh
-  ├── snapshots                 synchronized too, via esync.sh
-  ├── distfiles                 synchronized too, via esync.sh
+  ├── releases                  synchronized too, via sync.sh
+  ├── repos                     synchronized too, via sync.sh
+  ├── snapshots                 synchronized too, via sync.sh
+  ├── distfiles                 synchronized too, via sync.sh
   ├── meta                      meta package information, for meta builds (patches, configs, portage is not perfect)
 ```
   

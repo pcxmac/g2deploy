@@ -49,6 +49,8 @@ echo "############################### [ RELEASES ] #############################
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/releases.mirrors" rsync only-sync)"
 echo -e "SYNCING w/ $URL \e[25,42m[RELEASES]\e[0m";sleep 1
 if [[ ! -d /var/lib/portage/releases ]]; then mkdir -p /var/lib/portage/releases; fi
+# redo symlinks for releases...
+find /var/lib/portage/releases/ -type l -delete
 rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}${ARCH}" /var/lib/portage/releases | tee /var/log/esync.log
 
 echo "############################### [ DISTFILES ] ###################################"
