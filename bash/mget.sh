@@ -29,6 +29,7 @@ function getRSYNC()
 			else
 				if [[ -n ${host} ]]
 				then
+					echo ">>>rsync -a --no-motd --info=progress2 --rsync-path=\"sudo rsync\" "$@"" > ${SCRIPT_DIR}/bash/output.log
 					rsync -a --no-motd --info=progress2 --rsync-path="sudo rsync" "$@" 
 				fi
 			fi

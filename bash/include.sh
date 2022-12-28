@@ -87,8 +87,8 @@ patchFiles_sys() {
 	mget "${psrc}/var/" "${offset}/var/" 
 	mget "${psrc}/usr/" "${offset}/usr/"
 
-	mget "${psrc}/" "${offset}/ --exclude='*/'"
-	chown root:root /* 
+	# /*.[!.]* gets rid of syncing the root folder, use this for 'offset' or 'directory' syncs w/ out other suffixes to destination
+	mget "${psrc}/*.[!.]*" "${offset}/"
 }
 
 function editboot() 
