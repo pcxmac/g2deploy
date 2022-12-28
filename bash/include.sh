@@ -86,8 +86,6 @@ patchFiles_sys() {
 	mget "${psrc}/etc/" "${offset}/etc/" 
 	mget "${psrc}/var/" "${offset}/var/" 
 	mget "${psrc}/usr/" "${offset}/usr/"
-
-	# /*.[!.]* gets rid of syncing the root folder, use this for 'offset' or 'directory' syncs w/ out other suffixes to destination
 	mget "${psrc}/*.[!.]*" "${offset}/"
 }
 

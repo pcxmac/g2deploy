@@ -77,7 +77,7 @@
 						selectStr="${release_base_string#*current-}"
 						selectStr="${selectStr%*/}"
 						urlCurrent_xz="$(rsync -n ${hostname}::${dir}${release_base_string} | awk '{print $5}' | sed -e 's/<[^>]*>//g' | grep "${selectStr}" | grep ".xz$")"
-						urlCurrent_asc="$(rsync -n ${hostname}::${dir}${release_base_string} | awk '{print $5}' | sed -e 's/<[^>]*>//g' | grep "${selectSt}" | grep ".asc$")"
+						urlCurrent_asc="$(rsync -n ${hostname}::${dir}${release_base_string} | awk '{print $5}' | sed -e 's/<[^>]*>//g' | grep "${selectStr}" | grep ".asc$")"
 						printf "${server%releases/*}${release_base_string}${urlCurrent_xz}\n"
 						printf "${server%releases/*}${release_base_string}${urlCurrent_asc}\n"
 						exit
@@ -88,15 +88,16 @@
 				;;
 			esac
        	fi
-		if [[ ${type} == "http" || ${type} == "ftp" ]] && [[ ${server%://*} == "http" || ${server%://*} == "ftp" ]]
+		if [[ ${server%://*} == "${type}" ]]
 		then
 			case "${mirror##*/}" in
 				release*)
 					locationStr="${release_base_string}"
-					urlBase="${server}/${locationStr}"
+					urlBase="${server}${locationStr}"
 					selectStr="${locationStr#*current-*}"
 					selectStr="${selectStr%*/}"
-					urlCurrent="$(curl -s ${urlBase} --silent | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"
+					if [[ ${type} == "http" ]];then urlCurrent="$(curl -s ${urlBase} --silent | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"; fi
+					if [[ ${type} == "ftp" ]];then urlCurrent="$(curl -s ${urlBase} --silent --list-only | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"; fi
 					urlCurrent="$(echo ${urlCurrent} | awk '{print $1}' | head -n 1 )"
 					urlCurrent="${urlCurrent%.t*}"
 					if [[ "${release_base_string}" != "invalid" ]]; then
