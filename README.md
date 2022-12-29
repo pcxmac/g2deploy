@@ -6,19 +6,26 @@
 ##### <u>UPDATE USR SPACE FOR POOL/SET</u>
 
   <u>./update.sh</u> <b>work=pool/set bootpart=/dev/sdX# update</b>\
+
   <u>./update.sh</u> <b>work=pool/set update</b>
 ###
 ##### <u>NEW DISK + LOCAL OR REMOTE SOURCE</u>
 
   <u>./install.sh</u> <b>work=zfs://wSys/hardened@safe boot=zfs:///dev/sda:/usb/g1 </b><span style="color:green">(standard installation)</span>\
+
   <u>./install.sh</u> <b>work=zfs://root@10.1.0.1:/wSys/gnome@safe boot=zfs:///dev/nvme0n1:/saturn/g2 </b><span style="color:green">(convert nvme to zpool, new dataset) </span>\
+  
   <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe add=zfs://saturn/g2</b> <span style="color:green">(add to existing pool, add/modify boot record)</span> <span style="color:red"> >TESTING< </span>
 ###
 ##### <u>MIRROR URL FOR TYPE OF RESOURCE + PROTOCOL </u>
+
   <u>./mirror.sh</u> <b>../config/patchfiles.mirrors rsync</b>\
   <span style="color:blue">ex. output => "rsync://pkg.hypokrites.me/gentoo/patchfiles" (URI for patchfiles rsync access) </span>
 
-  <u>./mirror.sh</u> <b>../config/releases.mirrors http plasma</b> <span style="color:red"> (releases mirror requires 3 arguments, all others are type and protocol)</span>\
+  <u>./mirror.sh</u> <b>../config/releases.mirrors rsync</b>\
+  <span style="color:blue">rsync://mirror.csclub.uwaterloo.ca/gentoo-distfiles/releases/</span>
+
+  <u>./mirror.sh</u> <b>../config/releases.mirrors http plasma</b> <span style="color:red"> (releases mirror can accept a 'profile' argument, all others are type and protocol)</span>\
   <span style="color:blue">http://pkg.hypokrites.me/gentoo/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/stage3-amd64-desktop-openrc-20221205T133149Z.tar.xz</span> \
   <span style="color:blue">http://pkg.hypokrites.me/gentoo/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/stage3-amd64-desktop-openrc-20221205T133149Z.tar.xz.asc</span>
 
