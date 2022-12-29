@@ -1,3 +1,20 @@
+### GOALS:
+###### - Create a Gentoo installation which is completely independent of a 'meta-server'
+###### - Create a (modular) 'panel' for package and installation management across any network
+###### - Create a reliable repository for sharing gentoo related files
+###### - Create a reliable build service for testing package combinations
+
+### Version/Feature Targets:
+###### - 0.X <span style="color:red">Currently in pre-release</span>
+###### - 0.1 Stable installs, updates and deployments w/ ZFS 
+###### - 0.2 Stable installs, updates and deployments w/ ZFS;BTRFS;XFS;EXT4
+###### - 0.3 Method for integrating 'g2deploy' in to a new environment (installer)
+###### - 0.4 Meta Package Manager w/ package repo (git based)
+###### - 0.5 Beta / Stable
+###### - 0.6 Panel Integration
+
+
+
 ###HOW TO USE: (PRE-RELEASE < v0.1) | { v1.x = last stand alone implementation } | ZFS >primary target<
 ##### <u>SIMPLE LOCAL DEPLOYMENT ... LOCAL ONLY.</u>
   <u>./deploy.sh</u> <b>build=plasma work=zpool/plasma deploy</b>
@@ -5,9 +22,9 @@
 ###
 ##### <u>UPDATE USR SPACE FOR POOL/SET</u>
 
-  <u>./update.sh</u> <b>work=pool/set bootpart=/dev/sdX# update</b>
+  <u>./update.sh</u> <b>work=pool/set bootpart=/dev/sdX# update</b><span style="color:green"> (update /boot...loader + runtime (ie kernel upgrade))</span>
 
-  <u>./update.sh</u> <b>work=pool/set update</b>
+  <u>./update.sh</u> <b>work=pool/set update</b><span style="color:green"> (only update runtime)</span>
 ###
 ##### <u>NEW DISK + LOCAL OR REMOTE SOURCE</u>
 
