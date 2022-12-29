@@ -435,9 +435,12 @@ function add_to()
 				_destination=${x#*=}
 				setup_boot ${_source} ${_destination}
 			;;
-			add=*)
-				_destination=${x#*=}
-				add_to ${_source} ${_destination}
+
+			# NSFW
+
+			#add=*) 
+			#	_destination=${x#*=}
+			#	add_to ${_source} ${_destination}
 			;;
 		esac
 	done
