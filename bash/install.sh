@@ -85,173 +85,173 @@ function prepare_disks() {
 
 function setup_boot()	
 {
-			#ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"
-			kver="$(getKVER)"
-			kver="${kver#*linux-}"
+	#ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"
+	kver="$(getKVER)"
+	kver="${kver#*linux-}"
 
-			source_url=$1				# can be local or remote pool
-			stype=${source_url%://*}	# example : zfs://root@localhost.com:/pool/dataset ; btrfs:///Label/subvolume ; ssh://root@localhost:/path/to/set
-			shost=${source_url#*://}	
-			case ${stype} in
-				zfs)
-					source=${shost#*:/}
-					spool=${source%/*}
-					sdataset=${source##*/}
-					sdataset=${sdataset%@*}
-					ssnapshot="$(echo ${source} | grep '@')"
-					ssnapshot=${ssnapshot#*@}
-					shost=${shost%:*}
-					shost="$(echo $shost | grep -v '/' | grep "[[:alnum:]]\+@[[:alnum:]]\+")"
-					if [[ -n ${shost} ]]
-					then
-						spath="$(ssh ${shost} "zfs get mountpoint ${spool}/${sdataset}")"
-						spath="$(echo "${spath}" | grep 'mountpoint' | awk '{print $3}')"
-						root_path="$(ssh ${shost} "mount | grep ' / ' | grep ${spool}/${sdataset}")"
-						root_path="$(echo ${root_path} | awk '{print $1}')"
-						if [[ -n ${root_path} ]]; then spath=""; fi
-						spath="${spath}/.zfs/snapshot/${ssnapshot}"
-					else 
-						spath="$(zfs get mountpoint ${spool}/${sdataset})"
-						spath="$(echo "${spath}" | grep 'mountpoint' | awk '{print $3}')"
-						root_path="$(mount | grep ' / ' | grep ${spool}/${sdataset})"
-						root_path="$(echo ${root_path} | awk '{print $1}')"
-						if [[ -n ${root_path} ]]; then spath=""; fi
-						spath="${spath}/.zfs/snapshot/${ssnapshot}"
-					fi
-				;;
-				btrfs)
-					source=${shost#*:/}
-					spool=${source%/*}			#LABEL
-					sdataset=${source##*/}		#SUBVOLUME
-					sdataset=${sdataset%@*}
-					shost=${shost%:*}
-					shost="$(echo $shost | grep -v '/' | grep "[[:alnum:]]\+@[[:alnum:]]\+")"
-					if [[ -n ${shost} ]]
-					then
-						spath="$(ssh ${shost} "blkid | grep ${spool} | grep 'btrfs'")"
-						spath="$(echo ${spath} | awk '{print $1}' | tr -d ':')"
-						spath="$(ssh ${shost} "mount | grep ${spath}")"
-						spath_root="$(echo ${spath} | grep "subvol=/" | head -n 1 | awk '{print $3}')"
-						spath_subvol="$(echo ${spath} | grep "subvol=/${sdataset}" | head -n 1 | awk '{print $3}')"
-						if [[ -n ${spath_subvol} ]]; then spath=${spath_subvol}; else spath="${spath_root}/${sdataset}"; fi
-					else
-						spath="$(blkid | grep ${spool} | grep 'btrfs')"
-						spath="$(echo ${spath} | awk '{print $1}' | tr -d ':')"
-						spath="$(mount | grep ${spath})"
-						spath_root="$(echo ${spath} | grep "subvol=/" | head -n 1 | awk '{print $3}')"
-						spath_subvol="$(echo ${spath} | grep "subvol=/${sdataset}" | head -n 1 | awk '{print $3}')"
-						if [[ -n ${spath_subvol} ]]; then spath=${spath_subvol}; else spath="${spath_root}/${sdataset}"; fi
-					fi
-				;;
-				ssh)
-					source=${shost#*:}
-					spool=${source}
-					shost=${shost%:*}
-					shost="$(echo $shost | grep -v '/' | grep "[[:alnum:]]\+@[[:alnum:]]\+")"
-						spath="$(ssh ${shost} test ! -d ${source} || echo ${source})"
-				;;
-				ext4|xfs|ntfs)
-					source=${shost#*:}
-					spool=${source}
-					shost=""
-					spath=${source}
-				;;
-			esac
-
-			destination_url=$2				# DESTINATION
-			dtype=${destination_url%://*}	# example :	zfs:///dev/sda:/pool/dataset ; ntfs:///dev/sdX:/mnt/sdX ; config:///path/to/config
-			dhost=${destination_url#*://}	
-
-			case ${dtype} in
-				config)
-					echo "config ..."
-				;;
-				zfs)
-					destination=${dhost#*:/}
-					dpool=${destination%/*}
-					ddataset=${destination##*/}
-					ddataset=${ddataset%@*}
-					dhost="${dhost%:*}"
-					dpath="/srv/zfs/${dpool}"
-				;;
-				btrfs)
-					destination=${dhost#*:/}
-					dpool=${destination%/*}
-					ddataset=${destination##*/}
-					ddataset=${ddataset%@*}
-					dhost="${dhost%:*}"
-					dpath="/srv/btrfs/${dpool}/${ddataset}"
-				;;
-				ext4|xfs|ntfs)
-					destination=${dhost#*:}
-					dpool=${destination%/*}
-					ddataset=${destination##*/}
-					ddataset=${ddataset%@*}
-					dhost="${dhost%:*}"
-					dpath=${destination}
-				;;
-			esac
-
-			disk="$(echo ${dhost} | grep '^/dev/')"
-
-			echo "dhost = ${dhost}" 2>&1
-			echo "dpath = ${dpath}" 2>&1
-
-			echo "source = ${source} | stype = ${stype} | shost = ${shost} | pool = ${spool} | sdataset = ${sdataset} | ssnapshot =  ${ssnapshot} | root_path = ${root_path} | spath_root = ${spath_root} | spath_subvol = ${spath_subvol}"
-			echo "destination = ${destination} | Dtype = ${dtype} | Dhost = ${dhost} | dpool = ${dpool} | ddataset = ${ddataset} | dpath = ${dpath}"
-
-			sleep 10
-
-			if [[ -n "${disk}" ]]
+	source_url=$1				# can be local or remote pool
+	stype=${source_url%://*}	# example : zfs://root@localhost.com:/pool/dataset ; btrfs:///Label/subvolume ; ssh://root@localhost:/path/to/set
+	shost=${source_url#*://}	
+	case ${stype} in
+		zfs)
+			source=${shost#*:/}
+			spool=${source%/*}
+			sdataset=${source##*/}
+			sdataset=${sdataset%@*}
+			ssnapshot="$(echo ${source} | grep '@')"
+			ssnapshot=${ssnapshot#*@}
+			shost=${shost%:*}
+			shost="$(echo $shost | grep -v '/' | grep "[[:alnum:]]\+@[[:alnum:]]\+")"
+			if [[ -n ${shost} ]]
 			then
-				prepare_disks "${disk}" "${dpath}" "${dtype}" 
-			fi
-
-			if [[ ${dtype} == "${stype}" ]] 
-			then
-				case ${stype} in
-					zfs)
-						if [[ -n ${shost} ]]; then	ssh "${shost}" zfs send ${source} | pv | zfs recv -F "${destination}"
-						else 									 zfs send "${source}" | pv | zfs recv -F "${destination}"
-						fi
-					;;
-					btrfs)
-						if [[ -n ${shost} ]]; then	ssh "${shost}" btrfs send ${spath} | pv | btrfs receive "${dpath}"
-						else									 btrfs send "${spath}" | pv | btrfs receive "${dpath}"
-						fi
-					;;
-				esac
+				spath="$(ssh ${shost} "zfs get mountpoint ${spool}/${sdataset}")"
+				spath="$(echo "${spath}" | grep 'mountpoint' | awk '{print $3}')"
+				root_path="$(ssh ${shost} "mount | grep ' / ' | grep ${spool}/${sdataset}")"
+				root_path="$(echo ${root_path} | awk '{print $1}')"
+				if [[ -n ${root_path} ]]; then spath=""; fi
+				spath="${spath}/.zfs/snapshot/${ssnapshot}"
 			else 
-				case ${shost} in
-					'')
-						url="${stype}://${shost}:${spath}/"
-						url=${url#*://}
-						url=${url#*:/}
-						mget ${spath}/ ${dpath}
-					;;
-					*)
-						url="ssh://${shost}:${spath}/"
-						url=${url#*://}
-						url=${url#*:/}
-						mget ssh://${shost}:${spath}/ ${dpath}
-					;;
-				esac
+				spath="$(zfs get mountpoint ${spool}/${sdataset})"
+				spath="$(echo "${spath}" | grep 'mountpoint' | awk '{print $3}')"
+				root_path="$(mount | grep ' / ' | grep ${spool}/${sdataset})"
+				root_path="$(echo ${root_path} | awk '{print $1}')"
+				if [[ -n ${root_path} ]]; then spath=""; fi
+				spath="${spath}/.zfs/snapshot/${ssnapshot}"
 			fi
-
-			dstDir="${dpath}/${ddataset}"
-			install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
-
-			if [[ -n "${disk}" ]]
+		;;
+		btrfs)
+			source=${shost#*:/}
+			spool=${source%/*}			#LABEL
+			sdataset=${source##*/}		#SUBVOLUME
+			sdataset=${sdataset%@*}
+			shost=${shost%:*}
+			shost="$(echo $shost | grep -v '/' | grep "[[:alnum:]]\+@[[:alnum:]]\+")"
+			if [[ -n ${shost} ]]
 			then
-				boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
-				mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"
-				mget "${boot_src}" "${dstDir}/boot"
-				echo "mget "${boot_src}" "${dstDir}/boot""
-				kversion=$(getKVER)
-				kversion=${kversion#*linux-}
-				editboot "${kversion}" "${dpool}/${ddataset}"
-				umount "${dstDir}/boot"
+				spath="$(ssh ${shost} "blkid | grep ${spool} | grep 'btrfs'")"
+				spath="$(echo ${spath} | awk '{print $1}' | tr -d ':')"
+				spath="$(ssh ${shost} "mount | grep ${spath}")"
+				spath_root="$(echo ${spath} | grep "subvol=/" | head -n 1 | awk '{print $3}')"
+				spath_subvol="$(echo ${spath} | grep "subvol=/${sdataset}" | head -n 1 | awk '{print $3}')"
+				if [[ -n ${spath_subvol} ]]; then spath=${spath_subvol}; else spath="${spath_root}/${sdataset}"; fi
+			else
+				spath="$(blkid | grep ${spool} | grep 'btrfs')"
+				spath="$(echo ${spath} | awk '{print $1}' | tr -d ':')"
+				spath="$(mount | grep ${spath})"
+				spath_root="$(echo ${spath} | grep "subvol=/" | head -n 1 | awk '{print $3}')"
+				spath_subvol="$(echo ${spath} | grep "subvol=/${sdataset}" | head -n 1 | awk '{print $3}')"
+				if [[ -n ${spath_subvol} ]]; then spath=${spath_subvol}; else spath="${spath_root}/${sdataset}"; fi
 			fi
+		;;
+		ssh)
+			source=${shost#*:}
+			spool=${source}
+			shost=${shost%:*}
+			shost="$(echo $shost | grep -v '/' | grep "[[:alnum:]]\+@[[:alnum:]]\+")"
+				spath="$(ssh ${shost} test ! -d ${source} || echo ${source})"
+		;;
+		ext4|xfs|ntfs)
+			source=${shost#*:}
+			spool=${source}
+			shost=""
+			spath=${source}
+		;;
+	esac
+
+	destination_url=$2				# DESTINATION
+	dtype=${destination_url%://*}	# example :	zfs:///dev/sda:/pool/dataset ; ntfs:///dev/sdX:/mnt/sdX ; config:///path/to/config
+	dhost=${destination_url#*://}	
+
+	case ${dtype} in
+		config)
+			echo "config ..."
+		;;
+		zfs)
+			destination=${dhost#*:/}
+			dpool=${destination%/*}
+			ddataset=${destination##*/}
+			ddataset=${ddataset%@*}
+			dhost="${dhost%:*}"
+			dpath="/srv/zfs/${dpool}"
+		;;
+		btrfs)
+			destination=${dhost#*:/}
+			dpool=${destination%/*}
+			ddataset=${destination##*/}
+			ddataset=${ddataset%@*}
+			dhost="${dhost%:*}"
+			dpath="/srv/btrfs/${dpool}/${ddataset}"
+		;;
+		ext4|xfs|ntfs)
+			destination=${dhost#*:}
+			dpool=${destination%/*}
+			ddataset=${destination##*/}
+			ddataset=${ddataset%@*}
+			dhost="${dhost%:*}"
+			dpath=${destination}
+		;;
+	esac
+
+	disk="$(echo ${dhost} | grep '^/dev/')"
+
+	echo "dhost = ${dhost}" 2>&1
+	echo "dpath = ${dpath}" 2>&1
+
+	echo "source = ${source} | stype = ${stype} | shost = ${shost} | pool = ${spool} | sdataset = ${sdataset} | ssnapshot =  ${ssnapshot} | root_path = ${root_path} | spath_root = ${spath_root} | spath_subvol = ${spath_subvol}"
+	echo "destination = ${destination} | Dtype = ${dtype} | Dhost = ${dhost} | dpool = ${dpool} | ddataset = ${ddataset} | dpath = ${dpath}"
+
+	sleep 10
+
+	if [[ -n "${disk}" ]]
+	then
+		prepare_disks "${disk}" "${dpath}" "${dtype}" 
+	fi
+
+	if [[ ${dtype} == "${stype}" ]] 
+	then
+		case ${stype} in
+			zfs)
+				if [[ -n ${shost} ]]; then	ssh "${shost}" zfs send ${source} | pv | zfs recv -F "${destination}"
+				else 									 zfs send "${source}" | pv | zfs recv -F "${destination}"
+				fi
+			;;
+			btrfs)
+				if [[ -n ${shost} ]]; then	ssh "${shost}" btrfs send ${spath} | pv | btrfs receive "${dpath}"
+				else									 btrfs send "${spath}" | pv | btrfs receive "${dpath}"
+				fi
+			;;
+		esac
+	else 
+		case ${shost} in
+			'')
+				url="${stype}://${shost}:${spath}/"
+				url=${url#*://}
+				url=${url#*:/}
+				mget ${spath}/ ${dpath}
+			;;
+			*)
+				url="ssh://${shost}:${spath}/"
+				url=${url#*://}
+				url=${url#*:/}
+				mget ssh://${shost}:${spath}/ ${dpath}
+			;;
+		esac
+	fi
+
+	dstDir="${dpath}/${ddataset}"
+	install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
+
+	if [[ -n "${disk}" ]]
+	then
+		boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
+		mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"
+		mget "${boot_src}" "${dstDir}/boot"
+		echo "mget "${boot_src}" "${dstDir}/boot""
+		kversion=$(getKVER)
+		kversion=${kversion#*linux-}
+		editboot "${kversion}" "${dpool}/${ddataset}"
+		umount "${dstDir}/boot"
+	fi
  }
 
 function add_to()	
@@ -450,7 +450,6 @@ function add_to()
 			boot=*)
 				_destination=${x#*=}
 				setup_boot ${_source} ${_destination}
-			
 			;;
 			add=*)
 				_destination=${x#*=}
