@@ -49,7 +49,7 @@ function getRSYNC()
 
 function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 {
-	local destination="${2}"		# empty if streaming/serial output requested i
+	local destination="${2}"		# empty if streaming/serial output requested
 	local url="${1:?}"
 	local waiting=1
 	local httpCode=""
@@ -97,6 +97,8 @@ function getFTP()
 				echo "mget : ${url} ==> ${destination%/*}" 2>&1
 				wget -r --reject "index.*" -q --show-progress  --no-parent "${url}" -P "${destination}" 2>&1 | pv --progress 1>/dev/null
 			fi
+
+
 			waiting=0
 		else
 			waiting=1

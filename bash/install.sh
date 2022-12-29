@@ -194,14 +194,6 @@ function setup_boot()
 
 	disk="$(echo ${dhost} | grep '^/dev/')"
 
-	echo "dhost = ${dhost}" 2>&1
-	echo "dpath = ${dpath}" 2>&1
-
-	echo "source = ${source} | stype = ${stype} | shost = ${shost} | pool = ${spool} | sdataset = ${sdataset} | ssnapshot =  ${ssnapshot} | root_path = ${root_path} | spath_root = ${spath_root} | spath_subvol = ${spath_subvol}"
-	echo "destination = ${destination} | Dtype = ${dtype} | Dhost = ${dhost} | dpool = ${dpool} | ddataset = ${ddataset} | dpath = ${dpath}"
-
-	sleep 10
-
 	if [[ -n "${disk}" ]]
 	then
 		prepare_disks "${disk}" "${dpath}" "${dtype}" 
@@ -239,12 +231,12 @@ function setup_boot()
 	fi
 
 	dstDir="${dpath}/${ddataset}"
-	install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
 
 	if [[ -n "${disk}" ]]
 	then
 		boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
 		mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"
+		install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
 		mget "${boot_src}" "${dstDir}/boot"
 		echo "mget "${boot_src}" "${dstDir}/boot""
 		kversion=$(getKVER)
@@ -341,17 +333,9 @@ function add_to()
 				;;
 			esac
 
-			echo "dhost = ${dhost}" 2>&1
-			echo "dpath = ${dpath}" 2>&1
-
-			echo "source = ${source} | stype = ${stype} | shost = ${shost} | pool = ${spool} | sdataset = ${sdataset} | ssnapshot =  ${ssnapshot} | root_path = ${root_path} | spath_root = ${spath_root} | spath_subvol = ${spath_subvol}"
-			echo "destination = ${destination} | Dtype = ${dtype} | Dhost = ${dhost} | dpool = ${dpool} | ddataset = ${ddataset} | dpath = ${dpath}"
-
-			sleep 10
-
 			disk="$(echo ${dhost} | grep '^/dev/')"
 
-			if [[ -n "${disk}}" ]]
+			if [[ -n "${disk}" ]]
 			then
 				parts="$(ls -d /dev/* | grep "${disk}")"
 				clear_mounts ${disk}

@@ -211,10 +211,10 @@ function install_modules()
 
 	kver="${kver#*linux-}"
 
-
-	mget "${ksrc}${kver}" "${offset}/boot/LINUX/"
+	mget "${ksrc}${kver}/" "${offset}/boot/LINUX/"
 
 	mget "${ksrc}${kver}/modules.tar.gz" "${offset}/"
+	echo "decompressing ${ksrc}${kver}" 2>&1
 	pv "${offset}/modules.tar.gz" | tar xzf - -C "${offset}/"
 	rm "${offset}/modules.tar.gz"	
 }
