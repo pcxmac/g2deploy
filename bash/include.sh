@@ -3,7 +3,7 @@
 source ${SCRIPT_DIR}/bash/mget.sh
 
 tStamp() {
-	echo "0x$("obase=16; $(date +%s)" | bc)"
+	echo "0x$(echo "obase=16; $(date +%s)" | bc)"
 }
 
 function patchSystem()	
@@ -20,9 +20,11 @@ function patchSystem()
 			curl "${Purl}" --silent | sed '/^#/d'
 		;;
 		update)
+				# ${profile}.update
 				echo "updates..."
 		;;
 		fix=*)
+				# ${profile}.fix-0xXXXXXXXX (hex)
 				echo "fixes..."
 		;;
 	esac
