@@ -90,8 +90,8 @@ do
 
 			rootDS="$(df / | tail -n 1 | awk '{print $1}')"
 			target="$(getZFSMountPoint "${rootDS}")"
-
-			patchFiles_portage "${directory} ${_profile}"
+			
+			patchFiles_portage "${directory}" "${_profile}"
 
 			pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
 			patchSystem "${_profile}" 'update' > "${directory}/patches.sh"

@@ -8,9 +8,9 @@ source ${SCRIPT_DIR}/bash/include.sh
 function users()
 {
 	usermod -s /bin/zsh root
-	sudo sh -c 'echo root:P@$$w0rd | chpasswd' 2>/dev/null
+	sudo sh -c 'echo root:@PXCW0rd | chpasswd' 2>/dev/null
 	useradd sysop
-	sudo sh -c 'echo sysop:P@$$w0rd | chpasswd' 2>/dev/null
+	sudo sh -c 'echo sysop:@PXCW0rd | chpasswd' 2>/dev/null
 	usermod --home /home/sysop sysop
 	usermod -a -G wheel sysop
 	usermod --shell /bin/zsh sysop

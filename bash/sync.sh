@@ -40,7 +40,7 @@ testCase="$(emerge --info | grep 'location:' | awk '{print $2}')/.tmp-unverified
 #	sleep 30
 #done
 
-#emerge --sync | tee /var/log/esync.log
+emerge --sync | tee /var/log/esync.log
 
 echo "############################### [ SNAPSHOTS ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/snapshots.mirrors" rsync)"
