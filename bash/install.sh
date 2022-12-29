@@ -117,72 +117,77 @@ function setup_boot()
 			echo "dhost = ${dhost}" 2>&1
 			echo "dpath = ${dpath}" 2>&1
 
-			disk=${dhost}
+			echo "source = ${source} | stype = ${stype} | shost = ${shost} | pool = ${spool} | sdataset = ${sdataset} | ssnapshot =  ${ssnapshot} | root_path = ${root_path} | spath_root = ${spath_root} | spath_subvol = ${spath_subvol}"
+			echo "destination = ${destination} | Dtype = ${dtype} | Dhost = ${dhost} | dpool = ${dpool} | ddataset = ${ddataset} | dpath = ${dpath}"
 
-			clear_mounts ${disk}
-			sync
-			sgdisk -Z ${disk}
-			wipefs -af ${disk}
-			partprobe
-			sync
+			sleep 10
 
-			sgdisk --new 1:0:+32M -t 1:EF02 ${disk}
-			sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
-			sgdisk --new 3:0 -t 3:8300 ${disk}
+			disk="$(echo ${dhost} | grep '^/dev/')"
 
-			clear_mounts ${disk}
-			partprobe
-			sync
-
-			parts="$(ls -d /dev/* | grep "${disk}")"
-			wipefs -af "$(echo "${parts}" | grep '.2')"
-			wipefs -af "$(echo "${parts}" | grep '.3')"
-			mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
-
-			if [[ ! -d ${dpath} && ${dtype} != "zfs" ]]
-			then 
-				mkdir -p ${dpath}
-			elif [[ -d ${dpath} && ${dtype} == "zfs" ]]
+			if [[ -n "${disk}" ]]
 			then
-				rm ${dpath} -R
+				parts="$(ls -d /dev/* | grep "${disk}")"
+				clear_mounts ${disk}
+				sync
+				sgdisk -Z ${disk}
+				wipefs -af ${disk}
+				partprobe
+				sync
+				sgdisk --new 1:0:+32M -t 1:EF02 ${disk}
+				sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
+				sgdisk --new 3:0 -t 3:8300 ${disk}
+				clear_mounts ${disk}
+				partprobe
+				sync
+				wipefs -af "$(echo "${parts}" | grep '.2')"
+				wipefs -af "$(echo "${parts}" | grep '.3')"
+				mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
+
+				if [[ ! -d ${dpath} && ${dtype} != "zfs" ]]
+				then 
+					mkdir -p ${dpath}
+				elif [[ -d ${dpath} && ${dtype} == "zfs" ]]
+				then
+					rm ${dpath} -R
+				fi
+
+				case ${dtype} in
+					zfs)
+						options="-f"
+
+						zpool create ${options} \
+							-O acltype=posixacl \
+							-O compression=lz4 \
+							-O dnodesize=auto \
+							-O normalization=formD \
+							-O relatime=on \
+							-O xattr=sa \
+							-O encryption=aes-256-gcm \
+							-O keyformat=hex \
+							-O keylocation=file:///srv/crypto/zfs.key \
+							-O mountpoint="${dpath}" "${dpool}" \
+							"$(echo "${parts}" | grep '.3')"
+					;;
+					btrfs)
+						mount | grep "${disk}"
+						mkfs.btrfs "$(echo "${parts}" | grep '.3')" -L "${dpool}" -f
+						btrfs subvolume create "${dpath}"
+						mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
+					;;
+					xfs)
+						mkfs.xfs "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -f
+						mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
+					;;
+					ntfs)
+						mkfs.ntfs "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -f
+						mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
+					;;
+					ext4)
+						mkfs.ext4 "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -F
+						mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
+					;;
+				esac
 			fi
-
-			case ${dtype} in
-				zfs)
-					options="-f"
-
-					zpool create ${options} \
-						-O acltype=posixacl \
-						-O compression=lz4 \
-						-O dnodesize=auto \
-						-O normalization=formD \
-						-O relatime=on \
-						-O xattr=sa \
-						-O encryption=aes-256-gcm \
-						-O keyformat=hex \
-						-O keylocation=file:///srv/crypto/zfs.key \
-						-O mountpoint="${dpath}" "${dpool}" \
-						"$(echo "${parts}" | grep '.3')"
-				;;
-				btrfs)
-					mount | grep "${disk}"
-					mkfs.btrfs "$(echo "${parts}" | grep '.3')" -L "${dpool}" -f
-					btrfs subvolume create "${dpath}"
-					mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
-				;;
-				xfs)
-					mkfs.xfs "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -f
-					mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
-				;;
-				ntfs)
-					mkfs.ntfs "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -f
-					mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
-				;;
-				ext4)
-					mkfs.ext4 "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -F
-					mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
-				;;
-			esac
 
 			if [[ ${dtype} == "${stype}" ]] 
 			then
@@ -215,25 +220,20 @@ function setup_boot()
 				esac
 			fi
 
-			boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
 			dstDir="${dpath}/${ddataset}"
-			echo "----------------------------------------------------------------------------------"
-			echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
-			echo "dst Dir = ${dstDir} :: ${boot_src}"
+			install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
 
-			if [[ ! -d ${dstDir} ]]; then mkdir -p ${dstDir}; fi
-			mount "$(echo "${parts}" | grep '.2')" ${dstDir}/boot
-			mget ${boot_src} ${dstDir}/boot
-			kversion=$(getKVER)
-			kversion=${kversion#*linux-}
-			echo "KVERSION = ${kversion}" 2>&1
-
-			echo "installing modules ..."
-			install_modules ${dstDir}			# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
-
-			echo "editing boot"
-			editboot ${kversion} "${dpool}/${ddataset}"
-			umount ${dstDir}/boot
+			if [[ -n "${disk}" ]]
+			then
+				boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
+				mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"
+				mget "${boot_src}" "${dstDir}/boot"
+				echo "mget "${boot_src}" "${dstDir}/boot""
+				kversion=$(getKVER)
+				kversion=${kversion#*linux-}
+				editboot "${kversion}" "${dpool}/${ddataset}"
+				umount "${dstDir}/boot"
+			fi
  }
 
 function add_to()	
@@ -326,18 +326,27 @@ function add_to()
 			echo "dhost = ${dhost}" 2>&1
 			echo "dpath = ${dpath}" 2>&1
 
-			disk=${dhost}
-			parts="$(ls -d /dev/* | grep "${disk}")"
-
 			echo "source = ${source} | stype = ${stype} | shost = ${shost} | pool = ${spool} | sdataset = ${sdataset} | ssnapshot =  ${ssnapshot} | root_path = ${root_path} | spath_root = ${spath_root} | spath_subvol = ${spath_subvol}"
 			echo "destination = ${destination} | Dtype = ${dtype} | Dhost = ${dhost} | dpool = ${dpool} | ddataset = ${ddataset} | dpath = ${dpath}"
 
-			clear_mounts ${disk}
-			sync
+			sleep 10
+
+			disk="$(echo ${dhost} | grep '^/dev/')"
+
+			if [[ -n "${disk}}" ]]
+			then
+				parts="$(ls -d /dev/* | grep "${disk}")"
+				clear_mounts ${disk}
+				sync
+			fi
+
 
 			if [[ ! -d ${dpath} && ${dtype} != "zfs" ]]
 			then 
 				mkdir -p ${dpath}
+			elif [[ -d ${dpath} && ${dtype} == "zfs" ]]
+			then
+				rm ${dpath} -R
 			fi
 
 			case ${dtype} in
@@ -355,14 +364,6 @@ function add_to()
 				;;
 				
 			esac
-
-			boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
-			dstDir="${dpath}/${ddataset}"
-			echo "----------------------------------------------------------------------------------"
-			echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
-			echo "dst Dir = ${dstDir} :: ${boot_src} :: PARTS = ${parts}"
-
-			sleep 5
 
 			if [[ ${dtype} == ${stype} ]] 
 			then
@@ -395,17 +396,19 @@ function add_to()
 				esac
 			fi
 
-
-			#if [[ ! -d ${dstDir} ]]; then mkdir -p "${dstDir}"; fi		# this should never occur.
-			mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"
-			mget "${boot_src}" "${dstDir}/boot"
-			sleep 5
-			kversion=$(getKVER)
-			kversion=${kversion#*linux-}
-			echo "KVERSION = ${kversion}" 2>&1
+			dstDir="${dpath}/${ddataset}"
 			install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
-			editboot "${kversion}" "${dpool}/${ddataset}"
-			umount "${dstDir}/boot"
+
+			if [[ -n "${disk}" ]]
+			then
+				boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
+				mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"
+				mget "${boot_src}" "${dstDir}/boot"
+				kversion=$(getKVER)
+				kversion=${kversion#*linux-}
+				editboot "${kversion}" "${dpool}/${ddataset}"
+				umount "${dstDir}/boot"
+			fi
  }
 
 	dataset=""				#	the working dataset of the installation

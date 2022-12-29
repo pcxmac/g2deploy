@@ -62,9 +62,10 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 		then
 			if [[ -z ${destination} ]]
 			then
-				wget -O - --reject "index.*" --no-verbose --no-parent "${url}" 2>/dev/null
+				wget -O - --reject "index.*" -q --show-progress --no-parent "${url}" 2>/dev/null
 			else
-				wget -r --reject "index.*" --no-verbose --no-parent "${url}" -P "${destination%/*}" --show-progress
+				echo "mget : ${url} ==> ${destination%/*}" 2>&1
+				wget -r --reject "index.*" -q --show-progress --no-parent "${url}" -P "${destination%/*}" 2>&1 | pv --progress 1>/dev/null
 			fi
 			waiting=0
 		else
@@ -91,9 +92,10 @@ function getFTP()
 		then
 			if [[ -z ${destination} ]]
 			then
-				wget -O - --reject "index.*" --no-verbose --no-parent "${url}" 2>/dev/null
+				wget -O - --reject "index.*" -q --show-progress  --no-parent "${url}" 2>/dev/null
 			else
-				wget -r --reject "index.*" --no-verbose --no-parent "${url}" -P "${destination}" --show-progress
+				echo "mget : ${url} ==> ${destination%/*}" 2>&1
+				wget -r --reject "index.*" -q --show-progress  --no-parent "${url}" -P "${destination}" 2>&1 | pv --progress 1>/dev/null
 			fi
 			waiting=0
 		else
@@ -122,7 +124,6 @@ function mget()
 			then
 				echo "$(getFTP ${url})"
 			else
-				echo "getFTP ${url}"	> ${SCRIPT_DIR}/bash/output.log
 				getFTP "${url}" "${destination}"
 				mv ${destination}/${url#*://} ${destination}/
 				url=${url#*://}
@@ -135,7 +136,6 @@ function mget()
 			then
 				echo "$(getHTTP ${url})"
 			else
-				echo "getHTTP ${url}"	> ${SCRIPT_DIR}/bash/output.log
 				getHTTP "${url}" "${destination}" 
 				mv ${destination%/*}/${url#*://} ${destination%/*}
 				url=${url#*://}
@@ -149,9 +149,6 @@ function mget()
 			_source=${host#*:/}
 			host=${host%:/*}
 			offset=$(echo "$_source" | cut -d "/" -f1)
-
-			echo "ssh "${host}" "tar cf - /${_source}/" | pv --timer --rate | tar xf - -C "${destination}/"" > ${SCRIPT_DIR}/bash/output.log
-
 			ssh "${host}" "tar cf - /${_source}/" | pv --timer --rate | tar xf - -C "${destination}/"
 			mv ${destination}/${_source} ${destination}/__temp
 			rm ${destination:?}/${offset:?} -R

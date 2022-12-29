@@ -5,17 +5,20 @@
 ###
 ##### <u>UPDATE USR SPACE FOR POOL/SET</u>
 
-  <u>./update.sh</u> <b>work=pool/set bootpart=/dev/sdX# update</b>\
+  <u>./update.sh</u> <b>work=pool/set bootpart=/dev/sdX# update</b>
 
   <u>./update.sh</u> <b>work=pool/set update</b>
 ###
 ##### <u>NEW DISK + LOCAL OR REMOTE SOURCE</u>
 
-  <u>./install.sh</u> <b>work=zfs://wSys/hardened@safe boot=zfs:///dev/sda:/usb/g1 </b><span style="color:green">(standard installation)</span>\
+  <u>./install.sh</u> <b>work=zfs://wSys/hardened@safe boot=zfs:///dev/sda:/usb/g1 </b><span style="color:green">(standard installation)</span>
 
-  <u>./install.sh</u> <b>work=zfs://root@10.1.0.1:/wSys/gnome@safe boot=zfs:///dev/nvme0n1:/saturn/g2 </b><span style="color:green">(convert nvme to zpool, new dataset) </span>\
+  <u>./install.sh</u> <b>work=zfs://root@10.1.0.1:/wSys/gnome@safe boot=zfs:///dev/nvme0n1:/saturn/g2 </b><span style="color:green">(remote source ZFS Send/Recv --ssh) </span>
   
-  <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe add=zfs://saturn/g2</b> <span style="color:green">(add to existing pool, add/modify boot record)</span> <span style="color:red"> >TESTING< </span>
+  <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe add=zfs://saturn/g2</b> <span style="color:green">(add to existing pool, don't modify boot record)</span> <span style="color:red"></span>
+
+  <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe add=zfs:///dev/sdj:/saturn/g2</b> <span style="color:green">(add to existing pool, DO modify boot record)</span> <span style="color:red"></span>
+
 ###
 ##### <u>MIRROR URL FOR TYPE OF RESOURCE + PROTOCOL </u>
 
