@@ -5,6 +5,84 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
+function prepare_disks() {
+
+	local disk="${1:?}"
+	local dpath="${2:?}"
+	local dtype="${3:?}"
+
+	clear_mounts ${disk}
+	sync
+	for wipe in $(ls /dev | grep "${disk#*/dev/}")
+	do
+		wipefs -af /dev/${wipe}
+	done
+
+	sgdisk -Z ${disk}
+
+	partprobe
+	sync
+
+	sgdisk --new 1:0:+32M -t 1:EF02 ${disk}
+	sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
+	sgdisk --new 3:0 -t 3:8300 ${disk}
+
+	parts="$(ls -d /dev/* | grep "${disk}")"
+	sync
+
+	clear_mounts ${disk}
+
+	partprobe
+	sync
+	mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
+
+	if [[ ! -d ${dpath} && ${dtype} != "zfs" ]]
+	then 
+		mkdir -p ${dpath}
+	elif [[ -d ${dpath} && ${dtype} == "zfs" ]]
+	then
+		rm ${dpath} -R
+	fi
+
+	case ${dtype} in
+		zfs)
+			options="-f"
+
+			zpool create ${options} \
+				-O acltype=posixacl \
+				-O compression=lz4 \
+				-O dnodesize=auto \
+				-O normalization=formD \
+				-O relatime=on \
+				-O xattr=sa \
+				-O encryption=aes-256-gcm \
+				-O keyformat=hex \
+				-O keylocation=file:///srv/crypto/zfs.key \
+				-O mountpoint="${dpath}" "${dpool}" \
+				"$(echo "${parts}" | grep '.3')"
+		;;
+		btrfs)
+			mount | grep "${disk}"
+			mkfs.btrfs "$(echo "${parts}" | grep '.3')" -L "${dpool}" -f
+			btrfs subvolume create "${dpath}"
+			mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
+		;;
+		xfs)
+			mkfs.xfs "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -f
+			mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
+		;;
+		ntfs)
+			mkfs.ntfs "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -f
+			mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
+		;;
+		ext4)
+			mkfs.ext4 "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -F
+			mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
+		;;
+	esac
+	
+}
+
 function setup_boot()	
 {
 			#ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"
@@ -114,6 +192,8 @@ function setup_boot()
 				;;
 			esac
 
+			disk="$(echo ${dhost} | grep '^/dev/')"
+
 			echo "dhost = ${dhost}" 2>&1
 			echo "dpath = ${dpath}" 2>&1
 
@@ -122,71 +202,9 @@ function setup_boot()
 
 			sleep 10
 
-			disk="$(echo ${dhost} | grep '^/dev/')"
-
 			if [[ -n "${disk}" ]]
 			then
-				parts="$(ls -d /dev/* | grep "${disk}")"
-				clear_mounts ${disk}
-				sync
-				sgdisk -Z ${disk}
-				wipefs -af ${disk}
-				partprobe
-				sync
-				sgdisk --new 1:0:+32M -t 1:EF02 ${disk}
-				sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
-				sgdisk --new 3:0 -t 3:8300 ${disk}
-				clear_mounts ${disk}
-				partprobe
-				sync
-				wipefs -af "$(echo "${parts}" | grep '.2')"
-				wipefs -af "$(echo "${parts}" | grep '.3')"
-				mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
-
-				if [[ ! -d ${dpath} && ${dtype} != "zfs" ]]
-				then 
-					mkdir -p ${dpath}
-				elif [[ -d ${dpath} && ${dtype} == "zfs" ]]
-				then
-					rm ${dpath} -R
-				fi
-
-				case ${dtype} in
-					zfs)
-						options="-f"
-
-						zpool create ${options} \
-							-O acltype=posixacl \
-							-O compression=lz4 \
-							-O dnodesize=auto \
-							-O normalization=formD \
-							-O relatime=on \
-							-O xattr=sa \
-							-O encryption=aes-256-gcm \
-							-O keyformat=hex \
-							-O keylocation=file:///srv/crypto/zfs.key \
-							-O mountpoint="${dpath}" "${dpool}" \
-							"$(echo "${parts}" | grep '.3')"
-					;;
-					btrfs)
-						mount | grep "${disk}"
-						mkfs.btrfs "$(echo "${parts}" | grep '.3')" -L "${dpool}" -f
-						btrfs subvolume create "${dpath}"
-						mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
-					;;
-					xfs)
-						mkfs.xfs "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -f
-						mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
-					;;
-					ntfs)
-						mkfs.ntfs "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -f
-						mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
-					;;
-					ext4)
-						mkfs.ext4 "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -F
-						mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
-					;;
-				esac
+				prepare_disks "${disk}" "${dpath}" "${dtype}" 
 			fi
 
 			if [[ ${dtype} == "${stype}" ]] 
