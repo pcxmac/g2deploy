@@ -236,8 +236,8 @@ function setup_boot()
 	then
 		boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
 		mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"
-		install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
 		mget "${boot_src}" "${dstDir}/boot"
+		install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR ... MGET BREAKS IF THIS IS BEFORE THE PARENT, APPARENTLY MGET NEEDS AN EMPTY FOLDER...
 		echo "mget "${boot_src}" "${dstDir}/boot""
 		kversion=$(getKVER)
 		kversion=${kversion#*linux-}
@@ -399,13 +399,13 @@ function add_to()
 			fi
 
 			dstDir="${dpath}/${ddataset}"
-			install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
 
 			if [[ -n "${disk}" ]]
 			then
 				boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
 				mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"
 				mget "${boot_src}" "${dstDir}/boot"
+				install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR
 				kversion=$(getKVER)
 				kversion=${kversion#*linux-}
 				editboot "${kversion}" "${dpool}/${ddataset}"
