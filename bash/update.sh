@@ -13,19 +13,19 @@ function update_runtime() {
 	eselect profile show
 	sudo emerge --sync --verbose --backtrack=99 --ask=n;sudo eix-update
 	
-	echo "PATCHING UPDATES"
 
 	if [[ -f /patches.sh ]]
 	then
+		echo "PATCHING UPDATES"
 		sh < /patches.sh
 		rm /patches.sh
 	fi
 
-	echo "EMERGE MISSING PACKAGES"
-	if [[ -f /package.list ]]
+	if [[ -f /package.list && -n "$(cat /package.list | sed '/^#/d' | sed 's/ //g')" ]]
 	then
+		echo "EMERGE MISSING PACKAGES"
 		emerge ${emergeOpts} $(cat /package.list)
-		rm /package.list
+		cat /package.list
 	fi
 
 	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
@@ -36,7 +36,7 @@ function update_runtime() {
 		emerge portage --oneshot --ask=n
 	fi
 		
-	sudo emerge -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y "${exclude_atoms}"
+	sudo emerge -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y ${exclude_atoms}
 	eselect news read new
 	
 }
@@ -90,7 +90,7 @@ do
 
 			rootDS="$(df / | tail -n 1 | awk '{print $1}')"
 			target="$(getZFSMountPoint "${rootDS}")"
-			
+
 			patchFiles_portage "${directory}" "${_profile}"
 
 			pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"

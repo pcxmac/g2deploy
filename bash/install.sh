@@ -327,6 +327,7 @@ function add_to()
 			echo "dpath = ${dpath}" 2>&1
 
 			disk=${dhost}
+			parts="$(ls -d /dev/* | grep "${disk}")"
 
 			echo "source = ${source} | stype = ${stype} | shost = ${shost} | pool = ${spool} | sdataset = ${sdataset} | ssnapshot =  ${ssnapshot} | root_path = ${root_path} | spath_root = ${spath_root} | spath_subvol = ${spath_subvol}"
 			echo "destination = ${destination} | Dtype = ${dtype} | Dhost = ${dhost} | dpool = ${dpool} | ddataset = ${ddataset} | dpath = ${dpath}"
@@ -354,6 +355,14 @@ function add_to()
 				;;
 				
 			esac
+
+			boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
+			dstDir="${dpath}/${ddataset}"
+			echo "----------------------------------------------------------------------------------"
+			echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
+			echo "dst Dir = ${dstDir} :: ${boot_src} :: PARTS = ${parts}"
+
+			sleep 5
 
 			if [[ ${dtype} == ${stype} ]] 
 			then
@@ -386,13 +395,8 @@ function add_to()
 				esac
 			fi
 
-			boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"	
-			dstDir="${dpath}/${ddataset}"
-			echo "----------------------------------------------------------------------------------"
-			echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
-			echo "dst Dir = ${dstDir} :: ${boot_src}"
 
-			if [[ ! -d ${dstDir} ]]; then mkdir -p "${dstDir}"; fi
+			#if [[ ! -d ${dstDir} ]]; then mkdir -p "${dstDir}"; fi		# this should never occur.
 			mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"
 			mget "${boot_src}" "${dstDir}/boot"
 			sleep 5
