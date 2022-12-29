@@ -15,7 +15,7 @@
 
 
 
-###HOW TO USE: (PRE-RELEASE < v0.1) | { v1.x = last stand alone implementation } | ZFS >primary target<
+### HOW TO USE: (PRE-RELEASE < v0.1) | { v1.x = last stand alone implementation } | ZFS >primary target<
 ##### <u>SIMPLE LOCAL DEPLOYMENT ... LOCAL ONLY.</u>
   <u>./deploy.sh</u> <b>build=plasma work=zpool/plasma deploy</b>
   
