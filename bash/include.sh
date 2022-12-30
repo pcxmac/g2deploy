@@ -370,26 +370,30 @@ function zfs_keys()
 	done
 }
 
+# allows heirarchys of depth=1 (YAML FORMAT)
 function findKeyValue() {
 
 	local config_file="${1:?}"
 	local header="${2:?}"
 	local key="${3:?}"
 	local scan=0
+	local indent=2 #2 spaces only
 
 	while read -r line
 	do
-		if [[ -n "$(echo "${line}" | grep "^\[${header}]$")" ]]
+		if [[ -n "$(echo "${line}" | grep "^${header%%/*}:.*")" ]]	#root
 		then
-			scan=1
+			header=${header#*/}
+			if [[ ${header} == ${header#*/} ]];then scan=1; fi
 		fi
 		if [[ ${scan} == 1 ]]
 		then
-			if [[ ${line%%=*} == "${key}" ]]
+			if [[ ${line%%:*} == "${key}" ]]
 			then
-				echo "${line#*=}"
+				echo "${line#*:}"
 				exit
 			fi
 		fi
 	done < "${config_file}"
 }
+
