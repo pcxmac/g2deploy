@@ -398,6 +398,9 @@ function install_system() {
 				then
 					install_system "${vYAML}"
 					modify_boot "${vYAML}"
+
+					# solve - mv: cannot move '/srv/zfs/test/plasma/boot/LINUX//pkg.hypokrites.me/kernels/current/6.1.1-gentoo/' to '/srv/zfs/test/plasma/boot/LINUX/6.1.1-gentoo': Directory not empty
+
 				fi	
 			;;
 		esac
