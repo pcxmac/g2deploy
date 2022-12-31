@@ -392,8 +392,8 @@ function install_system() {
 				if [[ "${selection,,}" == "init" ]]
 				then
 					prepare_disks "${vYAML}"
-					setup_boot "${vYAML}"
 					install_system "${vYAML}"
+					setup_boot "${vYAML}"
 					modify_boot "${vYAML}"
 				fi 
 				if [[ "${selection,,}" == "add" ]]
