@@ -370,6 +370,7 @@ function zfs_keys()
 	done
 }
 
+# path format = key:value/next_key:next_value/.../last_key:last_value
 function yamlOrder() {
 
 	local _string="${1:?}"
@@ -388,7 +389,7 @@ function yamlOrder() {
 	echo "${_match}	${_string}"
 }
 
-# allows heirarchys of depth=1 (YAML FORMAT)
+# allows heirarchys of depth=N (YAML FORMAT)
 function findKeyValue() {
 
 	local config_file="${1:?}"		# YAML FILE, 2 spaced.
