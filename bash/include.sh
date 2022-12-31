@@ -393,7 +393,7 @@ function yamlOrder() {
 # allows heirarchys of depth=N (YAML FORMAT)
 function findKeyValue() {
 
-	local config_file="${1:?}"		# YAML FILE, 2 spaced.
+	local yaml="${1:?}"		# YAML FILE, 2 spaced.
 	local path="${2:?}"			
 	local tabL=2
 	local cp=1
@@ -401,7 +401,11 @@ function findKeyValue() {
 	local cv="$(yamlOrder "${path}" ${cp})"	
 	local ws=$(( tabL*(${cp}-1) ))
 
+	# option to use string or file, not exists...
+	[[ -f ${yaml} ]] && yaml="$(cat ${yaml})"
+
 	# positive logic loop
+	_tmp="${IFS}"
 	IFS=''
 	while read -r line
 	do
@@ -414,5 +418,6 @@ function findKeyValue() {
 		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${path}" ${cp})"; }
 		[[ -z "${match}" && ${listing} == "true" ]] && { break; }
 		ws=$(( tabL*(${cp}-1) ))
-	done < "${config_file}"
+	done < <(echo ${yaml})
+	IFS="${_tmp}"
 }

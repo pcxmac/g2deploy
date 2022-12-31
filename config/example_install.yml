@@ -14,7 +14,7 @@ install: ${dpath}
     format: ZFS
   kernel: 6.1.1-gentoo
   boot: EFI
-  partition: ${disk}2
+    partition: ${disk}2
   swap: file
     location: ${dpool}/swap
     format: funnyBone

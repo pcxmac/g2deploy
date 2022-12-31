@@ -158,7 +158,7 @@ destination="${2:?}"
 	std_o="${std_o}    format: ${stype}\n"
 	std_o="${std_o}  kernel: 6.1.1-gentoo\n"
 	std_o="${std_o}  boot: EFI\n"
-	std_o="${std_o}  partition: ${disk}2\n"
+	std_o="${std_o}  	partition: ${disk}2\n"
 	std_o="${std_o}  swap: file\n"
 	std_o="${std_o}    location: ${dpool}/swap\n"
 	std_o="${std_o}    format: funnyBone\n"
@@ -176,10 +176,10 @@ function prepare_disks() {
 	local vYAML="${1:?}"
 
 	# prepare_disks only supports one disk right now, further work to findkeyValue (list properties), and the following code required.
-	local disk="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks/-)"
-	local dpath="$(findKeyValue <(printf '%s\n' "${vYAML}") install)"
-	local dtype="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks/format)"
-	local dpool="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks/pool)"
+	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
+	local dpath="$(findKeyValue "${vYAML}" install)"
+	local dtype="$(findKeyValue "${vYAML}" install/disks/format)"
+	local dpool="$(findKeyValue "${vYAML}" install/disks/pool)"
 
 
 	#local disk="${1:?}"
@@ -216,7 +216,7 @@ function prepare_disks() {
 	parts="$(ls -d /dev/* | grep "${disk}")"
 	sync
 
-	echo "parts  =  ${parts}"
+	#echo "parts  =  ${parts}"
 
 
 	mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
@@ -273,29 +273,64 @@ function prepare_disks() {
 	
 }
 
-function setup_boot()	
-{
+function setup_boot() {
+
+	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
+	local ddataset="$(findKeyValue "${vYAML}" install/disks/dataset)"
+	local dpath="$(findKeyValue "${vYAML}" install)"
+	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
+	local boot_partition="$(findKeyValue "${vYAML}" install/boot/partition)"
+
+	local dstDir="${dpath}/${ddataset}"
+	# temporary type of assignment, list not handled currently
+	disk=${disk#*-}
+
+	mount "${boot_partition}" "${dstDir}/boot"
+	mget "${boot_src}" "${dstDir}/boot"
+	umount "${dstDir}/boot"
+}
+
+function modify_boot() {
+
+	local vYAML="${1:?}"
+
+	local dpool="$(findKeyValue "${vYAML}" install/disks/pool)"
+	local ddataset="$(findKeyValue "${vYAML}" install/disks/dataset)"
+	local dpath="$(findKeyValue "${vYAML}" install)"
+	local kversion="$(findKeyValue "${vYAML}" install/kernel)"
+	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
+	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
+	local dstDir="${dpath}/${ddataset}"
+
+	mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"	
+	install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR ... MGET BREAKS IF THIS IS BEFORE THE PARENT, APPARENTLY MGET NEEDS AN EMPTY FOLDER...
+	editboot "${kversion}" "${dpool}/${ddataset}"
+	umount "${dstDir}/boot"
+}
+
+function install_system() {
+
 	# FIGURED FOR ZFS CURRENTLY / ONLY
 
 	#ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"
 	# incongriguous method sequence, a compromise, tbd
 
-	yaml="${1:?}"
+	local vYAML="${1:?}"
 
-	local dpool="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks/pool)"
-	local ddataset="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks/dataset)"
-	local dpath="$(findKeyValue <(printf '%s\n' "${vYAML}") install)"
-	local dtype="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks/format)"
-	local kversion="$(findKeyValue <(printf '%s\n' "${vYAML}") install/kernel)"
-	local disk="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks/-)"
+	local dpool="$(findKeyValue "${vYAML}" install/disks/pool)"
+	local ddataset="$(findKeyValue "${vYAML}" install/disks/dataset)"
+	local dpath="$(findKeyValue "${vYAML}" install)"
+	local dtype="$(findKeyValue "${vYAML}" install/disks/format)"
+	local kversion="$(findKeyValue "${vYAML}" install/kernel)"
+	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
 	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
 
 	# (currently zfs) pool/dataset@snapshot
 	local destination="${dpool}/${ddataset}"
 
-	local spath="$(findKeyValue <(printf '%s\n' "${vYAML}") install/source/dataset)"
-	local stype="$(findKeyValue <(printf '%s\n' "${vYAML}") install/source/format)"
-	local shost="$(findKeyValue <(printf '%s\n' "${vYAML}") install/source/host)"
+	local spath="$(findKeyValue "${vYAML}" install/source/dataset)"
+	local stype="$(findKeyValue "${vYAML}" install/source/format)"
+	local shost="$(findKeyValue "${vYAML}" install/source/host)"
 
 	disk=${disk#*-}
 
@@ -306,11 +341,6 @@ function setup_boot()
 	# (currently zfs) pool/dataset to beget
 	local source="${spath}"
 	
-	#if [[ -n "${disk,,}" ]]
-	#then
-	#	prepare_disks "${disk}" "${dpath}" "${dtype}" 
-	#fi
-
 	if [[ ${dtype,,} == "${stype,,}" ]] 
 	then
 		case "${stype,,}" in
@@ -341,22 +371,11 @@ function setup_boot()
 			;;
 		esac
 	fi
-
-	dstDir="${dpath}/${ddataset}"
-
-	if [[ -n "${disk,,}" ]]
-	then
-			
-		mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"
-		mget "${boot_src}" "${dstDir}/boot"
-		install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR ... MGET BREAKS IF THIS IS BEFORE THE PARENT, APPARENTLY MGET NEEDS AN EMPTY FOLDER...
-		echo "mget "${boot_src}" "${dstDir}/boot""
-		kversion=$(getKVER)
-		kversion=${kversion#*linux-}
-		editboot "${kversion}" "${dpool}/${ddataset}"
-		umount "${dstDir}/boot"
-	fi
  }
+
+
+
+
 
 
 	dataset=""				#	the working dataset of the installation
@@ -364,16 +383,25 @@ function setup_boot()
 	profile=""				#	the build profile of the install
 	selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
 
-
-
 	for x in "$@"
 	do
 		case "${x,,}" in
 			work=*)
 				_source=${x#*=}
 			;;
+			init)
+				selection="init"
+			;;
+			add)
+				selection="add"
+			;;
 		esac
 	done
+
+
+	
+
+
 
 	for x in "$@"
 	do
@@ -381,8 +409,16 @@ function setup_boot()
 			boot=*)
 				_destination=${x#*=}
 				vYAML="$(generateYAML ${_source} ${_destination})"
-				prepare_disks "${vYAML}"
-				setup_boot "${vYAML}"
+
+				# determine if adding to an existing pool... or not.
+				if [[ "${selection,,}" == "init" ]]
+				then
+					prepare_disks "${vYAML}"
+					setup_boot "${vYAML}"
+				fi
+
+				install_system "${vYAML}"
+				modify_boot "${vYAML}"
 			;;
 
 			config=*)
