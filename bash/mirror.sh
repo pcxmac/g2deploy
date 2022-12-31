@@ -7,7 +7,7 @@
 	release_base_string=""
 	serversList="invalid"
 
-	case ${profile} in
+	case ${profile,,} in
 		musl*)			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}-hardened/"		;;
 		selinux)		release_base_string="releases/amd64/autobuilds/current-stage3-amd64-hardened-${profile}-openrc/";;
 		hardened|clang)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}-openrc/"			;;

@@ -85,6 +85,10 @@
       wireguard goes to WAN IP, need to define routing exchange
 
 
+  IF A PACKAGE FAILS TO BUILD DURING DEPLOY, IT MUST BE:
+    LOGGED
+    & REPORTED 
+
   x
   x  
 

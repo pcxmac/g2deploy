@@ -14,7 +14,7 @@ function patchSystem()
 	local Purl="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.patches" | sed 's/ //g')"
 	local Curl="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.patches" | sed 's/ //g')"
 
-	case ${type} in
+	case ${type,,} in
 		deploy*)
 			curl "${Curl}" --silent | sed '/^#/d'
 			curl "${Purl}" --silent | sed '/^#/d'
@@ -375,6 +375,7 @@ function yamlOrder() {
 
 	local _string="${1:?}"
 	local _order="${2:?}"
+	local _match=""
 
 	for ((i=1;i<=${_order};i++))
 	do
@@ -404,7 +405,7 @@ function findKeyValue() {
 	IFS=''
 	while read -r line
 	do
-		match="$(echo ${line} | grep -P "^\s{$ws}$(echo ${cv} | awk {'print $1'})")"
+		match="$(echo ${line} | grep -P "^\s{$ws}$(echo ${cv} | awk {'print $1'})" | sed 's/ //g')"
 		rem="$(echo ${cv} | awk {'print $2'})"
 		#echo "rank = ${ws} | search = ${cv} | match = ***${match}*** : ${line}"
 		# success ?

@@ -1,3 +1,5 @@
+# MOST OF THIS WILL PROBABLY TURN IN TO A PTYHON SCRIPT EVENTUALLY. TOO MUCH VARIABILITY WITH DATA STRUCTURES FOR BASH.
+
 #!/bin/bash
 
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
@@ -65,7 +67,7 @@ destination="${2:?}"
 	stype=${source_url%://*}	# example : zfs://root@localhost.com:/pool/dataset ; btrfs:///Label/subvolume ; ssh://root@localhost:/path/to/set
 	shost=${source_url#*://}	
 
-	case ${stype} in
+	case ${stype,,} in
 		zfs)
 			source=${shost#*:/}
 			spool=${source%/*}
@@ -142,7 +144,7 @@ destination="${2:?}"
 	dtype=${destination_url%://*}	# example :	zfs:///dev/sda:/pool/dataset ; ntfs:///dev/sdX:/mnt/sdX ; config:///path/to/config
 	dhost=${destination_url#*://}	
 
-	case ${dtype} in
+	case ${dtype,,} in
 		config)
 			echo "config ..."
 		;;
@@ -210,13 +212,20 @@ function prepare_disks() {
 
 	# prepare_disks only supports one disk right now, further work to findkeyValue (list properties), and the following code required.
 	local disk="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks/-)"
-	disk=${disk%[0-9][0-9]*}	# only supports one disk at the moment, with no mappable partitioning
 	local dpath="$(findKeyValue <(printf '%s\n' "${vYAML}") install)"
-	local dtype="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks)"
+	local dtype="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks/format)"
+	local dpool="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks/pool)"
+
 
 	#local disk="${1:?}"
 	#local dpath="${2:?}"
 	#local dtype="${3:?}"
+
+	disk=${disk#*-}
+	disk="$(echo ${disk%[0-9]*})"	# only supports one disk at the moment, with no mappable partitioning
+
+	#echo "disk = ${disk} | dpath = ${dpath} | dtype = ${dtype}"
+	#sleep 100
 
 	clear_mounts ${disk}
 	sync
@@ -234,13 +243,18 @@ function prepare_disks() {
 	sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
 	sgdisk --new 3:0 -t 3:8300 ${disk}
 
-	parts="$(ls -d /dev/* | grep "${disk}")"
-	sync
 
 	clear_mounts ${disk}
 
 	partprobe
 	sync
+
+	parts="$(ls -d /dev/* | grep "${disk}")"
+	sync
+
+	echo "parts  =  ${parts}"
+
+
 	mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
 
 	if [[ ! -d ${dpath} && ${dtype} != "zfs" ]]
@@ -251,7 +265,12 @@ function prepare_disks() {
 		rm ${dpath} -R
 	fi
 
-	case ${dtype} in
+	#echo "CCCC$(echo "${parts}" | grep '.3')"
+	#echo "disk = ${disk} | dpath = ${dpath} | dtype = ${dtype} | dpool = ${dpool}"
+
+	#sleep 100
+
+	case ${dtype,,} in
 		zfs)
 			options="-f"
 
@@ -328,7 +347,7 @@ function setup_boot()
 
 	if [[ ${dtype} == "${stype}" ]] 
 	then
-		case ${stype} in
+		case ${stype,,} in
 			zfs)
 				if [[ -n ${shost} ]]; then	ssh "${shost}" zfs send ${source} | pv | zfs recv -F "${destination}"
 				else 									 zfs send "${source}" | pv | zfs recv -F "${destination}"
@@ -341,7 +360,7 @@ function setup_boot()
 			;;
 		esac
 	else 
-		case ${shost} in
+		case ${shost,,} in
 			'')
 				url="${stype}://${shost}:${spath}/"
 				url=${url#*://}
