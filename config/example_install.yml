@@ -1,8 +1,9 @@
 # Install Config for @ ${dhost}:$(tStamp)\n" -- ZFS, because YAML is dynamic, not all attributes are common.
-install: ${dpath}
+install: ${dpool}/${ddataset}
   disks: 
     - ${disk}3
     pool: ${dpool}
+    path: ${dpath}
     dataset: ${ddataset}
     format: ZFS
     compression: lz4

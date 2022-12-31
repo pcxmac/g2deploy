@@ -141,29 +141,34 @@ destination="${2:?}"
 
 	disk="$(echo ${dhost} | grep '^/dev/')"
 
+	#echo "${disk} | dhost = ${dhost}"
+
 # generate YAML output
 	std_o="# Install Config for @ ${dhost}:$(tStamp)\n"
-	std_o="${std_o}install: ${dpath}\n"
+	std_o="${std_o}install: ${dpool}/${ddataset}\n"
 	std_o="${std_o}  disks: \n"
 	std_o="${std_o}    - ${disk}3\n"
 	std_o="${std_o}    pool: ${dpool}\n"
 	std_o="${std_o}    dataset: ${ddataset}\n"
+	std_o="${std_o}    path: ${dpath}\n"
 	std_o="${std_o}    format: zfs\n"
 	std_o="${std_o}    compression: lz4\n"
 	std_o="${std_o}    encryption: aes-gcm-256\n"
 	std_o="${std_o}      key: /srv/crypto/zfs.key\n"
-	std_o="${std_o}  source: \n"
+	std_o="${std_o}  source: ${spool}/${sdataset}@${ssnapshot}\n"
 	std_o="${std_o}    host: ${shost}\n"
-	std_o="${std_o}    dataset: ${spool}/${sdataset}@${ssnapshot}\n"
+	std_o="${std_o}    pool: ${spool}\n"
+	std_o="${std_o}    dataset: ${sdataset}\n"
+	std_o="${std_o}    snapshot: ${ssnapshot}\n"
 	std_o="${std_o}    format: ${stype}\n"
 	std_o="${std_o}  kernel: 6.1.1-gentoo\n"
 	std_o="${std_o}  boot: EFI\n"
-	std_o="${std_o}  	partition: ${disk}2\n"
+	std_o="${std_o}    partition: ${disk}2\n"
+	std_o="${std_o}    loader: refind\n"
 	std_o="${std_o}  swap: file\n"
 	std_o="${std_o}    location: ${dpool}/swap\n"
-	std_o="${std_o}    format: funnyBone\n"
+	std_o="${std_o}    format: 'zfs dataset, no CoW'\n"
 	std_o="${std_o}  profile: ${sprofile}\n"
-	std_o="${std_o}  bootloader: refind\n"
 
 	echo -e "${std_o}" 2>&1
 
@@ -177,7 +182,7 @@ function prepare_disks() {
 
 	# prepare_disks only supports one disk right now, further work to findkeyValue (list properties), and the following code required.
 	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
-	local dpath="$(findKeyValue "${vYAML}" install)"
+	local dpath="$(findKeyValue "${vYAML}" install/path)"
 	local dtype="$(findKeyValue "${vYAML}" install/disks/format)"
 	local dpool="$(findKeyValue "${vYAML}" install/disks/pool)"
 
@@ -277,7 +282,7 @@ function setup_boot() {
 
 	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
 	local ddataset="$(findKeyValue "${vYAML}" install/disks/dataset)"
-	local dpath="$(findKeyValue "${vYAML}" install)"
+	local dpath="$(findKeyValue "${vYAML}" install/path)"
 	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
 	local boot_partition="$(findKeyValue "${vYAML}" install/boot/partition)"
 
@@ -296,7 +301,7 @@ function modify_boot() {
 
 	local dpool="$(findKeyValue "${vYAML}" install/disks/pool)"
 	local ddataset="$(findKeyValue "${vYAML}" install/disks/dataset)"
-	local dpath="$(findKeyValue "${vYAML}" install)"
+	local dpath="$(findKeyValue "${vYAML}" install/path)"
 	local kversion="$(findKeyValue "${vYAML}" install/kernel)"
 	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
 	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
@@ -317,36 +322,34 @@ function install_system() {
 
 	local vYAML="${1:?}"
 
+	local install="$(findKeyValue "${vYAML}" install)"
 	local dpool="$(findKeyValue "${vYAML}" install/disks/pool)"
 	local ddataset="$(findKeyValue "${vYAML}" install/disks/dataset)"
-	local dpath="$(findKeyValue "${vYAML}" install)"
+	local dpath="$(findKeyValue "${vYAML}" install/path)"
 	local dtype="$(findKeyValue "${vYAML}" install/disks/format)"
 	local kversion="$(findKeyValue "${vYAML}" install/kernel)"
 	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
 	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
 
-	# (currently zfs) pool/dataset@snapshot
+	# (currently zfs) pool/dataset@snapshot ... needs to change to dpath, in yaml. ... install:(pool/dataset) ... not path
 	local destination="${dpool}/${ddataset}"
 
-	local spath="$(findKeyValue "${vYAML}" install/source/dataset)"
+	local spath="$(findKeyValue "${vYAML}" install/source)"
 	local stype="$(findKeyValue "${vYAML}" install/source/format)"
 	local shost="$(findKeyValue "${vYAML}" install/source/host)"
 
 	disk=${disk#*-}
 
-	echo -e "$vYAML"
+	#echo -e "$vYAML"
+	echo "installing ${spath} to ${install}"
+	echo "------------------------------------------"
 
-	echo "-------------------"
-
-	# (currently zfs) pool/dataset to beget
-	local source="${spath}"
-	
 	if [[ ${dtype,,} == "${stype,,}" ]] 
 	then
 		case "${stype,,}" in
 			zfs)
-				if [[ -n ${shost} ]]; then	ssh "${shost}" zfs send ${source} | pv | zfs recv -F "${destination}"
-				else 									 zfs send "${source}" | pv | zfs recv -F "${destination}"
+				if [[ -n ${shost} ]]; then	ssh "${shost}" zfs send ${spath} | pv | zfs recv -F "${destination}"
+				else 									 zfs send "${spath}" | pv | zfs recv -F "${destination}"
 				fi
 			;;
 			btrfs)
@@ -373,11 +376,6 @@ function install_system() {
 	fi
  }
 
-
-
-
-
-
 	dataset=""				#	the working dataset of the installation
 	directory=""			# 	the working directory of the prescribed dataset
 	profile=""				#	the build profile of the install
@@ -398,11 +396,6 @@ function install_system() {
 		esac
 	done
 
-
-	
-
-
-
 	for x in "$@"
 	do
 		case "${x,,}" in
@@ -415,14 +408,24 @@ function install_system() {
 				then
 					prepare_disks "${vYAML}"
 					setup_boot "${vYAML}"
-				fi
-
-				install_system "${vYAML}"
-				modify_boot "${vYAML}"
+					install_system "${vYAML}"
+					modify_boot "${vYAML}"
+				fi 
+				if [[ "${selection,,}" == "add" ]]
+				then
+					install_system "${vYAML}"
+					modify_boot "${vYAML}"
+				fi	
 			;;
+		esac
+	done
 
-			config=*)
-				echo "config = ${config}"
+	for x in "$@"
+	do
+		case "${x,,}" in
+			config)
+				vYAML="$(generateYAML ${_source} ${_destination})"
+				echo -e "${vYAML}"
 			;;
 		esac
 	done
