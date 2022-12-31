@@ -401,7 +401,7 @@ function findKeyValue() {
 	local cv="$(yamlOrder "${path}" ${cp})"	
 	local ws=$(( tabL*(${cp}-1) ))
 
-	# option to use string or file, not exists...
+	# option to use string or file
 	[[ -f ${yaml} ]] && yaml="$(cat ${yaml})"
 
 	# positive logic loop
@@ -409,10 +409,8 @@ function findKeyValue() {
 	IFS=''
 	while read -r line
 	do
-		#echo "cv = ${cv}" 2>&1
 		match="$(echo ${line} | grep -P "^\s{$ws}$(echo ${cv} | awk {'print $1'})" | sed 's/ //g')"
 		rem="$(echo ${cv} | awk {'print $2'})"
-		#echo "rank = ${ws} | search = ${cv} | match = ***${match}*** : ${line}"
 		# success ?
 		[[ -z "${rem}" && -n "${match}" ]] && { echo "${match#*:}"; listing="true"; }
 		# if a match is found, advance.		[[ YES MATCH ]]

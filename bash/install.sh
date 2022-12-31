@@ -12,7 +12,6 @@ function generateYAML() {
 source="${1:?}"
 destination="${2:?}"
 
-
 #
 #	conops : 
 #	
@@ -284,15 +283,14 @@ function modify_boot() {
 
 	local vYAML="${1:?}"
 
+	local boot_partition="$(findKeyValue "${vYAML}" install/boot/partition)"
 	local dpool="$(findKeyValue "${vYAML}" install/disks/pool)"
+	local kversion="$(findKeyValue "${vYAML}" install/kernel)"
 	local ddataset="$(findKeyValue "${vYAML}" install/disks/dataset)"
 	local dpath="$(findKeyValue "${vYAML}" install/disks/path)"
-	local kversion="$(findKeyValue "${vYAML}" install/kernel)"
-	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
-	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
 	local dstDir="${dpath}/${ddataset}"
 
-	mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"	
+	mount "${boot_partition}" "${dstDir}/boot"	
 	install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR ... MGET BREAKS IF THIS IS BEFORE THE PARENT, APPARENTLY MGET NEEDS AN EMPTY FOLDER...
 	editboot "${kversion}" "${dpool}/${ddataset}"
 	umount "${dstDir}/boot"
