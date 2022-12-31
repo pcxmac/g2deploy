@@ -409,6 +409,7 @@ function findKeyValue() {
 	IFS=''
 	while read -r line
 	do
+		#echo "cv = ${cv}" 2>&1
 		match="$(echo ${line} | grep -P "^\s{$ws}$(echo ${cv} | awk {'print $1'})" | sed 's/ //g')"
 		rem="$(echo ${cv} | awk {'print $2'})"
 		#echo "rank = ${ws} | search = ${cv} | match = ***${match}*** : ${line}"

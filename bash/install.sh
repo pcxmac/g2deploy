@@ -182,20 +182,16 @@ function prepare_disks() {
 
 	# prepare_disks only supports one disk right now, further work to findkeyValue (list properties), and the following code required.
 	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
-	local dpath="$(findKeyValue "${vYAML}" install/path)"
+	local dpath="$(findKeyValue "${vYAML}" install/disks/path)"
 	local dtype="$(findKeyValue "${vYAML}" install/disks/format)"
 	local dpool="$(findKeyValue "${vYAML}" install/disks/pool)"
+	local boot_partition="$(findKeyValue "${vYAML}" install/boot/partition)"
 
+	install_partition=${disk#*-}
+	disk="$(echo ${install_partition%[0-9]*})"	# only supports one disk at the moment, with no mappable partitioning
+	dpath="${dpath}/${ddataset}"
 
-	#local disk="${1:?}"
-	#local dpath="${2:?}"
-	#local dtype="${3:?}"
-
-	disk=${disk#*-}
-	disk="$(echo ${disk%[0-9]*})"	# only supports one disk at the moment, with no mappable partitioning
-
-	#echo "disk = ${disk} | dpath = ${dpath} | dtype = ${dtype}"
-	#sleep 100
+	#echo "disk = ${disk} | boot -> ${boot_partition} | part -> ${install_partition} | dpath = ${dpath} | dtype = ${dtype}" 2>&1
 
 	clear_mounts ${disk}
 	sync
@@ -218,13 +214,7 @@ function prepare_disks() {
 	partprobe
 	sync
 
-	parts="$(ls -d /dev/* | grep "${disk}")"
-	sync
-
-	#echo "parts  =  ${parts}"
-
-
-	mkfs.vfat "$(echo "${parts}" | grep '.2')" -I
+	mkfs.vfat "${boot_partition}" -I
 
 	if [[ ! -d ${dpath} && ${dtype} != "zfs" ]]
 	then 
@@ -233,11 +223,6 @@ function prepare_disks() {
 	then
 		rm ${dpath} -R
 	fi
-
-	#echo "CCCC$(echo "${parts}" | grep '.3')"
-	#echo "disk = ${disk} | dpath = ${dpath} | dtype = ${dtype} | dpool = ${dpool}"
-
-	#sleep 100
 
 	case "${dtype,,}" in
 		zfs)
@@ -254,25 +239,25 @@ function prepare_disks() {
 				-O keyformat=hex \
 				-O keylocation=file:///srv/crypto/zfs.key \
 				-O mountpoint="${dpath}" "${dpool}" \
-				"$(echo "${parts}" | grep '.3')"
+				"${install_partition}"
 		;;
 		btrfs)
 			mount | grep "${disk}"
-			mkfs.btrfs "$(echo "${parts}" | grep '.3')" -L "${dpool}" -f
+			mkfs.btrfs "$(echo "${disk}" | grep '.3')" -L "${dpool}" -f
 			btrfs subvolume create "${dpath}"
-			mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
+			mount -t "${dtype}" "$(echo "${disk}" | grep '.3')" "${dpath}"
 		;;
 		xfs)
-			mkfs.xfs "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -f
-			mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
+			mkfs.xfs "$(echo "${disk}" | grep '.3')" -L "${ddataset}" -f
+			mount -t "${dtype}" "$(echo "${disk}" | grep '.3')" "${dpath}"
 		;;
 		ntfs)
-			mkfs.ntfs "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -f
-			mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
+			mkfs.ntfs "$(echo "${disk}" | grep '.3')" -L "${ddataset}" -f
+			mount -t "${dtype}" "$(echo "${disk}" | grep '.3')" "${dpath}"
 		;;
 		ext4)
-			mkfs.ext4 "$(echo "${parts}" | grep '.3')" -L "${ddataset}" -F
-			mount -t "${dtype}" "$(echo "${parts}" | grep '.3')" "${dpath}"
+			mkfs.ext4 "$(echo "${disk}" | grep '.3')" -L "${ddataset}" -F
+			mount -t "${dtype}" "$(echo "${disk}" | grep '.3')" "${dpath}"
 		;;
 	esac
 	
@@ -282,7 +267,7 @@ function setup_boot() {
 
 	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
 	local ddataset="$(findKeyValue "${vYAML}" install/disks/dataset)"
-	local dpath="$(findKeyValue "${vYAML}" install/path)"
+	local dpath="$(findKeyValue "${vYAML}" install/disks/path)"
 	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
 	local boot_partition="$(findKeyValue "${vYAML}" install/boot/partition)"
 
@@ -301,7 +286,7 @@ function modify_boot() {
 
 	local dpool="$(findKeyValue "${vYAML}" install/disks/pool)"
 	local ddataset="$(findKeyValue "${vYAML}" install/disks/dataset)"
-	local dpath="$(findKeyValue "${vYAML}" install/path)"
+	local dpath="$(findKeyValue "${vYAML}" install/disks/path)"
 	local kversion="$(findKeyValue "${vYAML}" install/kernel)"
 	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
 	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
@@ -325,7 +310,7 @@ function install_system() {
 	local install="$(findKeyValue "${vYAML}" install)"
 	local dpool="$(findKeyValue "${vYAML}" install/disks/pool)"
 	local ddataset="$(findKeyValue "${vYAML}" install/disks/dataset)"
-	local dpath="$(findKeyValue "${vYAML}" install/path)"
+	local dpath="$(findKeyValue "${vYAML}" install/disks/path)"
 	local dtype="$(findKeyValue "${vYAML}" install/disks/format)"
 	local kversion="$(findKeyValue "${vYAML}" install/kernel)"
 	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
@@ -426,6 +411,8 @@ function install_system() {
 			config)
 				vYAML="$(generateYAML ${_source} ${_destination})"
 				echo -e "${vYAML}"
+				echo "------------------------------------------"
+				#echo "$(findKeyValue "${vYAML}" install/disks/path)"
 			;;
 		esac
 	done
