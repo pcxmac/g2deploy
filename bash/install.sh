@@ -176,23 +176,26 @@ destination="${2:?}"
 
 # generate YAML output
 	std_o="# Install Config for @ ${dhost}:$(tStamp)\n"
-	std_o="${std_o}install:${dpool}/${ddataset}-${sdataset}\n"
-	std_o="${std_o} disks:ZFS\n"
-	std_o="${std_o}  - ${disk}3\n"
-	std_o="${std_o}  pool:${dpool}\n"
-	std_o="${std_o}  dataset:${ddataset}\n"
-	std_o="${std_o}  format:\n"
-	std_o="${std_o}  compression:lz4\n"
-	std_o="${std_o}  encryption:aes-gcm-256\n"
-	std_o="${std_o}  key:/srv/crypto/zfs.key\n"
-	std_o="${std_o} kernel:6.1.1-gentoo\n"
-	std_o="${std_o} boot:EFI\n"
+	std_o="${std_o}install:${dpath}\n"
+	std_o="${std_o}  disks:ZFS\n"
+	std_o="${std_o}    - zardoz\n"
+	std_o="${std_o}    - ${disk}1\n"
+	std_o="${std_o}    - ${disk}2\n"
+	std_o="${std_o}    - ${disk}3\n"
+	std_o="${std_o}    pool:${dpool}\n"
+	std_o="${std_o}    dataset:${ddataset}\n"
+	std_o="${std_o}    format:\n"
+	std_o="${std_o}    compression:lz4\n"
+	std_o="${std_o}    encryption:aes-gcm-256\n"
+	std_o="${std_o}      key:/srv/crypto/zfs.key\n"
+	std_o="${std_o}  kernel:6.1.1-gentoo\n"
+	std_o="${std_o}  boot:EFI\n"
 	std_o="${std_o}  partition:${disk}2\n"
-	std_o="${std_o} swap:file\n"
-	std_o="${std_o}  location:${dpool}/swap\n"
-	std_o="${std_o}  format:funnyBone\n"
-	std_o="${std_o} profile:${sprofile}\n"
-	std_o="${std_o} bootloader:refind\n"
+	std_o="${std_o}  swap:file\n"
+	std_o="${std_o}    location:${dpool}/swap\n"
+	std_o="${std_o}    format:funnyBone\n"
+	std_o="${std_o}  profile:${sprofile}\n"
+	std_o="${std_o}  bootloader:refind\n"
 
 	echo -e "${std_o}" 2>&1
 
@@ -202,9 +205,13 @@ function prepare_disks() {
 
 	# inject YAML
 
-	local disk=
-	local dpath=
-	local dtype=
+	local vYAML="${1:?}"
+
+	# prepare_disks only supports one disk right now, further work to findkeyValue (list properties), and the following code required.
+	local disk="$(findKeyValue <(printf '%s\n' "${yaml}") install/disks/pool)"
+
+	local dpath="$(findKeyValue <(printf '%s\n' "${yaml}") install)"
+	local dtype="$(findKeyValue <(printf '%s\n' "${yaml}") install/disks)"
 
 	#local disk="${1:?}"
 	#local dpath="${2:?}"
@@ -380,11 +387,20 @@ function setup_boot()
 			boot=*)
 				_destination=${x#*=}
 
-				#yaml="$(generateYAML ${_source} ${_destination})"
+				yaml="$(generateYAML ${_source} ${_destination})"
 
-				#echo "$(findKeyValue <(printf '%s\n' "${yaml}") install/disks pool)"
 
-	#			echo "$(findKeyValue ../config/host.cfg "server/profile" test)"
+	echo "$(findKeyValue <(printf '%s\n' "${yaml}") install/disks/-) - disk"
+
+	echo "$(findKeyValue <(printf '%s\n' "${yaml}") install) - path"
+	
+	echo "$(findKeyValue <(printf '%s\n' "${yaml}") install/disks) - type"
+
+
+				#echo "$(findKeyValue <(printf '%s\n' "${yaml}") install/disks/pool)"	# works !
+				sleep 10
+
+	#			echo "$(findKeyValue ../config/host.cfg "server/profile/test)"
 
 				#echo -e "${yaml}"
 

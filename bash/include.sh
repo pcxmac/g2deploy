@@ -395,9 +395,11 @@ function findKeyValue() {
 	local path="${2:?}"			
 	local tabL=2
 	local cp=1
+	local listing="false"
 	local cv="$(yamlOrder "${path}" ${cp})"	
 	local ws=$(( tabL*(${cp}-1) ))
 
+	# positive logic loop
 	IFS=''
 	while read -r line
 	do
@@ -405,9 +407,10 @@ function findKeyValue() {
 		rem="$(echo ${cv} | awk {'print $2'})"
 		#echo "rank = ${ws} | search = ${cv} | match = ***${match}*** : ${line}"
 		# success ?
-		[[ -z "${rem}" && -n "${match}" ]] && { echo "${match#*:}"; break; }
+		[[ -z "${rem}" && -n "${match}" ]] && { echo "${match#*:}"; listing="true"; }
 		# if a match is found, advance.		[[ YES MATCH ]]
-		[[ -n "${match}" ]] && { ((cp+=1));cv="$(yamlOrder "${path}" ${cp})"; }
+		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${path}" ${cp})"; }
+		[[ -z "${match}" && ${listing} == "true" ]] && { break; }
 		ws=$(( tabL*(${cp}-1) ))
 	done < "${config_file}"
 }
