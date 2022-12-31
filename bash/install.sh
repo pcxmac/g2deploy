@@ -12,41 +12,6 @@ function generateYAML() {
 source="${1:?}"
 destination="${2:?}"
 
-#	examples... (of what will be generated, and eventually be accepted through the arg config=*)
-#	
-#	install:test/plasma-plasma_old
-#	disks:ZFS
-#		- /dev/sda3
-#		- /dev/sdb3
-#		- /dev/sdc3
-#		pool:test
-#		dataset:plasma
-#		format:raidz
-#		compression:lz4
-#		encryption:aes-192-gcm
-#			-key:password
-#	kernel:6.1.1-gentoo
-#	boot:EFI
-#		- /dev/sda2
-#	swap:file
-#		location:test/swap
-#	profile:plasma/systemd
-#	bootloader:refind
-#	
-#	
-#	install:test/g2-hardened
-#	disks:BTRFS
-#		- /dev/sda
-#		subvol:g2
-#		compression:lzo
-#	kernel:6.0.11-gentoo
-#	boot:EFI
-#		- /dev/sdb2
-#	swap:partition
-#		location:/dev/sdb1
-#	profile:hardened
-#	bootloader:grub
-#		
 
 #
 #	conops : 
@@ -67,7 +32,7 @@ destination="${2:?}"
 	stype=${source_url%://*}	# example : zfs://root@localhost.com:/pool/dataset ; btrfs:///Label/subvolume ; ssh://root@localhost:/path/to/set
 	shost=${source_url#*://}	
 
-	case ${stype,,} in
+	case "${stype,,}" in
 		zfs)
 			source=${shost#*:/}
 			spool=${source%/*}
@@ -144,7 +109,7 @@ destination="${2:?}"
 	dtype=${destination_url%://*}	# example :	zfs:///dev/sda:/pool/dataset ; ntfs:///dev/sdX:/mnt/sdX ; config:///path/to/config
 	dhost=${destination_url#*://}	
 
-	case ${dtype,,} in
+	case "${dtype,,}" in
 		config)
 			echo "config ..."
 		;;
@@ -183,14 +148,14 @@ destination="${2:?}"
 	std_o="${std_o}    - ${disk}3\n"
 	std_o="${std_o}    pool: ${dpool}\n"
 	std_o="${std_o}    dataset: ${ddataset}\n"
-	std_o="${std_o}    format: ZFS\n"
+	std_o="${std_o}    format: zfs\n"
 	std_o="${std_o}    compression: lz4\n"
 	std_o="${std_o}    encryption: aes-gcm-256\n"
 	std_o="${std_o}      key: /srv/crypto/zfs.key\n"
 	std_o="${std_o}  source: \n"
 	std_o="${std_o}    host: ${shost}\n"
-	std_o="${std_o}    dataset: ${spath}\n"
-	std_o="${std_o}    type: ${stype}\n"
+	std_o="${std_o}    dataset: ${spool}/${sdataset}@${ssnapshot}\n"
+	std_o="${std_o}    format: ${stype}\n"
 	std_o="${std_o}  kernel: 6.1.1-gentoo\n"
 	std_o="${std_o}  boot: EFI\n"
 	std_o="${std_o}  partition: ${disk}2\n"
@@ -243,7 +208,6 @@ function prepare_disks() {
 	sgdisk --new 2:0:+8G -t 2:EF00 ${disk}
 	sgdisk --new 3:0 -t 3:8300 ${disk}
 
-
 	clear_mounts ${disk}
 
 	partprobe
@@ -270,7 +234,7 @@ function prepare_disks() {
 
 	#sleep 100
 
-	case ${dtype,,} in
+	case "${dtype,,}" in
 		zfs)
 			options="-f"
 
@@ -319,7 +283,7 @@ function setup_boot()
 	yaml="${1:?}"
 
 	local dpool="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks/pool)"
-	local ddataset="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks/-)"
+	local ddataset="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks/dataset)"
 	local dpath="$(findKeyValue <(printf '%s\n' "${vYAML}") install)"
 	local dtype="$(findKeyValue <(printf '%s\n' "${vYAML}") install/disks/format)"
 	local kversion="$(findKeyValue <(printf '%s\n' "${vYAML}") install/kernel)"
@@ -330,24 +294,26 @@ function setup_boot()
 	local destination="${dpool}/${ddataset}"
 
 	local spath="$(findKeyValue <(printf '%s\n' "${vYAML}") install/source/dataset)"
-	local stype="$(findKeyValue <(printf '%s\n' "${vYAML}") install/source/type)"
+	local stype="$(findKeyValue <(printf '%s\n' "${vYAML}") install/source/format)"
 	local shost="$(findKeyValue <(printf '%s\n' "${vYAML}") install/source/host)"
+
+	disk=${disk#*-}
+
+	echo -e "$vYAML"
+
+	echo "-------------------"
 
 	# (currently zfs) pool/dataset to beget
 	local source="${spath}"
+	
+	#if [[ -n "${disk,,}" ]]
+	#then
+	#	prepare_disks "${disk}" "${dpath}" "${dtype}" 
+	#fi
 
-	
-	
-	
-	
-	if [[ -n "${disk}" ]]
+	if [[ ${dtype,,} == "${stype,,}" ]] 
 	then
-		prepare_disks "${disk}" "${dpath}" "${dtype}" 
-	fi
-
-	if [[ ${dtype} == "${stype}" ]] 
-	then
-		case ${stype,,} in
+		case "${stype,,}" in
 			zfs)
 				if [[ -n ${shost} ]]; then	ssh "${shost}" zfs send ${source} | pv | zfs recv -F "${destination}"
 				else 									 zfs send "${source}" | pv | zfs recv -F "${destination}"
@@ -360,7 +326,7 @@ function setup_boot()
 			;;
 		esac
 	else 
-		case ${shost,,} in
+		case "${shost,,}" in
 			'')
 				url="${stype}://${shost}:${spath}/"
 				url=${url#*://}
@@ -378,7 +344,7 @@ function setup_boot()
 
 	dstDir="${dpath}/${ddataset}"
 
-	if [[ -n "${disk}" ]]
+	if [[ -n "${disk,,}" ]]
 	then
 			
 		mount "$(echo "${parts}" | grep '.2')" "${dstDir}/boot"
@@ -402,7 +368,7 @@ function setup_boot()
 
 	for x in "$@"
 	do
-		case "${x}" in
+		case "${x,,}" in
 			work=*)
 				_source=${x#*=}
 			;;
@@ -411,7 +377,7 @@ function setup_boot()
 
 	for x in "$@"
 	do
-		case "${x}" in
+		case "${x,,}" in
 			boot=*)
 				_destination=${x#*=}
 				vYAML="$(generateYAML ${_source} ${_destination})"
