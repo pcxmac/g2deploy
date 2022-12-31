@@ -403,9 +403,9 @@ function findKeyValue() {
 	do
 		match="$(echo ${line} | grep -P "^\s{$ws}$(echo ${cv} | awk {'print $1'})")"
 		rem="$(echo ${cv} | awk {'print $2'})"
-		echo "rank = ${ws} | search = ${cv} | match = ***${match}*** : ${line}"
+		#echo "rank = ${ws} | search = ${cv} | match = ***${match}*** : ${line}"
 		# success ?
-		[[ -z "${rem}" && -n "${match}" ]] && { echo "${match#*:}"; exit; }
+		[[ -z "${rem}" && -n "${match}" ]] && { echo "${match#*:}"; break; }
 		# if a match is found, advance.		[[ YES MATCH ]]
 		[[ -n "${match}" ]] && { ((cp+=1));cv="$(yamlOrder "${path}" ${cp})"; }
 		ws=$(( tabL*(${cp}-1) ))

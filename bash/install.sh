@@ -386,23 +386,9 @@ function setup_boot()
 
 	#			echo "$(findKeyValue ../config/host.cfg "server/profile" test)"
 
-
-__path="server/arch"
-
-
-				#yamlOrder "${__path}" 0
-				yamlOrder "${__path}" 1
-				yamlOrder "${__path}" 2
-				yamlOrder "${__path}" 3
-				yamlOrder "${__path}" 4
-				yamlOrder "${__path}" 5
-
-				echo ">>> findKeyValue ../config/host.cfg $__path"
-				findKeyValue ../config/host.cfg "$__path"
-
 				#echo -e "${yaml}"
 
-				#setup_boot ${_source} ${_destination}
+				setup_boot ${_source} ${_destination}
 			;;
 
 			config=*)

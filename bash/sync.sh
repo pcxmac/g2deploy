@@ -21,8 +21,8 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
-pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg pkgserver host)"
-pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg pkgserver root)"
+pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/host")"
+pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/root")"
 
 echo "################################# [ REPOS ] #####################################"
 URL="rsync://rsync.us.gentoo.org/gentoo-portage/"
