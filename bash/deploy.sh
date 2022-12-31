@@ -12,7 +12,7 @@ function users()
 	useradd sysop
 	sudo sh -c 'echo sysop:@PXCW0rd | chpasswd' 2>/dev/null
 	usermod --home /home/sysop sysop
-	usermod -a -G wheel sysop
+	usermod -a -G wheel,portage sysop
 	usermod --shell /bin/zsh sysop
 	homedir="$(eval echo ~sysop)"
 	chown sysop:sysop "${homedir}" -R 2>/dev/null
@@ -143,8 +143,6 @@ function locales()
 	dataset=""				#	the working dataset of the installation
 	directory=""			# 	the working directory of the prescribed dataset
 	selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
-
-
 		
     for x in "$@"
     do
@@ -164,7 +162,6 @@ function locales()
             ;;
         esac
     done
-
 
 	echo "DIRECTORY == ${directory}"
 
