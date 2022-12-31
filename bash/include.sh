@@ -370,30 +370,44 @@ function zfs_keys()
 	done
 }
 
+function yamlOrder() {
+
+	local _string="${1:?}"
+	local _order="${2:?}"
+
+	for ((i=1;i<=${_order};i++))
+	do
+		_match="${_string%%/*}"
+		_string="${_string#*/}"
+		if [[ ${_match} == "${_string}" ]]
+		then
+			_string=""
+			break;
+		fi
+	done
+	echo "${_match}	${_string}"
+}
+
 # allows heirarchys of depth=1 (YAML FORMAT)
 function findKeyValue() {
 
-	local config_file="${1:?}"
-	local header="${2:?}"
-	local key="${3:?}"
-	local scan=0
-	local indent=2 #2 spaces only
+	local config_file="${1:?}"		# YAML FILE, 2 spaced.
+	local path="${2:?}"			
+	local tabL=2
+	local cp=1
+	local cv="$(yamlOrder "${path}" ${cp})"	
+	local ws=$(( tabL*(${cp}-1) ))
 
+	IFS=''
 	while read -r line
 	do
-		if [[ -n "$(echo "${line}" | grep "^${header%%/*}:.*")" ]]	#root
-		then
-			header=${header#*/}
-			if [[ ${header} == ${header#*/} ]];then scan=1; fi
-		fi
-		if [[ ${scan} == 1 ]]
-		then
-			if [[ ${line%%:*} == "${key}" ]]
-			then
-				echo "${line#*:}"
-				exit
-			fi
-		fi
+		match="$(echo ${line} | grep -P "^\s{$ws}$(echo ${cv} | awk {'print $1'})")"
+		rem="$(echo ${cv} | awk {'print $2'})"
+		echo "rank = ${ws} | search = ${cv} | match = ***${match}*** : ${line}"
+		# success ?
+		[[ -z "${rem}" && -n "${match}" ]] && { echo "${match#*:}"; exit; }
+		# if a match is found, advance.		[[ YES MATCH ]]
+		[[ -n "${match}" ]] && { ((cp+=1));cv="$(yamlOrder "${path}" ${cp})"; }
+		ws=$(( tabL*(${cp}-1) ))
 	done < "${config_file}"
 }
-

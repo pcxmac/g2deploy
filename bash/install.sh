@@ -210,7 +210,7 @@ function prepare_disks() {
 	#local dpath="${2:?}"
 	#local dtype="${3:?}"
 
-[]	clear_mounts ${disk}
+	clear_mounts ${disk}
 	sync
 	for wipe in $(ls /dev | grep "${disk#*/dev/}")
 	do
@@ -380,15 +380,25 @@ function setup_boot()
 			boot=*)
 				_destination=${x#*=}
 
-				yaml="$(generateYAML ${_source} ${_destination})"
+				#yaml="$(generateYAML ${_source} ${_destination})"
 
-				echo "$(findKeyValue <(printf '%s\n' "${yaml}") install/disks pool)"
+				#echo "$(findKeyValue <(printf '%s\n' "${yaml}") install/disks pool)"
 
-				#echo "$(findKeyValue ../config/host.cfg server root)"
-
-
+	#			echo "$(findKeyValue ../config/host.cfg "server/profile" test)"
 
 
+__path="server/arch"
+
+
+				#yamlOrder "${__path}" 0
+				yamlOrder "${__path}" 1
+				yamlOrder "${__path}" 2
+				yamlOrder "${__path}" 3
+				yamlOrder "${__path}" 4
+				yamlOrder "${__path}" 5
+
+				echo ">>> findKeyValue ../config/host.cfg $__path"
+				findKeyValue ../config/host.cfg "$__path"
 
 				#echo -e "${yaml}"
 
