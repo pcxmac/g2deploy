@@ -276,6 +276,7 @@ function setup_boot() {
 
 	mount "${boot_partition}" "${dstDir}/boot"
 	mget "${boot_src}" "${dstDir}/boot"
+	install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR ... MGET BREAKS IF THIS IS BEFORE THE PARENT, APPARENTLY MGET NEEDS AN EMPTY FOLDER...
 	umount "${dstDir}/boot"
 }
 
@@ -291,7 +292,6 @@ function modify_boot() {
 	local dstDir="${dpath}/${ddataset}"
 
 	mount "${boot_partition}" "${dstDir}/boot"	
-	install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR ... MGET BREAKS IF THIS IS BEFORE THE PARENT, APPARENTLY MGET NEEDS AN EMPTY FOLDER...
 	editboot "${kversion}" "${dpool}/${ddataset}"
 	umount "${dstDir}/boot"
 }
@@ -392,11 +392,13 @@ function install_system() {
 					prepare_disks "${vYAML}"
 					install_system "${vYAML}"
 					setup_boot "${vYAML}"
+					echo "modifying boot record ..."
 					modify_boot "${vYAML}"
 				fi 
 				if [[ "${selection,,}" == "add" ]]
 				then
 					install_system "${vYAML}"
+					echo "modifying boot record ..."
 					modify_boot "${vYAML}"
 
 					# solve - mv: cannot move '/srv/zfs/test/plasma/boot/LINUX//pkg.hypokrites.me/kernels/current/6.1.1-gentoo/' to '/srv/zfs/test/plasma/boot/LINUX/6.1.1-gentoo': Directory not empty
