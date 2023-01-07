@@ -33,7 +33,7 @@ function buildup()
 		echo -e "done "
 	fi
 
-	files="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/releases.mirrors" http "${selection}")"
+	files="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/releases" http "${selection}")"
 	filexz="$(echo "${files}" | grep '.xz$')"
 	fileasc="$(echo "${files}" | grep '.asc$')"
 	serverType="${filexz%//*}"
@@ -197,7 +197,7 @@ function locales()
 
  	chroot "${directory}" /bin/bash -c "system"
 	chroot "${directory}" /bin/bash -c "users ${_profile}"
-	services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/package.mirrors" http)/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
+	services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/package" http)/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
 
 	echo "services URL = ${services_URL}"
 

@@ -267,7 +267,7 @@ function setup_boot() {
 	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
 	local ddataset="$(findKeyValue "${vYAML}" install/disks/dataset)"
 	local dpath="$(findKeyValue "${vYAML}" install/disks/path)"
-	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
+	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles ftp)/boot/*"
 	local boot_partition="$(findKeyValue "${vYAML}" install/boot/partition)"
 
 	local dstDir="${dpath}/${ddataset}"
@@ -312,7 +312,7 @@ function install_system() {
 	local dtype="$(findKeyValue "${vYAML}" install/disks/format)"
 	local kversion="$(findKeyValue "${vYAML}" install/kernel)"
 	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
-	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors ftp)/boot/*"
+	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles ftp)/boot/*"
 
 	# (currently zfs) pool/dataset@snapshot ... needs to change to dpath, in yaml. ... install:(pool/dataset) ... not path
 	local destination="${dpool}/${ddataset}"

@@ -11,8 +11,8 @@ function patchSystem()
 
     local profile="${1:?}"
 	local type="${2:?}"
-	local Purl="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.patches" | sed 's/ //g')"
-	local Curl="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.patches" | sed 's/ //g')"
+	local Purl="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/${profile}.patches" | sed 's/ //g')"
+	local Curl="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/common.patches" | sed 's/ //g')"
 
 	case ${type,,} in
 		deploy*)
@@ -35,8 +35,8 @@ patchFiles_portage() {
     local offset="${1:?}"
 	local _profile="${2:?}"
 
-	common_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common" | sed 's/ //g' | sed "s/\"/'/g")"
-	spec_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${_profile}" | sed 's/ //g' | sed "s/\"/'/g")"
+	common_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/common" | sed 's/ //g' | sed "s/\"/'/g")"
+	spec_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/${_profile}" | sed 's/ //g' | sed "s/\"/'/g")"
 
 	if [[ -d ${offset}/etc/portage/package.license ]];then rm "${offset}/etc/portage/package.license" -R; fi
 	if [[ -d ${offset}/etc/portage/package.use ]];then rm "${offset}/etc/portage/package.use" -R; fi
@@ -74,7 +74,7 @@ patchFiles_portage() {
 patchFiles_user() {
     local offset="${1:?}"
 	local _profile="${2:?}"
-	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
+	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles rsync)"	
 	mget "${psrc}/root/" "${offset}/root/" 
 	mget "${psrc}/home/" "${offset}/home/" 
 }
@@ -83,7 +83,7 @@ patchFiles_sys() {
     local offset="${1:?}"
 	local _profile="${2:?}"
 
-	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/patchfiles.mirrors rsync)"	
+	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles rsync)"	
 
 	mget "${psrc}/etc/" "${offset}/etc/" 
 	mget "${psrc}/var/" "${offset}/var/" 
@@ -190,9 +190,9 @@ function pkgProcessor()
 	local iBase=""
 	local allPkgs=""
 
-	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/common.pkgs" | sed 's/ //g')"
+	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/common.pkgs" | sed 's/ //g')"
 	commonPkgs="$(curl $url --silent)"
-	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/package.mirrors http)/${profile}.pkgs" | sed 's/ //g')"
+	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/${profile}.pkgs" | sed 's/ //g')"
 	profilePkgs="$(curl $url --silent)"
 	allPkgs="$(echo -e "${commonPkgs}\n${profilePkgs}" | uniq | sort)"
 	iBase="$(chroot "${offset}" /usr/bin/qlist -I)"
@@ -207,7 +207,7 @@ function install_modules()
 {
 	local offset="${1:?}"
 	local kver="$(getKVER)"
-	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/kernel.mirrors ftp)"
+	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/kernel ftp)"
 
 	kver="${kver#*linux-}"
 
@@ -221,7 +221,7 @@ function install_modules()
 
 function getKVER() 
 {
-	local url_kernel="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/kernel.mirrors" ftp)"
+	local url_kernel="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/kernel" ftp)"
 	local kver="$(curl "$url_kernel" --silent | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep "\-gentoo")"
 	kver="linux-${kver}"
 	echo "${kver}"

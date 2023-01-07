@@ -43,12 +43,12 @@ testCase="$(emerge --info | grep 'location:' | awk '{print $2}')/.tmp-unverified
 emerge --sync | tee /var/log/esync.log
 
 echo "############################### [ SNAPSHOTS ] ###################################"
-URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/snapshots.mirrors" rsync)"
+URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/snapshots" rsync)"
 echo -e "SYNCING w/ $URL \e[25,42m[SNAPSHOTS]\e[0m";sleep 1
 rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
 echo "############################### [ RELEASES ] ###################################"
-URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/releases.mirrors" rsync only-sync)"
+URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/releases" rsync only-sync)"
 echo -e "SYNCING w/ $URL \e[25,42m[RELEASES]\e[0m";sleep 1
 if [[ ! -d "${pkgROOT}"/releases ]]; then mkdir -p "${pkgROOT}"/releases; fi
 
@@ -58,7 +58,7 @@ find "${pkgROOT}"/releases/ -type l -delete
 rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}${ARCH}" "${pkgROOT}"/releases | tee /var/log/esync.log
 
 echo "############################### [ DISTFILES ] ###################################"
-URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/distfiles.mirrors" rsync)"
+URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/distfiles" rsync)"
 echo -e "SYNCING w/ $URL \e[25,42m[DISTFILES]\e[0m";sleep 1
 rsync -avI --info=progress2 --timeout=300 --ignore-existing --ignore-times --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
