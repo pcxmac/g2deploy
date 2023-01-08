@@ -105,7 +105,7 @@ function editboot()
 	local DATASET="${2:?}"
 	local offset="${3:?}/boot"
 	local POOL="${DATASET%/*}"
-	local UUID="$(blkid | grep "$POOL" | awk '{print $3}' | tr -d '"')"
+	local UUID="$(blkid | grep "LABEL=\"$POOL\"" | awk '{print $3}' | tr -d '"' | uniq)"
 	local line_number=$(grep -n "ZFS=${DATASET} " "${offset}/EFI/boot/refind.conf" | cut -f1 -d:)
 	local menuL
 	local loadL
@@ -128,7 +128,7 @@ function editboot()
 		echo '	icon /EFI/boot/icons/os_gentoo.png' >> "${offset}/EFI/boot/refind.conf"
 		echo "	loader /linux/${VERSION#*linux-}/vmlinuz" >> "${offset}/EFI/boot/refind.conf"
 		echo "	initrd /linux/${VERSION#*linux-}/initramfs" >> "${offset}/EFI/boot/refind.conf"
-		echo "	options \"$UUID dozfs real_root=ZFS=$DATASET default scandelay=3 rw\"" >> "${offset}/EFI/boot/refind.conf"
+		echo "	options \"$UUID dozfs real_root=ZFS=$DATASET default scandelay=2 rw\"" >> "${offset}/EFI/boot/refind.conf"
 		echo '	#disabled' >> "${offset}/EFI/boot/refind.conf"
 		echo '}' >> "${offset}/EFI/boot/refind.conf"
 	fi
