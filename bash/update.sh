@@ -26,6 +26,7 @@ function update_runtime() {
 		echo "EMERGE MISSING PACKAGES"
 		emerge ${emergeOpts} $(cat /package.list)
 		cat /package.list
+		rm /package.list
 	fi
 
 	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"

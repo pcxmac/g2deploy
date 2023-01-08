@@ -71,7 +71,7 @@ function system()
 	echo "ISSUING UPDATES"
 	emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n
 
-	echo "PATCHING UPDATES"
+	echo "APPLYING NECCESSARY PRE-BUILD PATCHES"
 	sh < /patches.sh
 	rm /patches.sh
 
@@ -94,6 +94,13 @@ function system()
 
 	eix-update
 	updatedb
+}
+
+function services() 
+{
+	echo "EXECUTING SERVICE ROUTINE"
+	sh < /services.sh
+	rm /services.sh
 }
 
 function services()
@@ -139,6 +146,7 @@ function locales()
 	export -f system
 	export -f patchProcessor
 	export -f getG2Profile
+	export -f services
 
 	dataset=""				#	the working dataset of the installation
 	directory=""			# 	the working directory of the prescribed dataset
@@ -191,17 +199,21 @@ function locales()
 	zfs_keys "${dataset}"
 
 	pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
+
 	patchSystem "${_profile}" 'deploy' > "${directory}/patches.sh"
+	patchSystem "${_profile}" 'services' > "${directory}/services.sh"
 
 	chroot "${directory}" /bin/bash -c "locales ${_profile}"
 
  	chroot "${directory}" /bin/bash -c "system"
 	chroot "${directory}" /bin/bash -c "users ${_profile}"
-	services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/package" http)/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
 
-	echo "services URL = ${services_URL}"
+	chroot "${directory}" /bin/bash -c "services"
 
-	chroot "${directory}" /bin/bash -c "services ${services_URL}"
+	#services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/package" http)/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
+	#echo "services URL = ${services_URL}"
+	#chroot "${directory}" /bin/bash -c "services ${services_URL}"
+
 	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key "${dataset}"
 	clear_mounts "${directory}"
 	chown root:root "${directory}"
