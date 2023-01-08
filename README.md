@@ -35,13 +35,13 @@
 ###
 ##### <u>NEW DISK + LOCAL OR REMOTE SOURCE</u>
 
-  <u>./install.sh</u> <b>work=zfs://wSys/hardened@safe boot=zfs:///dev/sda:/usb/g1 </b><span style="color:green">(standard installation)</span>
+  <u>./install.sh</u> <b>work=zfs://wSys/hardened@safe boot=zfs:///dev/sda:/usb/g1 init</b><span style="color:green">(standard installation)</span>
 
-  <u>./install.sh</u> <b>work=zfs://root@10.1.0.1:/wSys/gnome@safe boot=zfs:///dev/nvme0n1:/saturn/g2 </b><span style="color:green">(remote source ZFS Send/Recv --ssh) </span>
+  <u>./install.sh</u> <b>work=zfs://root@10.1.0.1:/wSys/gnome@safe boot=zfs:///dev/nvme0n1:/saturn/g2 init</b><span style="color:green">(remote source ZFS Send/Recv --ssh) </span>
   
-  <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe add=zfs://saturn/g2</b> <span style="color:green">(add to existing pool, don't modify boot record)</span> <span style="color:red"></span>
+  <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe boot=zfs://saturn/g2 add</b> <span style="color:green">(add to existing pool, only add boot record</span> <span style="color:red"></span>
 
-  <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe add=zfs:///dev/sdj:/saturn/g2</b> <span style="color:green">(add to existing pool, DO modify boot record)</span> <span style="color:red"></span>
+  <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe add=zfs:///dev/sdj:/saturn/g2 config</b> <span style="color:green">(only show yaml config)</span> <span style="color:red"></span>
 
 ###
 ##### <u>MIRROR URL FOR TYPE OF RESOURCE + PROTOCOL </u>
