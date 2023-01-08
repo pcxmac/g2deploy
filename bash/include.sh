@@ -2,7 +2,8 @@
 
 source ${SCRIPT_DIR}/bash/mget.sh
 
-tStamp() {
+tStamp() 
+{
 	echo "0x$(echo "obase=16; $(date +%s)" | bc)"
 }
 
@@ -24,16 +25,17 @@ function patchSystem()
 		;;
 		update)
 				# ${profile}.update
-				echo "updates..."
+				echo "echo '...';"
 		;;
 		fix=*)
 				# ${profile}.fix-0xXXXXXXXX (hex)
-				echo "fixes..."
+				echo "echo '...';"
 		;;
 	esac
 }
 
-function patchFiles_portage() {
+function patchFiles_portage() 
+{
 
     local offset="${1:?}"
 	local _profile="${2:?}"
@@ -74,7 +76,8 @@ function patchFiles_portage() {
 	done < <(curl "${spec_URI}.conf" --silent)
 }
 
-function patchFiles_user() {
+function patchFiles_user() 
+{
     local offset="${1:?}"
 	local _profile="${2:?}"
 	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles rsync)"	
@@ -82,7 +85,8 @@ function patchFiles_user() {
 	mget "${psrc}/home/" "${offset}/home/" 
 }
 
-function patchFiles_sys() {
+function patchFiles_sys() 
+{
     local offset="${1:?}"
 	local _profile="${2:?}"
 
@@ -237,7 +241,8 @@ function getKVER()
 	echo "${kver}"
 }
 
-function decompress() {
+function decompress() 
+{
 	local src="${1:?}"
 	local dst="${2:?}"
 	local compression_type="$(file "${src}" | awk '{print $2}')"
@@ -251,7 +256,8 @@ function decompress() {
 	esac
 }
 
-function getG2Profile() {
+function getG2Profile() 
+{
 
 	local _mountpoint="${1:?}"
 	local _profile=""
@@ -303,7 +309,8 @@ function getG2Profile() {
 	echo "${_profile}" 
 }
 
-function getHostZPool () {
+function getHostZPool () 
+{
 	local pool="$(mount | grep " / " | awk '{print $1}')"
 	pool="${pool%/*}"
 	echo "${pool}"
@@ -316,7 +323,8 @@ function getZFSMountPoint ()
 	if [[ -n ${mountpt} ]]; then echo "$(echo ${mountpt} | sed 's:/*$::')"; fi
 }
 
-function compress() {
+function compress() 
+{
 	local src="${1:?}"
 	local dst="${2:?}"
 	local ksize="$(du -sb "$src" | awk '{print $1}')"
@@ -324,14 +332,16 @@ function compress() {
 	tar cfz - "${src}" | pv -s "${ksize}"  > "${dst}"
 }
 
-function compress_list() {
+function compress_list() 
+{
 	local src="${1:?}"
 	local dst="${2:?}"
 	
 	tar cfz - -T "${src}" | (pv -p --timer --rate --bytes > "${dst}")
 }
 
-function rSync() {
+function rSync() 
+{
 	local src="${1:?}"
 	local dst="${2:?}"
 
@@ -386,7 +396,8 @@ function zfs_keys()
 }
 
 # path format = key:value/next_key:next_value/.../last_key:last_value
-function yamlOrder() {
+function yamlOrder() 
+{
 
 	local _string="${1:?}"
 	local _order="${2:?}"
@@ -406,7 +417,8 @@ function yamlOrder() {
 }
 
 # allows heirarchys of depth=N (YAML FORMAT)
-function findKeyValue() {
+function findKeyValue() 
+{
 
 	local yaml="${1:?}"		# YAML FILE, 2 spaced.
 	local path="${2:?}"			

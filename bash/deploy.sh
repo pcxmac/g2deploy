@@ -103,11 +103,11 @@ function services()
 	rm /services.sh
 }
 
-function services()
-{
-	local service_list="${1:?}"
-	bash <(curl "${service_list}" --silent)
-}
+#function services()
+#{
+#	local service_list="${1:?}"
+#	bash <(curl "${service_list}" --silent)
+#}
 
 function locales()
 {
