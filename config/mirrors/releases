@@ -14,7 +14,7 @@ rsync://mirrors.rit.edu/gentoo/releases/
 rsync://mirror.rackspace.com/gentoo/releases/
 
 rsync://mirror.csclub.uwaterloo.ca/gentoo-distfiles/releases/
-rsync://mirrors.tera-byte.com/gentoo/releases/
+#rsync://mirrors.tera-byte.com/gentoo/releases/
 #rsync://mirrors.ircam.fr/pub/gentoo-distfiles/releases/
 #rsync://linux.rz.ruhr-uni-bochum.de/gentoo/releases/
 #rsync://ftp.fau.de/gentoo/releases/

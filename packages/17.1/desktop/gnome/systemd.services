@@ -2,7 +2,7 @@
 
 systemctl enable NetworkManager
 systemctl enable zfs.target
-systemctl enable zfs-import
+systemctl enable zfs-zed
 systemctl enable zfs-import-cache
 systemctl enable zfs-mount
 systemctl enable zfs-import.target
