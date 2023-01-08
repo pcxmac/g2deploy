@@ -292,7 +292,7 @@ function modify_boot() {
 	local dstDir="${dpath}/${ddataset}"
 
 	mount "${boot_partition}" "${dstDir}/boot"	
-	editboot "${kversion}" "${dpool}/${ddataset}"
+	editboot "${kversion}" "${dpool}/${ddataset}" "${dstDir}"
 	umount "${dstDir}/boot"
 }
 

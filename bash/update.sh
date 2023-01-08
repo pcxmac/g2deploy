@@ -44,6 +44,9 @@ function update_runtime() {
 export PYTHONPATH=""
 export -f update_runtime
 
+directory="/"
+
+# target user space. 
 for x in "$@"
 do
 	case "${x}" in
@@ -60,28 +63,24 @@ do
 			else
 				echo "shazaam!"
 				dataset="${x#*=}"
-				_profile="$(getG2Profile "${directory}")"
 			fi
 		;;
 	esac
 done
 
-
+_profile="$(getG2Profile "${directory}")"
 emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --verbose --tree --backtrack=99"		
 
 echo "PROFILE -- $_profile"
-
 echo "${directory}"
 
 if [[ ! -d ${directory} ]];then exit; fi
 
-clear_mounts "${directory}"
-
 kversion=$(getKVER)
 kversion=${kversion#*linux-}
 
-mounts "${directory}"
 
+# execute update
 for x in $@
 do
 	case "${x}" in
@@ -96,8 +95,15 @@ do
 			pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
 			patchSystem "${_profile}" 'update' > "${directory}/patches.sh"
 
-			chroot "${directory}" /bin/bash -c "update_runtime"
-
+			if [[ ${directory} == "/" ]]
+			then
+				update_runtime
+			else
+				clear_mounts "${directory}"
+				mounts "${directory}"
+				chroot "${directory}" /bin/bash -c "update_runtime"
+				clear_mounts "${directory}"
+			fi
 			patchFiles_sys "${directory}" "${_profile}"
 	;;
 	esac
@@ -112,12 +118,12 @@ do
 			if [[ ${type_part} == *"TYPE=\"vfat\""* ]];
 			then
 				echo "update boot ! @ ${efi_part} @ ${dataset} :: ${directory} >> + $(getKVER)"
-
 				echo "mount ${efi_part} ${directory}/boot"
 				mount "${efi_part}" "${directory}/boot"
 				echo "....."
-				editboot "${kversion}" "${dataset}"
+				editboot "${kversion}" "${dataset}" "${directory}"
 				install_modules "${directory}"
+				umount "${directory}/boot"
 			else
 				echo "no mas"
 			fi
@@ -125,4 +131,3 @@ do
 	esac
 done
 
-clear_mounts "${directory}"

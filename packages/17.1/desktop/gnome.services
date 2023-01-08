@@ -22,3 +22,5 @@ dir="/var/lib/AccountsService/users"
 mkdir -p $dir
 printf "[User]\nSession=gnome-wayland\nIcon=/home/sysop/.face\nSystemAccount=false\n " > $dir/sysop
 printf "[User]\nSession=gnome-wayland\nIcon=/home/root/.face\nSystemAccount=false\n " > $dir/root
+
+rc-update delete hwclock boot

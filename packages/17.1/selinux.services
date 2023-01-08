@@ -9,3 +9,5 @@ rc-update add autofs
 rc-update add cronie
 rc-update add syslog-ng
 rc-update add ntpd
+
+rc-update delete hwclock boot

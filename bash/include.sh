@@ -30,7 +30,7 @@ function patchSystem()
 	esac
 }
 
-patchFiles_portage() {
+function patchFiles_portage() {
 
     local offset="${1:?}"
 	local _profile="${2:?}"
@@ -71,7 +71,7 @@ patchFiles_portage() {
 	done < <(curl "${spec_URI}.conf" --silent)
 }
 
-patchFiles_user() {
+function patchFiles_user() {
     local offset="${1:?}"
 	local _profile="${2:?}"
 	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles rsync)"	
@@ -79,7 +79,7 @@ patchFiles_user() {
 	mget "${psrc}/home/" "${offset}/home/" 
 }
 
-patchFiles_sys() {
+function patchFiles_sys() {
     local offset="${1:?}"
 	local _profile="${2:?}"
 
@@ -96,7 +96,7 @@ function editboot()
 
 	local VERSION="${1:?}"
 	local DATASET="${2:?}"
-	local offset="$(getZFSMountPoint "${DATASET}")/boot"
+	local offset="${3:?}/boot"
 	local POOL="${DATASET%/*}"
 	local UUID="$(blkid | grep "$POOL" | awk '{print $3}' | tr -d '"')"
 	local line_number=$(grep -n "ZFS=${DATASET} " "${offset}/EFI/boot/refind.conf" | cut -f1 -d:)
@@ -195,7 +195,14 @@ function pkgProcessor()
 	url="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/${profile}.pkgs" | sed 's/ //g')"
 	profilePkgs="$(curl $url --silent)"
 	allPkgs="$(echo -e "${commonPkgs}\n${profilePkgs}" | uniq | sort)"
-	iBase="$(chroot "${offset}" /usr/bin/qlist -I)"
+
+	if [[ ${offset} == "/" ]]
+	then
+		iBase="$(/usr/bin/qlist -I)"
+	else
+		iBase="$(chroot "${offset}" /usr/bin/qlist -I)"
+	fi
+
 	iBase="$(echo "${iBase}" | uniq | sort)"
 
 	diffPkgs="$(awk 'FNR==NR {a[$0]++; next} !($0 in a)' <(echo "${iBase}") <(echo "${allPkgs}"))"
@@ -249,7 +256,12 @@ function getG2Profile() {
 
 	if [[ -n "$(stat "${_mountpoint}" 2>/dev/null)" && -d "${_mountpoint}" ]]
 	then
-		result="$(chroot "${_mountpoint}" /usr/bin/eselect profile show | tail -n1)"
+		if [[ ${_mountpoint} == "/" ]]
+		then
+			result="$(/usr/bin/eselect profile show | tail -n1)"
+		else
+			result="$(chroot "${_mountpoint}" /usr/bin/eselect profile show | tail -n1)"
+		fi
 	else
 		if [[ -z ${_mountpoint} ]]		# if no mountpoint, implied to use local machine, else result is already defined
 		then
