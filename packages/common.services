@@ -1,0 +1,35 @@
+
+#differentiate between openrc and systemd
+
+isD="$(systemctl --version  2>/dev/null | head -n1)"
+isO="$(openrc --version 2>/dev/null | head -n1)"
+
+
+if [[ -n ${isD} ]]
+then
+	systemctl enable NetworkManager
+	systemctl enable zfs.target
+	systemctl enable zfs-zed
+	systemctl enable zfs-import-cache
+	systemctl enable zfs-mount
+	systemctl enable zfs-import.target
+	systemctl enable cronie
+	systemctl enable autofs
+	systemctl enable ntpd
+	ln -sf /dev/null /etc/systemd/system/systemd-resolved.service
+	ln -sf /dev/null /etc/systemd/system/rpcbind.service
+
+elif [[ -n ${isO} ]]
+then
+	rc-update add local
+	rc-update add zfs-mount boot
+	rc-update add zfs-load-key boot
+	rc-update add zfs-zed boot
+	rc-update add zfs-import boot
+	rc-update add autofs
+	rc-update add cronie
+	rc-update add syslog-ng
+	rc-update add ntpd
+	rc-update delete hwclock boot
+
+fi

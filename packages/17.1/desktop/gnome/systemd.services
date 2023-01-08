@@ -1,15 +1,5 @@
 # GNOME/SYSTEMD SERVICES
 
-systemctl enable NetworkManager
-systemctl enable zfs.target
-systemctl enable zfs-zed
-systemctl enable zfs-import-cache
-systemctl enable zfs-mount
-systemctl enable zfs-import.target
-systemctl enable cronie
-systemctl enable autofs
-systemctl enable ntpd
-
 ln -sf /dev/null /etc/systemd/system/systemd-resolved.service
 ln -sf /dev/null /etc/systemd/system/rpcbind.service
 
