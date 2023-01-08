@@ -33,9 +33,9 @@
   - pump
   - dhclient
 
+  - update needs to utilize 'profiles' in order to preserve profile specific config data 
 
-
-  - convert pkg/patch processor to streaming functions, no more root placements
+  x
 
   - build list of dependencies for this platform, add pkgcore.
 
@@ -43,7 +43,7 @@
 
   - better granularity over profile versions, and then move common in to specific versions, then be able to understand the version when patching w/ specific sets. 
 
-  - create a meta-sync (out of sync.sh) for rollups prior to backups/commits
+  x
   
   - create an autopatcher script for updating servers, and software patches (basically a portage + sys patch hooked to a server update or emerge --update)
 
@@ -51,13 +51,13 @@
 
   - sanitize mget - stream methods, need to check this one closely for most/close to all cases.
   
-  - add pkg update to system install, after sync up, before profile packages. No more no-meshing w/ versions
+  x
 
   x
 
   - should i move to git type sync ? look in to glsa/news/manifests/signing more, need comprehensive list of requirements for git -> rsync conversion.
 
-  - figure out why fstab is not loading up the pool/swap
+  - figure out why fstab is not loading up the pool/swap [install]
 
   ?
   ?
@@ -177,7 +177,7 @@
   x
   x
 
-  need option for kernel source ... in deploy ?
+  x
 
   x
 

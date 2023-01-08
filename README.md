@@ -10,8 +10,12 @@
 ###### - 0.2 Stable installs, updates and deployments w/ ZFS;BTRFS;XFS;EXT4
 ###### - 0.3 Method for integrating 'g2deploy' in to a new environment (installer)
 ###### - 0.4 Meta Package Manager w/ package repo (git based)
-###### - 0.5 Beta / Stable
-###### - 0.6 Panel Integration
+###### - 0.5 Profiling for updates/installs
+###### - 0.6 Patch-Fixes + signed binary packages
+###### - 0.7 Multi-Arch
+###### - 0.8 Panel Integration
+###### - 0.9 Beta / Stable (30 Days) + Panel Fixes
+
 
 
 
@@ -25,6 +29,9 @@
   <u>./update.sh</u> <b>work=pool/set bootpart=/dev/sdX# update</b><span style="color:green"> (update /boot...loader + runtime (ie kernel upgrade))</span>
 
   <u>./update.sh</u> <b>work=pool/set update</b><span style="color:green"> (only update runtime)</span>
+
+  <u>./update.sh</u> <b>update</b><span style="color:green"> (update root system)</span>
+
 ###
 ##### <u>NEW DISK + LOCAL OR REMOTE SOURCE</u>
 
