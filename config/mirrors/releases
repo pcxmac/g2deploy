@@ -6,12 +6,12 @@ http://pkg.hypokrites.me/gentoo/
 #http://gentoo.gossamerhost.com/
 #https://gentoo.osuosl.org/
 #https://mirror.leaseweb.com/gentoo/
-rsync://mirror.leaseweb.com/gentoo/releases/
+#rsync://mirror.leaseweb.com/gentoo/releases/
 #http://gentoo-mirror.flux.utah.edu/
 #https://mirrors.rit.edu/gentoo/
 rsync://mirrors.rit.edu/gentoo/releases/
 #https://mirror.rackspace.com/gentoo/
-rsync://mirror.rackspace.com/gentoo/releases/
+#rsync://mirror.rackspace.com/gentoo/releases/
 
 rsync://mirror.csclub.uwaterloo.ca/gentoo-distfiles/releases/
 #rsync://mirrors.tera-byte.com/gentoo/releases/

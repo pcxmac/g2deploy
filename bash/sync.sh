@@ -23,24 +23,15 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/host")"
 pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/root")"
+pkgCONF="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/config")"
 
+syncURI="$(cat ${pkgCONF} | grep "^sync-uri")"
+URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/repos" rsync)"
 echo "################################# [ REPOS ] #####################################"
-URL="rsync://rsync.us.gentoo.org/gentoo-portage/"
+sed -i "s|^sync-uri.*|${URL}|g" ${pkgCONF}
 echo -e "SYNCING w/ ***$URL*** [REPOS]"
-
-unverified="none"
-testCase="$(emerge --info | grep 'location:' | awk '{print $2}')/.tmp-unverified-download-quarantine"
-#while [[ -n ${unverified} ]]
-#do
-#	emerge --sync | tee /var/log/esync.log
-#    sleep 1
-#    sync
-#    if [[ -d  "${testCase}" ]];then echo "?" unverified=""; fi
-#	ls ${testCase} -ail | grep 'tmp'
-#	sleep 30
-#done
-
 emerge --sync | tee /var/log/esync.log
+sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
 
 echo "############################### [ SNAPSHOTS ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/snapshots" rsync)"
@@ -51,8 +42,6 @@ echo "############################### [ RELEASES ] #############################
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/releases" rsync only-sync)"
 echo -e "SYNCING w/ $URL \e[25,42m[RELEASES]\e[0m";sleep 1
 if [[ ! -d "${pkgROOT}"/releases ]]; then mkdir -p "${pkgROOT}"/releases; fi
-
-
 
 find "${pkgROOT}"/releases/ -type l -delete
 rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}${ARCH}" "${pkgROOT}"/releases | tee /var/log/esync.log
