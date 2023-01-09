@@ -4,5 +4,5 @@ rsync://rsync.nl.gentoo.org/gentoo/snapshots
 rsync://rsync.uk.gentoo.org/gentoo/snapshots
 #rsync://rsync.jp.gentoo.org/gentoo/snapshots
 #rsync://rsync.kr.gentoo.org/gentoo/snapshots
-#rsync://rsync.ca.gentoo.org/gentoo/snapshots
-#rsync://mirror.csclub.uwaterloo.ca/gentoo-distfiles/snapshots
+rsync://rsync.ca.gentoo.org/gentoo/snapshots
+rsync://mirror.csclub.uwaterloo.ca/gentoo-distfiles/snapshots
