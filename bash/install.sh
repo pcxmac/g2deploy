@@ -140,13 +140,22 @@ destination="${2:?}"
 
 	disk="$(echo ${dhost} | grep '^/dev/')"
 
+	# this can be turned in to a case/switch, perhaps do this after disk prep, add key_insert function
+	partClassifier="${disk##*/sd*}"
+	if [[ -n ${partClassifier} ]]
+	then
+		pmod="p"
+	else
+		pmod=""
+	fi
+
 	#echo "${disk} | dhost = ${dhost}"
 
 # generate YAML output
 	std_o="# Install Config for @ ${dhost}:$(tStamp)\n"
 	std_o="${std_o}install: ${dpool}/${ddataset}\n"
 	std_o="${std_o}  disks: \n"
-	std_o="${std_o}    - ${disk}3\n"
+	std_o="${std_o}    - ${disk}${pmod}3\n"
 	std_o="${std_o}    pool: ${dpool}\n"
 	std_o="${std_o}    dataset: ${ddataset}\n"
 	std_o="${std_o}    path: ${dpath}\n"
@@ -162,7 +171,7 @@ destination="${2:?}"
 	std_o="${std_o}    format: ${stype}\n"
 	std_o="${std_o}  kernel: ${kver}\n"
 	std_o="${std_o}  boot: EFI\n"
-	std_o="${std_o}    partition: ${disk}2\n"
+	std_o="${std_o}    partition: ${disk}${pmod}2\n"
 	std_o="${std_o}    loader: refind\n"
 	std_o="${std_o}  swap: file\n"
 	std_o="${std_o}    location: ${dpool}/swap\n"

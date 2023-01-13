@@ -35,6 +35,8 @@
 
   - update needs to utilize 'profiles' in order to preserve profile specific config data 
 
+  - kernel modules are wrongly installed during deployment or update or install. figure it out
+
   x
 
   - build list of dependencies for this platform, add pkgcore.
