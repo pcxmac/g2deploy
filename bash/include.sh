@@ -1,8 +1,9 @@
 #!/bin/bash
 
 source ${SCRIPT_DIR}/bash/mget.sh
+source ${SCRIPT_DIR}/bash/yaml.sh
 
-tStamp() 
+function tStamp() 
 {
 	echo "0x$(echo "obase=16; $(date +%s)" | bc)"
 }
@@ -392,57 +393,4 @@ function zfs_keys()
 			fi
 		done
 	done
-}
-
-# path format = key:value/next_key:next_value/.../last_key:last_value
-function yamlOrder() 
-{
-
-	local _string="${1:?}"
-	local _order="${2:?}"
-	local _match=""
-
-	for ((i=1;i<=${_order};i++))
-	do
-		_match="${_string%%/*}"
-		_string="${_string#*/}"
-		if [[ ${_match} == "${_string}" ]]
-		then
-			_string=""
-			break;
-		fi
-	done
-	echo "${_match}	${_string}"
-}
-
-# allows heirarchys of depth=N (YAML FORMAT)
-function findKeyValue() 
-{
-
-	local yaml="${1:?}"		# YAML FILE, 2 spaced.
-	local path="${2:?}"			
-	local tabL=2
-	local cp=1
-	local listing="false"
-	local cv="$(yamlOrder "${path}" ${cp})"	
-	local ws=$(( tabL*(${cp}-1) ))
-
-	# option to use string or file
-	[[ -f ${yaml} ]] && yaml="$(cat ${yaml})"
-
-	# positive logic loop
-	_tmp="${IFS}"
-	IFS=''
-	while read -r line
-	do
-		match="$(echo ${line} | grep -P "^\s{$ws}$(echo ${cv} | awk {'print $1'})" | sed 's/ //g')"
-		rem="$(echo ${cv} | awk {'print $2'})"
-		# success ?
-		[[ -z "${rem}" && -n "${match}" ]] && { echo "${match#*:}"; listing="true"; }
-		# if a match is found, advance.		[[ YES MATCH ]]
-		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${path}" ${cp})"; }
-		[[ -z "${match}" && ${listing} == "true" ]] && { break; }
-		ws=$(( tabL*(${cp}-1) ))
-	done < <(echo ${yaml})
-	IFS="${_tmp}"
 }

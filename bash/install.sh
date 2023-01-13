@@ -141,6 +141,8 @@ destination="${2:?}"
 	disk="$(echo ${dhost} | grep '^/dev/')"
 
 	# this can be turned in to a case/switch, perhaps do this after disk prep, add key_insert function
+	# function insertKeyValue "path:zzz/to/key" "second_key:value" --> path:zzz/to/key/second_key:value
+
 	partClassifier="${disk##*/sd*}"
 	if [[ -n ${partClassifier} ]]
 	then
