@@ -22,45 +22,40 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
-
 pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/host")"
 pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/root")"
 pkgCONF="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/config")"
 
-
 # initial condition calls for emerge-webrsync
 syncURI="$(cat ${pkgCONF} | grep "^sync-uri")"
 #syncLocation="$(cat ${pkgCONF} | grep "^location")"
-
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/repos" rsync)"
 #LOCATION="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/repo")"
-
-echo "################################# [ REPOS ] #####################################"
 sed -i "s|^sync-uri.*|${URL}|g" ${pkgCONF}
 #sed -i "s|^location.*|location = ${LOCATION}|g" ${pkgCONF}
-
+echo "################################# [ REPOS ] #####################################"
 echo -e "SYNCING w/ ***$URL*** [REPOS]"
 emerge --sync | tee /var/log/esync.log
 sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
 #sed -i "s|^location.*|${syncLocation}|g" ${pkgCONF}
 
 # initial condition calls for non-recursive sync
-echo "############################### [ SNAPSHOTS ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/snapshots" rsync)"
+echo "############################### [ SNAPSHOTS ] ###################################"
 echo -e "SYNCING w/ $URL \e[25,42m[SNAPSHOTS]\e[0m";sleep 1
 rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
 # initial condition calls for non-recursive sync
-echo "############################### [ RELEASES ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/releases" rsync only-sync)"
+echo "############################### [ RELEASES ] ###################################"
 echo -e "SYNCING w/ $URL \e[25,42m[RELEASES]\e[0m";sleep 1
 if [[ ! -d "${pkgROOT}"/releases ]]; then mkdir -p "${pkgROOT}"/releases; fi
 find "${pkgROOT}"/releases/ -type l -delete
 rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}${ARCH}" "${pkgROOT}"/releases | tee /var/log/esync.log
 
 # initial condition calls for non-recursive sync
-echo "############################### [ DISTFILES ] ###################################"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/distfiles" rsync)"
+echo "############################### [ DISTFILES ] ###################################"
 echo -e "SYNCING w/ $URL \e[25,42m[DISTFILES]\e[0m";sleep 1
 rsync -avI --info=progress2 --timeout=300 --ignore-existing --ignore-times --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
@@ -90,15 +85,13 @@ chown "${owner}:${group}" "${SCRIPT_DIR}/meta" -R			1>/dev/null
 chown "${owner}:${group}" "${SCRIPT_DIR}/profiles" -R		1>/dev/null
 chown "${owner}:${group}" "${SCRIPT_DIR}/packages" -R		1>/dev/null
 
-repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
+#repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
 
-repo="/var/lib/portage/repository/*"
-
-for x in $(ls "${repo%/*}")
+for x in $(ls "${pkgROOT}/repository")
 do
     echo "-------${x}-------"
-    git -C "${repo%/*}/${x}" fetch --all
-    git -C "${repo%/*}/${x}" pull
+    git -C "${pkgROOT}/repository/${x}" fetch --all
+    git -C "${pkgROOT}/repository/${x}" pull
 done
 
 #qmanifest -g
