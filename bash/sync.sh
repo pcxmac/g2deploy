@@ -16,23 +16,33 @@
 #       https://www.gentoo.org/glep/glep-0074.html (MANIFESTS)   
 #       
 
+
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
+
 pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/host")"
 pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/root")"
 pkgCONF="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/config")"
 
+
 # initial condition calls for emerge-webrsync
 syncURI="$(cat ${pkgCONF} | grep "^sync-uri")"
+#syncLocation="$(cat ${pkgCONF} | grep "^location")"
+
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/repos" rsync)"
+#LOCATION="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/repo")"
+
 echo "################################# [ REPOS ] #####################################"
 sed -i "s|^sync-uri.*|${URL}|g" ${pkgCONF}
+#sed -i "s|^location.*|location = ${LOCATION}|g" ${pkgCONF}
+
 echo -e "SYNCING w/ ***$URL*** [REPOS]"
 emerge --sync | tee /var/log/esync.log
 sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
+#sed -i "s|^location.*|${syncLocation}|g" ${pkgCONF}
 
 # initial condition calls for non-recursive sync
 echo "############################### [ SNAPSHOTS ] ###################################"
@@ -96,6 +106,7 @@ done
 
 hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | /usr/bin/awk '{print $8}')"
 hostip="$(/bin/ip --brief address show dev ${hostip} | /usr/bin/awk '{print $3}')"
+
 sed -i "s|HOST:.*|HOST: ${hostip}|g" /etc/rsync/rsyncd.motd
 sed -i "s|DATE:.*|DATE: $(date)|g" /etc/rsync/rsyncd.motd
 

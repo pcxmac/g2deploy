@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT_DIR="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+SCRIPT_DIR="${SCRIPT_DIR%/*}"
+
 source ${SCRIPT_DIR}/bash/mget.sh
 source ${SCRIPT_DIR}/bash/yaml.sh
 
@@ -105,8 +108,8 @@ function editboot()
 	local DATASET="${2:?}"
 	local offset="${3:?}/boot"
 	local POOL="${DATASET%/*}"
-	local UUID="$(blkid | grep "LABEL=\"$POOL\"" | awk '{print $3}' | tr -d '"' | uniq)"
-	local line_number=$(grep -n "ZFS=${DATASET} " "${offset}/EFI/boot/refind.conf" | cut -f1 -d:)
+	local UUID="$(blkid | \grep "LABEL=\"$POOL\"" | awk '{print $3}' | tr -d '"' | uniq)"
+	local line_number=$(\grep -n "ZFS=${DATASET} " "${offset}/EFI/boot/refind.conf" | cut -f1 -d:)
 	local menuL
 	local loadL
 	local initrdL
@@ -144,13 +147,13 @@ function clear_mounts()
 	offset="$(echo "$1" | sed 's:/*$::')"
 	procs="$(lsof "${offset}" 2>/dev/null | sed '1d' | awk '{print $2}' | uniq)" 
     dir="$(echo "${offset}" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
-	output="$(cat /proc/mounts | grep "$dir" | wc -l)"
+	output="$(cat /proc/mounts | \grep "$dir" | wc -l)"
 
 	if [[ -z ${offset} ]];then exit; fi	# this will break the local machine if it attempts to unmount nothing.
 
 	for process in ${procs}; do kill -9 "${process}"; done
 
-	if [[ -n "$(echo "${dir}" | grep '/dev/')" ]]
+	if [[ -n "$(echo "${dir}" | \grep '/dev/')" ]]
 	then
 		dir="${dir}"
 	else
@@ -162,15 +165,15 @@ function clear_mounts()
 		while read -r mountpoint
 		do
 			umount $mountpoint > /dev/null 2>&1
-		done < <(cat /proc/mounts | grep "$dir" | awk '{print $2}')
-		output="$(cat /proc/mounts | grep "$dir" | wc -l)"
+		done < <(cat /proc/mounts | \grep "$dir" | awk '{print $2}')
+		output="$(cat /proc/mounts | \grep "$dir" | wc -l)"
 	done
 }
 
 function mounts()
 {
 	local offset="${1:?}"
-	local mSize="$(cat /proc/meminfo | column -t | grep 'MemFree' | awk '{print $2}')"
+	local mSize="$(cat /proc/meminfo | column -t | \grep 'MemFree' | awk '{print $2}')"
 	mSize="${mSize}K"
 
 	echo "msize = $mSize"
@@ -185,7 +188,10 @@ function mounts()
 	mount -t tmpfs tmpfs "${offset}/run"
 	echo "attempting to mount binpkgs..."  2>&1
 
-	mount --bind /var/lib/portage/binpkgs "${offset}/var/lib/portage/binpkgs"
+	pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/host")"
+	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/root")"
+
+	mount -t fuse.sshfs -n -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT} "${offset}/var/lib/portage/binpkgs"
 
 }
 
@@ -311,7 +317,7 @@ function getG2Profile()
 
 function getHostZPool () 
 {
-	local pool="$(mount | grep " / " | awk '{print $1}')"
+	local pool="$(mount | \grep " / " | awk '{print $1}')"
 	pool="${pool%/*}"
 	echo "${pool}"
 }
@@ -364,7 +370,7 @@ function zfs_keys()
 	
 	for i in ${pools}
 	do
-		listing="$(zfs list | grep "${i}/" | awk '{print $1}')"
+		listing="$(zfs list | \grep "${i}/" | awk '{print $1}')"
 
 		for j in ${listing}
 		do
