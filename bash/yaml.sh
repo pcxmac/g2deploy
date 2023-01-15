@@ -9,7 +9,7 @@
 
 function yamlTabL()
 {
-	local _yaml="${1:?}"							# YAML FILE, 2 spaced.
+	local _yaml="${1:?}"							# YAML FILE, X spaced.
 	local tabLength=""
 	# option to use string or file
 	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
@@ -98,7 +98,7 @@ function modifyKeyValue()
 	local tabL=$(yamlTabL ${_yaml})				# autodetects tab space and assigns here
 	local cp=1									# search column, cp = 1 = first column
 	local listing="false"						# not currently matching the prefix (prior to right most)
-	local cv="$(yamlOrder "${_path}" ${cp})"		
+	local cv="$(yamlOrder "${_path}" ${cp})"	
 	local ws=$(( tabL*(${cp}-1) ))				
 	local rem 									
 	local target=""								# -i, target = last key-value, -r, target = whole path/key-value
@@ -119,7 +119,7 @@ function modifyKeyValue()
 	# if inserting, the last value follows after the last :, in case of values like /dev/sdX, : is the control character
 	# if removing, do not provide value, generally speaking, just provide the last key, and the last /, will decide
 
-	# safety check for existing key, if i !
+	# safety check for existing key, if i ! error = key exists, -r, is error = key does not exist, all through 2>, 
 
 	# option to use string or file
 	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
@@ -129,23 +129,13 @@ function modifyKeyValue()
 	IFS=''
 	while read -r line
 	do
-		match="$(echo ${line} | \grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}')" | sed 's/ //g')"
-		rem="$(echo ${cv} | awk '{print $2}')"
-
-		# used for removal of key-value pair
-
-		[[ -z "${rem}" && -n "${match}" ]] && { listing="true"; }
+		
+	# pad="$(printf "%-${val}s")" where val is the number of spaces.
 
 
-
-		# if a match is found, advance.		[[ YES MATCH ]]
-		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${_path}" ${cp})"; }
-		# if correct path, key found, & not matching any more time to break, 
-		# 'success ?' has echo'd ALL the match(s),
-		[[ -z "${match}" && ${listing} == "true" ]] && { echo "INSERT HERE" }
-		ws=$(( tabL*(${cp}-1) ))
 	done < <(echo ${_yaml})
 	IFS="${_tmp}"
+
 }
     # test yaml string for debug
 

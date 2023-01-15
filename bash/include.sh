@@ -13,7 +13,6 @@ function tStamp()
 
 function patchSystem()	
 {
-
     local profile="${1:?}"
 	local type="${2:?}"
 
