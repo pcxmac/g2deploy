@@ -46,28 +46,28 @@
 ###
 ##### <u>MIRROR URL FOR TYPE OF RESOURCE + PROTOCOL </u>
 
-  <u>./mirror.sh</u> <b>../config/patchfiles.mirrors rsync</b>\
+  <u>./mirror.sh</u> <b>../config/mirrors/patchfiles rsync</b>\
   <span style="color:blue">ex. output => "rsync://pkg.hypokrites.me/gentoo/patchfiles" (URI for patchfiles rsync access) </span>
 
-  <u>./mirror.sh</u> <b>../config/releases.mirrors rsync</b>\
+  <u>./mirror.sh</u> <b>../config/mirrors/releases rsync</b>\
   <span style="color:blue">rsync://mirror.csclub.uwaterloo.ca/gentoo-distfiles/releases/</span>
 
-  <u>./mirror.sh</u> <b>../config/releases.mirrors http plasma</b> <span style="color:red"> (releases mirror can accept a 'profile' argument, all others are type and protocol)</span>\
+  <u>./mirror.sh</u> <b>../config/mirrors/releases http plasma</b> <span style="color:red"> (releases mirror can accept a 'profile' argument, all others are type and protocol)</span>\
   <span style="color:blue">http://pkg.hypokrites.me/gentoo/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/stage3-amd64-desktop-openrc-20221205T133149Z.tar.xz</span> \
   <span style="color:blue">http://pkg.hypokrites.me/gentoo/releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/stage3-amd64-desktop-openrc-20221205T133149Z.tar.xz.asc</span>
 
-  <u>./mirror.sh</u> <b>../config/releases.mirrors rsync hardened</b>\
+  <u>./mirror.sh</u> <b>../config/mirrors/releases rsync hardened</b>\
   <span style="color:blue">rsync://mirrors.rit.edu/gentoo/releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/stage3-amd64-hardened-openrc-20221225T170313Z.tar.xz</span> \
   <span style="color:blue">rsync://mirrors.rit.edu/gentoo/releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/stage3-amd64-hardened-openrc-20221225T170313Z.tar.xz.asc</span>
 
-  <u>./mirror.sh</u> <b>../config/kernel.mirrors ftp</b>\
+  <u>./mirror.sh</u> <b>../config/mirrors/kernel ftp</b>\
   <span style="color:blue">ftp://pkg.hypokrites.me/kernels/current/</span>
 
 
-<u>./mirror.sh</u> <b>../config/package.mirrors http</b>\
+<u>./mirror.sh</u> <b>../config/mirrors/package http</b>\
 <span style="color:blue">http://pkg.hypokrites.me/gentoo/packages</span>
 
-<u>./mirror.sh</u> <b>../config/distfiles.mirrors rsync</b>\
+<u>./mirror.sh</u> <b>../config/mirrors/distfiles rsync</b>\
 <span style="color:blue">rsync://mirror.csclub.uwaterloo.ca/gentoo-distfiles/distfiles</span>
 ####
 <span style="color:red"><b>*</b> : </span> which servers are enabled/disabled (commented out), are controlled by the *.mirrors files in ../config
