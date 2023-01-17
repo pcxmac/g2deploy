@@ -18,10 +18,11 @@ function yamlTabL()
 	IFS=''
 	while read -r line
 	do
+		#echo ${line}
 		tabLength="$(echo ${line} | awk -F '[^ ].*' '{print length($1)}')"
 		if [[ -n ${tabLength} ]]; then break; fi 
 
-	done < <(echo ${_yaml} | \grep -iP '^\s.*[a-z]')
+	done < <(echo -e "${_yaml}" | \grep -iP '^\s.*[a-z]')
 	IFS="${_tmp}"
 	echo $tabLength
 }
@@ -38,6 +39,7 @@ function yamlLength()
 	echo "${count}"  # print length of address
 }
 
+# [cursor] : [remainder] : [current path]
 function yamlOrder() 
 {
 
@@ -55,94 +57,97 @@ function yamlOrder()
 			break;
 		fi
 	done
-	prior="${1%/${_string}*}"
-	echo "${_match}\t${_string}\t${prior}"                 # returns sought after key/value + remaining search pattern
+	#prior="${1%/${_string}*}"
+	#echo -e "${_match}\t${_string}\t${prior}"                 # returns sought after key/value + remaining search pattern
+	echo -e "${_match}    ${_string}"                 # returns sought after key/value + remaining search pattern
 }
 
-# yaml -f find, -r remove, -a add, -p (print)
 
-# allows heirarchys of depth=N (YAML FORMAT)
-function findKeyValue() 
-{
-	local _yaml="${1:?}"						# YAML FILE, 
-	local _path="${2:?}"						# path to search for, includes key in rightmost
-	local tabL=$(yamlTabL ${_yaml})				# tab format, support for autodetect
-	local cp=1									# search column, cp = 1 = first column
-	local listing="false"						# not currently matching the prefix (prior to right most)
-	local cv="$(yamlOrder "${_path}" ${cp})"		
-	local ws=$(( tabL*(${cp}-1) ))				
-	local remainder
-	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
+function findKeyValue() {
 
-	_tmp="${IFS}"
+	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
+	local _path="${2:?}"			
+	local tabL="$(yamlTabL "${_yaml}")"
+	local cp=1
+	local listing="false"
+	local cv="$(yamlOrder "${_path}" ${cp})"	
+	local ws=$(( tabL*(${cp}-1) ))
+
+	# positive logic loop
 	IFS=''
 	while read -r line
 	do
-		match="$(echo ${line} | \grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}')" | sed 's/ //g')"
-		remainder="$(echo ${cv} | awk '{print $2}')"
-		[[ -z "${remainder}" && -n "${match}" ]] && { echo "${match#*:}"; listing="true"; }
+		match="$(echo ${line} | grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}')")"
+		rem="$(echo ${cv} | awk '{print $2}')"
+		#echo "rank = ${ws} | search = ${cv} | match = ***${match}*** : ${line}"
+		# success ?
+		[[ -z "${rem}" && -n "${match}" ]] && { echo "${match#*:}"; listing="true"; }
+		# if a match is found, advance.		[[ YES MATCH ]]
 		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${_path}" ${cp})"; }
 		[[ -z "${match}" && ${listing} == "true" ]] && { break; }
 		ws=$(( tabL*(${cp}-1) ))
-	done < <(echo ${_yaml})
-	IFS="${_tmp}"
+	done < <(echo -e "${_yaml}")
 }
+
 
 # outputs a modified yaml string, which can be directed by the user to replace a file or string (-i, insert) (-r, remove)
-function modifyKeyValue() 
-{
+# function modifyKeyValue() 
+# {
 
-	local _yaml="${1:?}"						# YAML FILE, 
-	local _path="${2:?}"						# path to search for, includes key in rightmost
-	local _mode="${3:?}"						# -i or -r supported
-	local tabL=$(yamlTabL ${_yaml})				# autodetects tab space and assigns here
-	local cp=1									# search column, cp = 1 = first column
-	local listing="false"						# not currently matching the prefix (prior to right most)
-	local cv="$(yamlOrder "${_path}" ${cp})"	
-	local ws=$(( tabL*(${cp}-1) ))				
-	local rem 									
-	local target=""								# -i, target = last key-value, -r, target = whole path/key-value
+# 	local _yaml="${1:?}"						# YAML FILE, 
+# 	local _path="${2:?}"						# path to search for, includes key in rightmost
+# 	local _mode="${3:?}"						# -i or -r supported
+# 	local tabL=$(yamlTabL ${_yaml})				# autodetects tab space and assigns here
+# 	local cp=1									# search column, cp = 1 = first column
+# 	local listing="false"						# not currently matching the prefix (prior to right most)
+# 	local cv="$(yamlOrder "${_path}" ${cp})"	
+# 	local ws=$(( tabL*(${cp}-1) ))				
+# 	local rem 									
+# 	local target=""								# -i, target = last key-value, -r, target = whole path/key-value
 
-	orderLength="$(yamlLength "${_path}")"
-	if [[ ${_mode} == "-i" ]]
-	then 
-		target="$(yamlOrder ${_path} $((orderLength-1)) | awk '{print $3}')";
-		value="$(yamlOrder ${_path} $((orderLength-1)) | awk '{print $2}')"	
-	fi
-	if [[ ${_mode} == "-r" ]]
-	then 
-		target=${_path}
-		value=""	
-	fi
+# 	orderLength="$(yamlLength "${_path}")"
+# 	if [[ ${_mode} == "-i" ]]
+# 	then 
+# 		target="$(yamlOrder ${_path} $((orderLength-1)) | awk '{print $3}')";
+# 		value="$(yamlOrder ${_path} $((orderLength-1)) | awk '{print $2}')"	
+# 	fi
+# 	if [[ ${_mode} == "-r" ]]
+# 	then 
+# 		target=${_path}
+# 		value=""	
+# 	fi
 
-	# if inserting, we will be matching length-1, and the rightmost will be a true key value pair - ///key:value
-	# if inserting, the last value follows after the last :, in case of values like /dev/sdX, : is the control character
-	# if removing, do not provide value, generally speaking, just provide the last key, and the last /, will decide
+# 	# if inserting, we will be matching length-1, and the rightmost will be a true key value pair - ///key:value
+# 	# if inserting, the last value follows after the last :, in case of values like /dev/sdX, : is the control character
+# 	# if removing, do not provide value, generally speaking, just provide the last key, and the last /, will decide
 
-	# safety check for existing key, if i ! error = key exists, -r, is error = key does not exist, all through 2>, 
+# 	# safety check for existing key, if i ! error = key exists, -r, is error = key does not exist, all through 2>, 
 
-	# option to use string or file
-	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
+# 	# option to use string or file
+# 	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
 
-	# positive logic loop
-	_tmp="${IFS}"
-	IFS=''
-	while read -r line
-	do
+# 	# positive logic loop
+# 	_tmp="${IFS}"
+# 	IFS=''
+# 	while read -r line
+# 	do
 		
-	# pad="$(printf "%-${val}s")" where val is the number of spaces.
+# 	# pad="$(printf "%-${val}s")" where val is the number of spaces.
 
 
-	done < <(echo ${_yaml})
-	IFS="${_tmp}"
+# 	done < <(echo ${_yaml})
+# 	IFS="${_tmp}"
 
-}
+# }
     # test yaml string for debug
 
 	std_o="# Install Config for @ ${dhost}:123456\n"
 	std_o="${std_o}install: ${dpool}/${ddataset}\n"
 	std_o="${std_o}  disks: \n"
-	std_o="${std_o}    - ${disk}${pmod}3\n"
+	std_o="${std_o}    - /dev/sda3\n"
+	std_o="${std_o}    - /dev/sdb3\n"
+	std_o="${std_o}    - /dev/sdc3\n"
+	std_o="${std_o}    - /dev/sdd3\n"
 	std_o="${std_o}    pool: ${dpool}\n"
 	std_o="${std_o}    dataset: ${ddataset}\n"
 	std_o="${std_o}    path: ${dpath}\n"
