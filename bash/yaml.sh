@@ -101,102 +101,61 @@ function findKeyValue() {
 
 function modifyKeyValue() {
 
-	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
-	local _path="${2:?}"			
+	local _yaml="${1:?}"					# YAML FILE, 2 spaced.
+	local _path="${2:?}"					#
+	local _mode="${3:?}"					# 
 	local tabL="$(yamlTabL "${_yaml}")"
 	local cp=1
 	local listing="false"
 	local cv="$(yamlOrder "${_path}" ${cp})"	
 	local ws=$(( tabL*(${cp}-1) ))
-
-	local offset="$(yamlLength ${_path})"
-	offset
+	local orderLength
+	local _target
+	local _value
 
  	# option to use string or file
  	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
+
+	orderLength="$(yamlLength "${_path}")"
+
+ 	if [[ ${_mode} == "-i" || ${_mode} == "-m" ]]	# INSERTS ONE BRANCH OR LEAF IN TO SUBSET OF TARGET
+ 	then 
+ 		_target="$(echo "$(yamlOrder "${_path}" $((orderLength-1)))" | awk '{print $3}' | sed 's/[][]//g')";
+ 		_value="$(echo "$(yamlOrder "${_path}" $((orderLength-1)))" | awk '{print $2}' | sed 's/[][]//g')";
+ 	fi
+ 	if [[ ${_mode} == "-r" ]]	# RECURSIVE DELETE (EFFECTIVELY, PRUNES EVERY BRANCH/LEAF TO INCLUDE TARGET, OF)
+ 	then 
+ 		_target="${_path}";
+ 		_value="";
+ 	fi
+ 	if [[ ${_mode} == "-m" ]]	# MODIFY EXISTING KEY/VALUE PAIR W. KEY:VALUE:NEW_VALUE
+ 	then
+		_target="${_path%:*}"
+ 		_value="${_value%%:*}:${_value##*:}"
+ 	fi
+
+	echo "target = ${_target} . key/value.target = ${_value} : order length = ${orderLength}"
 
 	# positive logic loop
 	IFS=''
 	while read -r line
 	do
+		echo $match
 		match="$(echo ${line} | \grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}')")"
 		rem="$(echo ${cv} | awk '{print $2}')"
 		#echo "rank = ${ws} | search = ${cv} | match = ***${match}*** : ${line}"
 		# success ?
-		[[ -z "${rem}" && -n "${match}" ]] && { echo "${match#*:}"; listing="true"; }
+		#[[ ${listing} == "true" && ]]
+		[[ ${cp} == $((orderLength-1)) && -n "${match}" ]] && { listing="true"; }
 		# if a match is found, advance.		[[ YES MATCH ]]
 		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${_path}" ${cp})"; }
-		[[ -z "${match}" && ${listing} == "true" ]] && { break; }
+		[[ -z "${match}" && ${listing} == "true" ]] && { echo "${_value}"; }
 		ws=$(( tabL*(${cp}-1) ))
 	done < <(echo -e "${_yaml}")
 }
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# outputs a modified yaml string, which can be directed by the user to replace a file or string (-i, insert) (-r, remove)
-# function modifyKeyValue() 
-# {
-
-# 	local _yaml="${1:?}"						# YAML FILE, 
-# 	local _path="${2:?}"						# path to search for, includes key in rightmost
-# 	local _mode="${3:?}"						# -i or -r supported
-# 	local tabL=$(yamlTabL ${_yaml})				# autodetects tab space and assigns here
-# 	local cp=1									# search column, cp = 1 = first column
-# 	local listing="false"						# not currently matching the prefix (prior to right most)
-# 	local cv="$(yamlOrder "${_path}" ${cp})"	
-# 	local ws=$(( tabL*(${cp}-1) ))				
-# 	local rem 									
-# 	local target=""								# -i, target = last key-value, -r, target = whole path/key-value
-
-# 	orderLength="$(yamlLength "${_path}")"
-# 	if [[ ${_mode} == "-i" ]]
-# 	then 
-# 		target="$(yamlOrder ${_path} $((orderLength-1)) | awk '{print $3}')";
-# 		value="$(yamlOrder ${_path} $((orderLength-1)) | awk '{print $2}')"	
-# 	fi
-# 	if [[ ${_mode} == "-r" ]]
-# 	then 
-# 		target=${_path}
-# 		value=""	
-# 	fi
-
-# 	# if inserting, we will be matching length-1, and the rightmost will be a true key value pair - ///key:value
-# 	# if inserting, the last value follows after the last :, in case of values like /dev/sdX, : is the control character
-# 	# if removing, do not provide value, generally speaking, just provide the last key, and the last /, will decide
-
-# 	# safety check for existing key, if i ! error = key exists, -r, is error = key does not exist, all through 2>, 
-
-# 	# option to use string or file
-# 	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
-
-# 	# positive logic loop
-# 	_tmp="${IFS}"
-# 	IFS=''
-# 	while read -r line
-# 	do
-		
-# 	# pad="$(printf "%-${val}s")" where val is the number of spaces.
-
-
-# 	done < <(echo ${_yaml})
-# 	IFS="${_tmp}"
-
-# }
-    # test yaml string for debug
 
 	std_o="# Install Config for @ ${dhost}:123456\n"
 	std_o="${std_o}install: ${dpool}/${ddataset}\n"
@@ -222,8 +181,9 @@ function modifyKeyValue() {
 	std_o="${std_o}  boot: EFI\n"
 	std_o="${std_o}    partition:/dev/sda2\n"
 	std_o="${std_o}    loader: refind\n"
+	std_o="${std_o}    HELP: YOYOMA\n"
 	std_o="${std_o}  swap: file\n"
 	std_o="${std_o}    location: ${dpool}/swap\n"
 	std_o="${std_o}    format: 'zfs dataset, no CoW'\n"
-	std_o="${std_o}  profile: ${sprofile}\n"
+	std_o="${std_o}  profile: END_OF_LINE\n"
 
