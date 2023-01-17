@@ -5,6 +5,7 @@ emerge --ask --noreplace gui-libs/display-manager-init --ask=n
 rc-update add elogind boot
 rc-update add dbus
 rc-update add display-manager default
+rc-update add NetworkManager default
 
 dir="/var/lib/AccountsService/users"
 mkdir -p $dir

@@ -57,9 +57,9 @@ function yamlOrder()
 			break;
 		fi
 	done
-	#prior="${1%/${_string}*}"
-	#echo -e "${_match}\t${_string}\t${prior}"                 # returns sought after key/value + remaining search pattern
-	echo -e "${_match}    ${_string}"                 # returns sought after key/value + remaining search pattern
+	_prior="${1%/${_string}*}"
+	echo -e "[${_match}]\t[${_string}]\t[${_prior}]"                 # returns sought after key/value + remaining search pattern
+	#echo -e "${_match}\t${_string}"                 # returns sought after key/value + remaining search pattern
 }
 
 
@@ -72,12 +72,54 @@ function findKeyValue() {
 	local listing="false"
 	local cv="$(yamlOrder "${_path}" ${cp})"	
 	local ws=$(( tabL*(${cp}-1) ))
+	
+	# option to use string or file
+ 	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
 
 	# positive logic loop
 	IFS=''
 	while read -r line
 	do
-		match="$(echo ${line} | grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}')")"
+		match="$(echo ${line} | \grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g')")"
+		rem="$(echo ${cv} | awk '{print $2}' | sed 's/[][]//g')"
+		[[ -z "${rem}" && -n "${match}" ]] && 
+		{ 
+			if [[ ${match#*:} == ${match} ]]
+			then 
+				echo "${match#*-}" | sed 's/^[ \t]*//';
+			else 
+				echo "${match#*:}" | sed 's/^[ \t]*//';
+			fi			 
+			listing="true"; 
+		}
+		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${_path}" ${cp}    )"; }
+		[[ -z "${match}" && ${listing} == "true" ]] && { break; }
+		ws=$(( tabL*(${cp}-1) ))
+	done < <(echo -e "${_yaml}")
+}
+
+
+function modifyKeyValue() {
+
+	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
+	local _path="${2:?}"			
+	local tabL="$(yamlTabL "${_yaml}")"
+	local cp=1
+	local listing="false"
+	local cv="$(yamlOrder "${_path}" ${cp})"	
+	local ws=$(( tabL*(${cp}-1) ))
+
+	local offset="$(yamlLength ${_path})"
+	offset
+
+ 	# option to use string or file
+ 	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
+
+	# positive logic loop
+	IFS=''
+	while read -r line
+	do
+		match="$(echo ${line} | \grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}')")"
 		rem="$(echo ${cv} | awk '{print $2}')"
 		#echo "rank = ${ws} | search = ${cv} | match = ***${match}*** : ${line}"
 		# success ?
@@ -88,6 +130,21 @@ function findKeyValue() {
 		ws=$(( tabL*(${cp}-1) ))
 	done < <(echo -e "${_yaml}")
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # outputs a modified yaml string, which can be directed by the user to replace a file or string (-i, insert) (-r, remove)

@@ -1,7 +1,12 @@
+
+
+
 meta for iptables installer, takes an iptables script and works with ->
 
 gentoo : systemd,openrc
 ubuntu : systemd
+
+
 
 coverage/scope -
 
@@ -14,12 +19,6 @@ coverage/scope -
 	docker		...			
 
 
-fw {
-
-	gateway (wg), for *this domain
-
-	lan (private ip-adapters)
-		(virtual networking/bridges)
 
 
-}
+
