@@ -63,7 +63,8 @@ function yamlOrder()
 }
 
 
-function findKeyValue() {
+function findKeyValue() 
+{
 
 	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
 	local _path="${2:?}"			
@@ -80,7 +81,8 @@ function findKeyValue() {
 	IFS=''
 	while read -r line
 	do
-		match="$(echo ${line} | \grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g')")"
+		match="$(echo ${line} | \grep -P "^$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')"     )"
+		echo "$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g') ;; $line > $(echo $cv | awk '{print $1}')"
 		rem="$(echo ${cv} | awk '{print $2}' | sed 's/[][]//g')"
 		[[ -z "${rem}" && -n "${match}" ]] && 
 		{ 
@@ -99,67 +101,109 @@ function findKeyValue() {
 }
 
 
-function modifyKeyValue() {
 
-	local _yaml="${1:?}"					# YAML FILE, 2 spaced.
-	local _path="${2:?}"					#
-	local _mode="${3:?}"					# 
+
+function insertKeyValue() 
+{
+
+	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
+	local _path="${2:?}"			
 	local tabL="$(yamlTabL "${_yaml}")"
 	local cp=1
 	local listing="false"
 	local cv="$(yamlOrder "${_path}" ${cp})"	
 	local ws=$(( tabL*(${cp}-1) ))
-	local orderLength
-	local _target
-	local _value
-
- 	# option to use string or file
+	
+	# option to use string or file
  	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
 
-	orderLength="$(yamlLength "${_path}")"
+	_target="$(echo "$(yamlOrder "${_path}" $((orderLength-1)))" | awk '{print $3}' | sed 's/[][]//g')";
+	_target="${_path%:*}"
+	_value="${_path##*/}"
 
- 	if [[ ${_mode} == "-i" || ${_mode} == "-m" ]]	# INSERTS ONE BRANCH OR LEAF IN TO SUBSET OF TARGET
- 	then 
- 		_target="$(echo "$(yamlOrder "${_path}" $((orderLength-1)))" | awk '{print $3}' | sed 's/[][]//g')";
- 		_value="$(echo "$(yamlOrder "${_path}" $((orderLength-1)))" | awk '{print $2}' | sed 's/[][]//g')";
- 	fi
- 	if [[ ${_mode} == "-r" ]]	# RECURSIVE DELETE (EFFECTIVELY, PRUNES EVERY BRANCH/LEAF TO INCLUDE TARGET, OF)
- 	then 
- 		_target="${_path}";
- 		_value="";
- 	fi
- 	if [[ ${_mode} == "-m" ]]	# MODIFY EXISTING KEY/VALUE PAIR W. KEY:VALUE:NEW_VALUE
- 	then
-		_target="${_path%:*}"
- 		_value="${_value%%:*}:${_value##*:}"
- 	fi
-
-	echo "target = ${_target} . key/value.target = ${_value} : order length = ${orderLength}"
+	echo "target = ${_target} | add = ${_value}"
 
 	# positive logic loop
 	IFS=''
 	while read -r line
 	do
-		echo $match
-		match="$(echo ${line} | \grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}')")"
-		rem="$(echo ${cv} | awk '{print $2}')"
-		#echo "rank = ${ws} | search = ${cv} | match = ***${match}*** : ${line}"
-		# success ?
-		#[[ ${listing} == "true" && ]]
-		[[ ${cp} == $((orderLength-1)) && -n "${match}" ]] && { listing="true"; }
-		# if a match is found, advance.		[[ YES MATCH ]]
-		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${_path}" ${cp})"; }
-		[[ -z "${match}" && ${listing} == "true" ]] && { echo "${_value}"; }
+		match="$(echo ${line} | \grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}')" )"
+		rem="$(echo ${cv} | awk '{print $2}' | sed 's/[][]//g')"
+		echo "${cv} | ${cp} | ${match}"
+		[[ -z "${rem}" && -n "${match}" ]] && 
+		{ 
+			# key:value exists
+			echo "FUCK !"			 
+			listing="true"; 
+		}
+		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${_path}" ${cp}    )"; }
+		[[ -z "${match}" && ${listing} == "true" ]] && { break; }
 		ws=$(( tabL*(${cp}-1) ))
 	done < <(echo -e "${_yaml}")
 }
+
+
+# function modifyKeyValue() {
+
+# 	local _yaml="${1:?}"					# YAML FILE, 2 spaced.
+# 	local _path="${2:?}"					#
+# 	local _mode="${3:?}"					# 
+# 	local tabL="$(yamlTabL "${_yaml}")"
+# 	local cp=1
+# 	local listing="false"
+# 	local cv="$(yamlOrder "${_path}" ${cp})"	
+# 	local ws=$(( tabL*(${cp}-1) ))
+# 	local orderLength
+# 	local _target
+# 	local _value
+
+#  	# option to use string or file
+#  	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
+
+# 	orderLength="$(yamlLength "${_path}")"
+
+#  	if [[ ${_mode} == "-i" || ${_mode} == "-m" ]]	# INSERTS ONE BRANCH OR LEAF IN TO SUBSET OF TARGET
+#  	then 
+#  		_target="$(echo "$(yamlOrder "${_path}" $((orderLength-1)))" | awk '{print $3}' | sed 's/[][]//g')";
+#  		_value="$(echo "$(yamlOrder "${_path}" $((orderLength-1)))" | awk '{print $2}' | sed 's/[][]//g')";
+#  	fi
+#  	if [[ ${_mode} == "-r" ]]	# RECURSIVE DELETE (EFFECTIVELY, PRUNES EVERY BRANCH/LEAF TO INCLUDE TARGET, OF)
+#  	then 
+#  		_target="${_path}";
+#  		_value="";
+#  	fi
+#  	if [[ ${_mode} == "-m" ]]	# MODIFY EXISTING KEY/VALUE PAIR W. KEY:VALUE:NEW_VALUE
+#  	then
+# 		_target="${_path%:*}"
+#  		_value="${_value%%:*}:${_value##*:}"
+#  	fi
+
+# 	echo "target = ${_target} . key/value.target = ${_value} : order length = ${orderLength}"
+
+# 	# positive logic loop
+# 	IFS=''
+# 	while read -r line
+# 	do
+# 		echo $match
+# 		match="$(echo ${line} | \grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}')")"
+# 		rem="$(echo ${cv} | awk '{print $2}')"
+# 		#echo "rank = ${ws} | search = ${cv} | match = ***${match}*** : ${line}"
+# 		# success ?
+# 		#[[ ${listing} == "true" && ]]
+# 		[[ ${cp} == $((orderLength-1)) && -n "${match}" ]] && { listing="true"; }
+# 		# if a match is found, advance.		[[ YES MATCH ]]
+# 		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${_path}" ${cp})"; }
+# 		[[ -z "${match}" && ${listing} == "true" ]] && { echo "${_value}"; }
+# 		ws=$(( tabL*(${cp}-1) ))
+# 	done < <(echo -e "${_yaml}")
+# }
 
 
 
 
 	std_o="# Install Config for @ ${dhost}:123456\n"
 	std_o="${std_o}install: ${dpool}/${ddataset}\n"
-	std_o="${std_o}  disks: \n"
+	std_o="${std_o}  disks: ZORO\n"
 	std_o="${std_o}    - /dev/sda3\n"
 	std_o="${std_o}    - /dev/sdb3\n"
 	std_o="${std_o}    - /dev/sdc3\n"
