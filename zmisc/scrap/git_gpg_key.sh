@@ -45,3 +45,13 @@ gpg --full-generate-key
 
 
 
+copy ssh and gnupg subfolders in to same user's directory
+
+copy gitconfig to users directory
+
+vscode should prompt for a web login to github
+
+--- this will allow you to pass through ssh, but not gpg, for gpg, you have to register properly
+
+for vscode, you will have to enable commit signing, through the file/preferences/settings, upon setting this
+the new push will prompt pinentry, and you can use gnome to save your key, through a password.
