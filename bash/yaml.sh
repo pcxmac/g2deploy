@@ -80,9 +80,11 @@ function findKeyValue()
 	IFS=''
 	while read -r line
 	do
-		match="$(echo ${line} | \grep -P "$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')"     )"
+		match="$(echo ${line} | \grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')"     )"
 		#echo "[$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')] /$cp/ >$match< $line > $(echo $cv | awk '{print $1}')"
 		rem="$(echo ${cv} | awk '{print $2}' | sed 's/[][]//g')"
+
+		#echo "-> ... $line [$ws]"
 
 		[[ -z "${rem}" && -n "${match}" ]] &&
 		{
@@ -120,14 +122,10 @@ function insertKeyValue()
 	while read -r line
 	do
 		tabLength="$(($(echo ${line} | awk -F '[^ ].*' '{print length($1)}')/2 +1))"
-		match="$(echo ${line} | \grep -P "$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')"     )"
+		match="$(echo ${line%:*} | \grep -P "$(echo ${cv%:*} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')"     )"
 		rem="$(echo ${cv} | awk '{print $2}' | sed 's/[][]//g')"
-
-		echo "${rem} :: ${match}"
-
 		[[ -z "${rem}" && -n "${match}" ]] &&
 		{
-			echo "root dir !"
 			listing="true";
 			((cp+=1))
 		}
@@ -136,19 +134,23 @@ function insertKeyValue()
 
 		if [[ ${listing} == "done" ]]
 		then
+			cn="$((cp))"
+			tabS="$( printf "%*s%s" $((cn*tabL-tabL)) )"
+			newLine="${tabS}INSERT THIS"
 			if [[ ${match#*:} == ${match} ]]
 			then
-				echo "INSERT THIS" | sed 's/^[ \t]*//';
+				echo "${cn} ${newLine}" | sed 's/^[ \t]*//';
 			else
-				echo "INSERT THIS" | sed 's/^[ \t]*//';
-			fi			 
+				echo "${cn} ${newLine}" | sed 's/^[ \t]*//';
+			fi
+			listing="false"
 		fi
 
 		ws=$(( tabL*(${cp}-1) ))
 
-		echo "${listing} ${line}"
-		#echo "[$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')] /$cp/ >$match< {$tabLength} $line > $(echo $cv | awk '{print $1}') :: $line"
-		#echo $line
+		#echo "${listing} ${line}"
+		#echo "[$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')] /$cp/ >$match | $rem< {$tabLength} $line > $(echo $cv | awk '{print $1}') :: $line"
+		echo "$tabLength $line"
 
 	done < <(echo -e "${_yaml}")
 }
@@ -228,7 +230,7 @@ function insertKeyValue()
 	std_o="${std_o}      key: /srv/crypto/zfs.key\n"
 	std_o="${std_o}  source: ${spool}/${sdataset}@${ssnapshot}\n"
 	std_o="${std_o}    host: ${shost}\n"
-	std_o="${std_o}    pool: ${spool}\n"
+	std_o="${std_o}    pool: /source\n"
 	std_o="${std_o}    dataset: ${sdataset}\n"
 	std_o="${std_o}    snapshot: ${ssnapshot}\n"
 	std_o="${std_o}    format: ${stype}\n"
@@ -238,7 +240,7 @@ function insertKeyValue()
 	std_o="${std_o}    loader: refind\n"
 	std_o="${std_o}    HELP: YOYOMA\n"
 	std_o="${std_o}  swap: file\n"
-	std_o="${std_o}    location: ${dpool}/swap\n"
+	std_o="${std_o}    location: ${dpool}/swapr\n"
 	std_o="${std_o}    format: 'zfs dataset, no CoW'\n"
 	std_o="${std_o}  profile: END_OF_LINE\n"
 
