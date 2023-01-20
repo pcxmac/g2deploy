@@ -65,7 +65,6 @@ function yamlOrder()
 
 function findKeyValue() 
 {
-
 	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
 	local _path="${2:?}"
 	local tabL="$(yamlTabL "${_yaml}")"
@@ -106,38 +105,51 @@ function insertKeyValue()
 {
 
 	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
-	local _path="${2:?}"			
+	local _path="${2:?}"
 	local tabL="$(yamlTabL "${_yaml}")"
 	local cp=1
 	local listing="false"
-	local cv="$(yamlOrder "${_path}" ${cp})"	
+	local cv="$(yamlOrder "${_path}" ${cp})"
 	local ws=$(( tabL*(${cp}-1) ))
 	
 	# option to use string or file
  	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
 
-	_target="$(echo "$(yamlOrder "${_path}" $((orderLength-1)))" | awk '{print $3}' | sed 's/[][]//g')";
-	_target="${_path%:*}"
-	_value="${_path##*/}"
-
-	echo "target = ${_target} | add = ${_value}"
-
 	# positive logic loop
 	IFS=''
 	while read -r line
 	do
-		match="$(echo ${line} | \grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}')" )"
+		tabLength="$(($(echo ${line} | awk -F '[^ ].*' '{print length($1)}')/2 +1))"
+		match="$(echo ${line} | \grep -P "$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')"     )"
 		rem="$(echo ${cv} | awk '{print $2}' | sed 's/[][]//g')"
-		echo "${cv} | ${cp} | ${match}"
-		[[ -z "${rem}" && -n "${match}" ]] && 
-		{ 
-			# key:value exists
-			echo "FUCK !"			 
-			listing="true"; 
+
+		echo "${rem} :: ${match}"
+
+		[[ -z "${rem}" && -n "${match}" ]] &&
+		{
+			echo "root dir !"
+			listing="true";
+			((cp+=1))
 		}
 		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${_path}" ${cp}    )"; }
-		[[ -z "${match}" && ${listing} == "true" ]] && { break; }
+		[[ -z "${match}" && ${listing} == "true" && ${tabLength} < "${cp}" ]] && { listing="done"; }
+
+		if [[ ${listing} == "done" ]]
+		then
+			if [[ ${match#*:} == ${match} ]]
+			then
+				echo "INSERT THIS" | sed 's/^[ \t]*//';
+			else
+				echo "INSERT THIS" | sed 's/^[ \t]*//';
+			fi			 
+		fi
+
 		ws=$(( tabL*(${cp}-1) ))
+
+		echo "${listing} ${line}"
+		#echo "[$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')] /$cp/ >$match< {$tabLength} $line > $(echo $cv | awk '{print $1}') :: $line"
+		#echo $line
+
 	done < <(echo -e "${_yaml}")
 }
 
