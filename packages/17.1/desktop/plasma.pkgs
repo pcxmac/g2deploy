@@ -11,4 +11,4 @@ sys-auth/elogind
 x11-misc/sddm
 kde-plasma/plasma-pa
 media-sound/pavucontrol-qt
-
+x11-terms/kitty

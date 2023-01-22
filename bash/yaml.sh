@@ -7,12 +7,26 @@
 
 # subprocesses do not respect variable case !!!
 
+# no syntax checking present
+
+##################################################################################################################################
+
+# yaml standardization [charcater format/spec] formula
+function yamlStd()
+{
+	local _yaml="${1:?}"
+	echo -e "${_yaml}" | sed 's/#.*$//' | sed '/^[[:space:]]*$/d' | sed 's/[^A-Za-z0-9_.:/*-\s ]//g'
+}
+
+# scans a yaml structure, and returns the first length of a tab occurance, yaml tab values are typically 2 and 4
 function yamlTabL()
 {
 	local _yaml="${1:?}"							# YAML FILE, X spaced.
 	local tabLength=""
 	# option to use string or file
 	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
+
+	_yaml="$(yamlStd ${_yaml})"
 
 	_tmp="${IFS}"
 	IFS=''
@@ -27,9 +41,13 @@ function yamlTabL()
 	echo $tabLength
 }
 
+# return the number of elements in a yaml path, ie [ root/partition/directory/leaf ]
 function yamlLength()
 {
 	local _string="${1:?}"
+
+	_string="$(yamlStd ${_string})"
+
     local count=1
     while [ ${_string} != ${_string#*/} ]
     do
@@ -40,12 +58,14 @@ function yamlLength()
 }
 
 # [cursor] : [remainder] : [current path]
-function yamlOrder() 
+function yamlPath() 
 {
-
-	local _string="${1:?}"
+	# last slash added to ensure conditional statement inside for loop terminates when last two keys are the same, ie. ../disk/disk
+	local _string="${1:?}/"
 	local _order="${2:?}"
 	local _match=""
+
+	_string="$(yamlStd ${_string})"
 
 	for ((i=1;i<=${_order};i++))
 	do
@@ -58,62 +78,204 @@ function yamlOrder()
 		fi
 	done
 	_prior="${1%/${_string}*}"
-	echo -e "[${_match}]\t[${_string}]\t[${_prior}]"                 # returns sought after key/value + remaining search pattern
+	# returns sought after key/value + remaining search pattern. There should be no white space between or after key-value pairs.
+	echo -e "[${_match}]\t[${_string}]\t[${_prior}]" | sed 's/ //g' | sed 's:/*$::';                  
 	#echo -e "${_match}\t${_string}"                 # returns sought after key/value + remaining search pattern
 }
 
+function yamlOrder()
+{
+	# last slash added to ensure conditional statement inside for loop terminates when last two keys are the same, ie. ../disk/disk
+	local _string="${1:?}/"
+	local _order="${2:?}"
+	local _match=""
 
+	_string="$(yamlStd ${_string})"
+
+	for ((i=1;i<=${_order};i++))
+	do
+		_match="${_string%%/*}"
+		_string="${_string#*/}"
+		if [[ ${_match} == "${_string}" ]]
+		then
+			_string=""
+			break;
+		fi
+	done
+	
+	# returns sought after key/value + remaining search pattern
+	echo -e "${_match}" | sed 's/ //g' | sed 's:/*$::'               
+}
+
+# return a pad, given the argument's value (white space)
+function yamlTab() 
+{
+	local _length=${1:?}
+	echo "$( printf "%*s%s" ${_length} )"
+}
+
+# find a value in a yaml structure, keys can have their values present for selecting the right branches, with in heirarchys with like named keys
+# not all key-value pairs have to be explicit, only those which are unique to the path, but which need to differentiate are required.
 function findKeyValue() 
 {
 	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
 	local _path="${2:?}"
 	local tabL="$(yamlTabL "${_yaml}")"
-	local cp=1
 	local listing="false"
-	local cv="$(yamlOrder "${_path}" ${cp})"
-	local ws=$(( tabL*(${cp}-1) ))
-	
+	# cursor position
+	local cp=1
+	# string, about which path is articulated
+	local cv="$(echo $(yamlOrder "${_path}" ${cp}))";
+	# actual number of tabs between key-value and left-most
+	local tabLength
+	#local cursor="$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g')";
+
+	#echo $_path
+	#echo $cv
+
 	# option to use string or file
  	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
+
+	#echo $tabL
 
 	# positive logic loop
 	IFS=''
 	while read -r line
 	do
-		match="$(echo ${line} | \grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')"     )"
-		#echo "[$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')] /$cp/ >$match< $line > $(echo $cv | awk '{print $1}')"
-		rem="$(echo ${cv} | awk '{print $2}' | sed 's/[][]//g')"
+		# get order of key, ie how many tabs are in between key and left-most
+		tabLength="$(($(echo ${line} | awk -F '[^ ].*' '{print length($1)}')/2 +1))"
+		# if tabLength is less than the cursor, reset cursor (cv), the position assumes =tabLength
 
-		#echo "-> ... $line [$ws]"
+		#echo "[${tabLength} : $((cp*tabL))]" 
 
-		[[ -z "${rem}" && -n "${match}" ]] &&
-		{
-			if [[ ${match#*:} == ${match} ]]
-			then
-				echo "${match#*-}" | sed 's/^[ \t]*//';
-			else
-				echo "${match#*:}" | sed 's/^[ \t]*//';
-			fi			 
-			listing="true"; 
+		#echo "tab length = $tabLength ; cp = $cp"
+
+		[[ ${tabLength} < "$((cp*tabL))" ]] && 
+		{ 
+			listing="false";
+			cp="$((tabLength))";
+			cv="$(echo $(yamlOrder "${_path}" ${cp}))";
 		}
-		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${_path}" ${cp}    )"; }
-		[[ -z "${match}" && ${listing} == "true" ]] && { break; }
 
-		ws=$(( tabL*(${cp}-1) ))
-	done < <(echo -e "${_yaml}")
+		sleep 0
+
+		# format the line to have the correct tabLength and no whitespace in between key-value pairs.
+		line="$(yamlTab $((tabL * tabLength)))$(echo ${line} | sed 's/ //g')"
+	 	#cursor="$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g')";
+
+		#echo "$line :: $(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')"
+		[[ $cv != "" ]] && match="$(echo ${line} | \grep -wP "^\s{$((cp*tabL))}$(echo ${cv}).*$")";
+
+		#echo "\grep -wP "^\s{$((cp*tabL))}$(echo ${cv})$""
+
+		#echo "<${tabLength}>[$cp] > <$line> ($match) [$cv]"
+		echo "$line ++$match++"
+		#echo "$(yamlOrder "${_path}" ${cp}) [${tabLength}|${cp}]${line} < $match | $rem /${listing}"
+		#rem="$(echo ${cv} | awk '{print $2}' | sed 's/[][]//g')"
+#sleep 5
+		#echo $line
+		# if there is a match, and it's not listing, and the next path element doesn't exist ...
+		[[ -n "${match}" && ${listing} == "false" ]] && [[ "$(yamlOrder "${_path}" $((cp+1)))" != "" ]] &&
+		{ 
+			((cp+=1));
+			cv="$(echo $(yamlOrder "${_path}" ${cp}))";
+			#echo "ADD CP @ $cp"
+		}
+
+		[[ -z "${rem}" && -n "${match}" ]] && [[ ${listing} == "false" ]] 
+		{
+			[[ ${match#*:} == ${match} ]] &&
+		 	{
+		 		#echo "---${match#*-}--- ---${rem}--- && ${match} && ${listing} == false $cv" | sed 's/^[ \t]*//';
+		 	} || {
+		 		#echo ":::${match#*:}::: :::${rem}::: && ${match} && ${listing} == false $cv" | sed 's/^[ \t]*//';
+		 	}			 
+		 	listing="true"; 
+		}
+
+		# if no longer matching, whether listing or scanning, advance cursor, disable listing
+		# [[ -z "${match}" ]] && 
+		# { 
+		# 	# cursor forward in the path
+		# 	cursor="$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g')";
+		# 	cp=$((cp+1));
+		# 	cv="$(yamlOrder "${_path}" ${cp})"; 
+		# 	listing="false"
+		# }
+		
+		[[ -z "${match}" && ${listing} == "true" ]] && { listing="done"; }
+		
+		#echo "[${tabLength},$((cp*tabL))]$line :: ${cursor},${listing} :: ${match}"
+
+	#echo "[${tabLength}|${cs}]$line < $match | $rem "
+	# format the length to omit comments & empty lines, and filter out non-spec characters
+	done < <(yamlStd "${_yaml}")
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# add a key-value pair as the last child, under the guardianship of the prefix path, ie [root/partition/path/prefix/ KEY:VALUE]
+# checks for existing KEY:VALUE, same keys can exist with in a prefix/parent branch
 function insertKeyValue() 
 {
-
 	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
 	local _path="${2:?}"
 	local tabL="$(yamlTabL "${_yaml}")"
 	local cp=1
 	local listing="false"
 	local cv="$(yamlOrder "${_path}" ${cp})"
-	local ws=$(( tabL*(${cp}-1) ))
+	local cs=$(( tabL*(${cp}-1) ))
 	
+	if [[ -n $(findKeyValue ${_yaml} ${_path}) ]] && { echo "-------------------------------------found"; } 
+
 	# option to use string or file
  	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
 
@@ -121,39 +283,126 @@ function insertKeyValue()
 	IFS=''
 	while read -r line
 	do
-		tabLength="$(($(echo ${line} | awk -F '[^ ].*' '{print length($1)}')/2 +1))"
-		match="$(echo ${line%:*} | \grep -P "$(echo ${cv%:*} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')"     )"
+
+		tabLength="$(($(echo ${line} | awk -F '[^ ].*' '{print length($1)}') ))"
+		match="$(echo ${line} | \grep -P "^\s{$cs}$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')"     )"
 		rem="$(echo ${cv} | awk '{print $2}' | sed 's/[][]//g')"
+
+		if [[ ${tabLength} < ${cs} ]] && { echo "SHIT !"; listing="false"; }
 		[[ -z "${rem}" && -n "${match}" ]] &&
 		{
-			listing="true";
-			((cp+=1))
+			#echo "----------------LIMIT"
+			# if [[ ${match#*:} == ${match} ]]
+			# then
+			# 	echo "${match#*-}" | sed 's/^[ \t]*//';
+			# else
+			# 	echo "${match#*:}" | sed 's/^[ \t]*//';
+			# fi			 
+			listing="true"; 
 		}
 		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${_path}" ${cp}    )"; }
-		[[ -z "${match}" && ${listing} == "true" && ${tabLength} < "${cp}" ]] && { listing="done"; }
+		[[ -z "${match}" && ${listing} == "true" ]] && { listing="false"; echo "[${tabLength}|${cs}]$(yamlTab $((tabLength)))<><>NEW CHILD<><>"; }
 
-		if [[ ${listing} == "done" ]]
-		then
-			cn="$((cp))"
-			tabS="$( printf "%*s%s" $((cn*tabL-tabL)) )"
-			newLine="${tabS}INSERT THIS"
-			if [[ ${match#*:} == ${match} ]]
-			then
-				echo "${cn} ${newLine}" | sed 's/^[ \t]*//';
-			else
-				echo "${cn} ${newLine}" | sed 's/^[ \t]*//';
-			fi
-			listing="false"
-		fi
+		echo "[${tabLength}|${cs}]$line"
 
-		ws=$(( tabL*(${cp}-1) ))
-
-		#echo "${listing} ${line}"
-		#echo "[$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')] /$cp/ >$match | $rem< {$tabLength} $line > $(echo $cv | awk '{print $1}') :: $line"
-		echo "$tabLength $line"
-
+		cs=$(( tabL*(${cp}-1) ))
 	done < <(echo -e "${_yaml}")
 }
+
+# function insertKeyValue() 
+# {
+# 	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
+# 	local _path="${2:?}"
+# 	local tabL="$(yamlTabL "${_yaml}")"
+# 	local cp=1
+# 	local listing="false"
+# 	local cv="$(yamlOrder "${_path}" ${cp})"
+# 	local ws=$(( tabL*(${cp}-1) ))
+	
+# 	# option to use string or file
+#  	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
+
+# 	key=${_path##*/}
+# 	key=${key%:*}
+# 	value=${_path##*/}
+# 	value=${value#*:}
+
+# 	_path=${_path%/*}
+
+# 	echo "path = $_path :: key = ${key} , value = ${value}"
+
+# 	# positive logic loop
+# 	IFS=''
+# 	while read -r line
+# 	do
+# 		tabLength="$(($(echo ${line} | awk -F '[^ ].*' '{print length($1)}')/2 +1))"
+# 		match="$(echo ${line} | \grep -P "^\s{$ws}$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')"     )"
+# 		rem="$(echo ${cv} | awk '{print $2}' | sed 's/[][]//g')"
+# 		echo $line
+# 		[[ -z "${rem}" && -n "${match}" ]] && {	listing="true"; $((cp+1)); }
+# 		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${_path}" ${cp}    )"; }
+# 		[[ -z "${match}" && ${listing} == "true" ]] && { listing="done"; }
+# 		[[ ${listing} == "done" ]] && { listing="false"; echo "----------------- END."; }
+# 		ws=$(( tabL*(${cp}-1) ))
+# 	done < <(echo -e "${_yaml}")
+# }
+
+# function znsertKeyValue() 
+# {
+
+# 	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
+# 	local _path="${2:?}"
+# 	local tabL="$(yamlTabL "${_yaml}")"
+# 	local cp=1
+# 	local listing="false"
+# 	local cv="$(yamlOrder "${_path}" ${cp})"
+# 	local ws=$(( tabL*(${cp}-1) ))
+
+# 	operator=${_path##*/}
+# 	_path=${_path%/*}
+# 	newV=""
+# 	#newV=${operator##*:}
+# 	key=${operator%%:*}
+# 	if [[ $operator != ${key} ]] && newV=${operator##*:}
+
+
+
+# 	echo "_path = $_path | newv = $newV | key = $key"
+
+#  	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
+
+# 	IFS=''
+
+# 	while read -r line
+# 	do
+# 		tabLength="$(($(echo ${line} | awk -F '[^ ].*' '{print length($1)}')/2 +1))"
+# 		match="$(echo ${line%:*} | \grep -P "^\s{$ws}$(echo ${cv%:*} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')"     )"
+# 		rem="$(echo ${cv} | awk '{print $2}' | sed 's/[][]//g')"
+# 		[[ -z "${rem}" && -n "${match}" ]] &&
+# 		{
+# 			listing="true";
+# 			((cp+=1))
+# 		}
+# 		[[ -n "${match}" && ${listing} == "false" ]] && { ((cp+=1));cv="$(yamlOrder "${_path}" ${cp}    )"; }
+# 		[[ -z "${match}" && ${listing} == "true" && ${tabLength} < "${cp}" ]] && { listing="done"; }
+
+# 		if [[ ${listing} == "done" ]]
+# 		then
+# 			tabS="$( printf "%*s%s" $((cp*tabL-tabL)) )"
+# 			newLine="${tabS}${key}:${newV}"
+# 			if [[ "${match#*:}" == "${match}" ]]
+# 			then
+# 				echo "${cn} ${newLine}" | sed 's/^[ \t]*//';
+# 			else
+# 				echo "${cn} ${newLine}" | sed 's/^[ \t]*//';
+# 			fi
+# 			listing="false"
+# 		fi
+
+# 		ws=$(( tabL*(${cp}-1) ))
+# 		echo "$tabLength $line"
+# 	done < <(echo -e "${_yaml}")
+# }
 
 
 # function modifyKeyValue() {

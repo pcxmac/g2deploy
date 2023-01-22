@@ -1,0 +1,37 @@
+
+--- insert
+
+
+first, find the target node			install/disks/pool  
+
+only match parent+1
+
+match "^\s{cp+1}
+
+if column < target, listing=false
+if column >= target, insert while listing=true
+
+
+
+if no children, create a child
+
+if children, add to end of children, if no child match, if child key exists, do nothing.
+
+
+
+--- modify
+
+
+first, find the target node
+
+replace key:value-old:value-new
+
+continue
+
+
+--- remove
+
+
+first, find the target node
+
+continue to omit yaml as long as whitespace is > target
