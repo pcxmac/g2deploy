@@ -69,7 +69,7 @@ function yamlStd()
 	IFS="${_tmp}"
 }
 
-# converts to tab x2, and eliminates all garbage text
+# picks out list items, or values from key-value pairs
 function yamlValue()
 {
 	local stdYAML
@@ -143,6 +143,7 @@ function yamlPath()
 	#echo -e "${_match}\t${_string}"                 # returns sought after key/value + remaining search pattern
 }
 
+# displays the Nth element in a yaml path-address
 function yamlOrder()
 {
 	# last slash added to ensure conditional statement inside for loop terminates when last two keys are the same, ie. ../disk/disk
@@ -163,6 +164,10 @@ function yamlOrder()
 	printf '%s\n' "${_match}"              
 }
 
+# finds a value in a yaml object, specific key-values filter out particular branches
+#	1	if tab < cp, cp = tab (current match)
+#	2	if match, cp ++							... this will satisfy the 'list' cycle
+#	3	if match & no next, print result (end of search path)
 function findKeyValue() 
 {
 	local listing="false"
@@ -170,23 +175,15 @@ function findKeyValue()
 	local cp=0
 	# actual number of tabs between key-value and left-most
 	local tabLength
-	#local cursor="$(echo ${cv} | awk '{print $1}' | sed 's/[][]//g')";
-
 	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
 	local _path="${2:?}"
-
+	# path length, to determine target leaf/node
 	local pLength="$(yamlPathL $_path)"
-
 	#standardize input
 	_yaml="$(yamlStd ${_yaml})"
-
-	# string, about which path is articulated
+	# strings, about which path is articulated
 	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
 	local next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
-
-	#	1	if tab < cp, cp = tab (current match)
-	#	2	if match, cp ++							... this will satisfy the 'list' cycle
-	#	3	if match & no next, print result (end of search path)
 
 	IFS=''
 	# pWave constructor
@@ -194,6 +191,7 @@ function findKeyValue()
 	do
 		# GENERATOR
 		tabLength="$(( $(yamlPadL ${line})/2 ))"
+
 		# if moving outside the scope of the current cursor
 		[[ $((tabLength)) < $((cp)) ]] && 
 		{ 
@@ -202,10 +200,6 @@ function findKeyValue()
 		}
 
 		# DETERMINANAT
-
-		# debugging
-		#echo "$line // $tabLength // [$cv:$next] @ [$((tabLength/2)) : $cp] > $match"  
-
 		[[ $((tabLength)) == $((cp)) ]] && {
 		 	match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((tabLength*2))}$(printf '%s\n' "${cv}").*$")";
 			next="$(yamlOrder ${_path} $((cp+1)))"
@@ -222,16 +216,109 @@ function findKeyValue()
 		}
 
 		 # EXECUTOR
-
-		# debugging
-		#echo "$line // $tabLength // [$cv:$next] @ [$((tabLength/2)) : $cp] > $match"  
-
 		[[ -n "${match}" && -z ${next} ]] && { 
 			printf '%s\n' "$(yamlValue $line)"
 		}
 
 	done < <(printf '%s\n' "${_yaml}")
 }
+
+# INSERT KEY VALUE
+# REMOVE KEY VALUE
+# MODIFY KEY VALUE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #			next="$(yamlOrder ${_path} $((tabLength/2)))"
 
@@ -260,12 +347,8 @@ function findKeyValue()
 
 		#echo "$line :: $(echo ${cv} | awk '{print $1}' | sed 's/[][]//g' | sed 's/ //g')"
 
-
-		
 		#echo "[${tabLength},$((cp*tabL))]$line :: ${cursor},${listing} :: ${match}"
-
-	#echo "[${tabLength}|${cs}]$line < $match | $rem "
-
+		#echo "[${tabLength}|${cs}]$line < $match | $rem "
 
 		#[[ -z "${rem}" && -n "${match}" ]] && [[ ${listing} == "false" ]] {
 			#[[ ${match#*:} == ${match} ]] && {
@@ -291,52 +374,6 @@ function findKeyValue()
 		#echo "[${tabLength}:${cp}]$line ++$match++ , $cv"
 		#echo "$(yamlOrder "${_path}" ${cp}) [${tabLength}|${cp}]${line} < $match | $rem /${listing}"
 		#rem="$(echo ${cv} | awk '{print $2}' | sed 's/[][]//g')"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # add a key-value pair as the last child, under the guardianship of the prefix path, ie [root/partition/path/prefix/ KEY:VALUE]
