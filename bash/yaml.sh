@@ -54,7 +54,7 @@ function yamlStd()
 	while read -r line
 	do
 		# GENERATE
-		padLength="$(( $(echo ${line} | awk -F '[^ ].*' '{print length($1)}') ))"
+		padLength="$(( $(printf '%s\n' ${line} | awk -F '[^ ].*' '{print length($1)}') ))"
 		padLength=$((_tab*(padLength-offset)/tabLength))
 		fLine="$(yamlPad $((padLength)))$(printf '%s\n' ${line} | sed 's/ //g')"
 		printf '%s\n' "${fLine}"
@@ -106,7 +106,7 @@ function yamlPathL()
         count=$((count+1))
 		_string="${_string#*/}"
 	done
-	echo "${count}"  # print length of address
+	printf "${count}"  # print length of address
 }
 
 # [cursor] : [remainder] : [current path]
@@ -125,14 +125,14 @@ function yamlPath()
 		_string="${_string#*/}"
 		if [[ ${_match} == "${_string}" ]]
 		then
-			echo $_match
+			printf $_match
 			_string=""
 			break;
 		fi
 	done
 	_prior="${1%/${_string}*}"
 	# returns sought after key/value + remaining search pattern. There should be no white space between or after key-value pairs.
-	echo -e "[${_match}]\t[${_string}]\t[${_prior}]" | sed 's/ //g' | sed 's:/*$::';                  
+	printf '%s\t%s\t%s\n' "${_match}" "${_string}" "${_prior}" | sed 's/ //g' | sed 's:/*$::';                  
 	#echo -e "${_match}\t${_string}"                 # returns sought after key/value + remaining search pattern
 }
 
@@ -174,8 +174,8 @@ function findKeyValue()
 	_yaml="$(yamlStd ${_yaml})"
 
 	# string, about which path is articulated
-	local cv="$(echo $(yamlOrder "${_path}" ${cp}))";
-	local next="$(echo $(yamlOrder "${_path}" $((cp+1))))";
+	local cv="$(printf $(yamlOrder "${_path}" ${cp}))";
+	local next="$(printf $(yamlOrder "${_path}" $((cp+1))))";
 
 	#	1	if tab < cp, cp = tab (current match)
 	#	2	if match, cp ++							... this will satisfy the 'list' cycle
@@ -185,16 +185,16 @@ function findKeyValue()
 	# pWave constructor
 	while read -r line
 	do
-		# GENERATE
+		# GENERATOR
 		tabLength="$(( $(printf '%s\n' ${line} | awk -F '[^ ].*' '{print length($1)}') ))"
-
-		# DETERMINANAT
 		# if moving outside the scope of the current cursor
 		[[ $((tabLength/2)) < $((cp)) ]] && 
 		{ 
 			cp="$((tabLength/2))";
-			cv="$(echo $(yamlOrder "${_path}" ${cp}))";
+			cv="$(printf $(yamlOrder "${_path}" ${cp}))";
 		}
+
+		# DETERMINANAT
 
 		# debugging
 		#echo "$line // $tabLength // [$cv:$next] @ [$((tabLength/2)) : $cp] > $match"  
@@ -214,7 +214,7 @@ function findKeyValue()
 			cv="$(yamlOrder ${_path} ${cp})";
 		}
 
-		 # EXECUTION
+		 # EXECUTOR
 
 		# debugging
 		#echo "$line // $tabLength // [$cv:$next] @ [$((tabLength/2)) : $cp] > $match"  
