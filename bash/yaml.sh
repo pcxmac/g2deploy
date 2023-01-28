@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # path format = key:value/next_key:next_value/.../last_key:last_value
-# this functino outputs the key:value for a given 'column' or order coordinate,
+# this function outputs the key:value for a given 'column' or order coordinate,
 # example : yamlOrder 'path/to:value/get:not/is/hidden' 2 = { 'to:value' 'get:not/is/hidden'}
 # ie, you get the key/value combination, and the remainder of the path in the right most return value
 
@@ -16,6 +16,13 @@ function yamlPad()
 {
 	local _length=${1:?}
 	printf '%s\n' "$(printf "%*s%s" ${_length})"
+}
+
+function yamlPadL()
+{
+	local _key_value=${1:?}
+	_key_value="$(( $(printf '%s\n' ${_key_value} | awk -F '[^ ].*' '{print length($1)}') ))"
+	printf '%s\n' "${_key_value}"
 }
 
 # yaml standardization [charcater format/spec] formula
@@ -106,7 +113,7 @@ function yamlPathL()
         count=$((count+1))
 		_string="${_string#*/}"
 	done
-	printf "${count}"  # print length of address
+	printf '%s\n' "${count}"  # print length of address
 }
 
 # [cursor] : [remainder] : [current path]
@@ -125,7 +132,7 @@ function yamlPath()
 		_string="${_string#*/}"
 		if [[ ${_match} == "${_string}" ]]
 		then
-			printf $_match
+			printf '%s\n' $_match
 			_string=""
 			break;
 		fi
@@ -170,12 +177,12 @@ function findKeyValue()
 
 	local pLength="$(yamlPathL $_path)"
 
-	#standardize inputs
+	#standardize input
 	_yaml="$(yamlStd ${_yaml})"
 
 	# string, about which path is articulated
-	local cv="$(printf $(yamlOrder "${_path}" ${cp}))";
-	local next="$(printf $(yamlOrder "${_path}" $((cp+1))))";
+	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
+	local next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
 
 	#	1	if tab < cp, cp = tab (current match)
 	#	2	if match, cp ++							... this will satisfy the 'list' cycle
@@ -186,12 +193,12 @@ function findKeyValue()
 	while read -r line
 	do
 		# GENERATOR
-		tabLength="$(( $(printf '%s\n' ${line} | awk -F '[^ ].*' '{print length($1)}') ))"
+		tabLength="$(( $(yamlPadL ${line})/2 ))"
 		# if moving outside the scope of the current cursor
-		[[ $((tabLength/2)) < $((cp)) ]] && 
+		[[ $((tabLength)) < $((cp)) ]] && 
 		{ 
-			cp="$((tabLength/2))";
-			cv="$(printf $(yamlOrder "${_path}" ${cp}))";
+			cp="$((tabLength))";
+			cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
 		}
 
 		# DETERMINANAT
@@ -199,8 +206,8 @@ function findKeyValue()
 		# debugging
 		#echo "$line // $tabLength // [$cv:$next] @ [$((tabLength/2)) : $cp] > $match"  
 
-		[[ $((tabLength/2)) == $((cp)) ]] && {
-		 	match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((tabLength))}$(printf '%s\n' "${cv}").*$")";
+		[[ $((tabLength)) == $((cp)) ]] && {
+		 	match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((tabLength*2))}$(printf '%s\n' "${cv}").*$")";
 			next="$(yamlOrder ${_path} $((cp+1)))"
 	 	} || { 
 			match="";
