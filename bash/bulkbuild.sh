@@ -15,7 +15,7 @@ do
 	zfs destroy $dset -r
 	zfs create $dset
 
-	./deploy.sh work=$work build=$build $options
+	./deploy.sh work=$work build=$build deploy
 
 	./update.sh work=$work update
 done
