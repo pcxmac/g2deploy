@@ -1,5 +1,6 @@
 # COMMON PATCHES 17.X
 
-echo "no common patches";
+#echo "no common patches";
 
+emerge x11-drivers/xf86-video-qxl
 
