@@ -6,5 +6,5 @@
 <=sys-libs/glibc-2.35
 
 >=sys-kernel/gentoo-sources-6.2.0
-<=sys-kernel/gentoo-sources-6.0
+<=sys-kernel/gentoo-sources-5.0
 
