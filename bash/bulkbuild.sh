@@ -6,10 +6,14 @@ for ((x=1;x<8;x++))
 do
 	work="$(findKeyValue ../config/build.cfg deploy:$x/work)"
 	build="$(findKeyValue ../config/build.cfg deploy:$x/build)"
-	options="$(findKeyValue ../config/build.cfg deploy:$x/options)"
+	dset="$(findKeyValue ../config/build.cfg deploy:$x/dset)"
 
-	zfs destroy $work -r
-	zfs create $work
+	clear_mounts $work
+
+	zfs destroy $dset -r
+	zfs create $dset
 
 	./deploy.sh work=$work build=$build $options
+
+	./update.sh work=$work update
 done
