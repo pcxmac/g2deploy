@@ -1,16 +1,5 @@
 #!/usr/bin/env bash
 
-# path format = key:value/next_key:next_value/.../last_key:last_value
-# this function outputs the key:value for a given 'column' or order coordinate,
-# example : yamlOrder 'path/to:value/get:not/is/hidden' 2 = { 'to:value' 'get:not/is/hidden'}
-# ie, you get the key/value combination, and the remainder of the path in the right most return value
-
-# subprocesses do not respect variable case !!!
-
-# no syntax checking present
-
-##################################################################################################################################
-
 # return a pad, given the argument's value (white space)
 function yamlPad()
 {
@@ -76,29 +65,6 @@ function yamlValue()
 	stdYAML="${1:?}"
 	printf '%s\n' "${stdYAML}" | sed 's/ //g; s/^-//; s/[^:]*://g';
 }
-
-# scans a yaml structure, and returns the first length of a tab occurance, yaml tab values are typically 2 and 4
-# function yamlTabL()
-# {
-# 	local _yaml="${1:?}"							# YAML FILE, X spaced.
-# 	local tabLength=""
-# 	# option to use string or file
-# 	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
-
-# 	_yaml="$(yamlStd ${_yaml})"
-
-# 	_tmp="${IFS}"
-# 	IFS=''
-# 	while read -r line
-# 	do
-# 		#echo ${line}
-# 		tabLength="$(echo ${line} | awk -F '[^ ].*' '{print length($1)}')"
-# 		if [[ -n ${tabLength} ]]; then break; fi 
-
-# 	done < <(printf "${_yaml}" | \grep -iP '^\s.*[a-z]')
-# 	IFS="${_tmp}"
-# 	printf '%s\n' "$tabLength"
-# }
 
 # return the number of elements in a yaml path, ie [ root/partition/directory/leaf ]
 function yamlPathL()
@@ -227,6 +193,8 @@ function findKeyValue()
 # REMOVE KEY VALUE
 # MODIFY KEY VALUE
 
+function modifyKeyValue()
+{
 
 
 
@@ -248,7 +216,7 @@ function findKeyValue()
 
 
 
-
+}
 
 
 
