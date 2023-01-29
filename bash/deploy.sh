@@ -142,9 +142,9 @@ function locales()
 	export -f users
 	export -f locales
 	export -f services
-
 	export -f system
-	export -f patchProcessor
+
+#	export -f patchProcessor
 	export -f getG2Profile
 	export -f services
 

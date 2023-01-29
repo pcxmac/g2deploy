@@ -115,19 +115,31 @@ function yamlOrder()
 	# last slash added to ensure conditional statement inside for loop terminates when last two keys are the same, ie. ../disk/disk
 	# " \\ " added to help disable matching of next path element,
 
-	local _string="${1:?}/"
+	local _remainder="${1:?}/"
 	local _order="$((${2:?}))"
 
-	local _match=""
+	local _prune=""
 	#_string="$(yamlStd ${_string})"
 
 	for ((i=0;i<=${_order};i++))
 	do
-		_match="${_string%%/*}"
-		_string="${_string#*/}"
+		#echo "$i $_prune :: $_remainder"
+		_prune="${_remainder%%/*}"
+		_remainder="${_remainder#*/}"
+
+		# no way to delimit nested lists, need to think about the syntax rules surrounding multiple lists, no values, etc...
+		#[[ $_prune == "-" ]] && { 
+		#	_remainder="${_remainder}"
+		#	_prune="${_prune}/${_remainder}"
+		#	_remainder="${_remainder#*:*/}"
+		#	_prune="${_prune%%/$_remainder}"
+		#}
+		#printf '%s | %s \n' "$_prune" "$_remainder"
+
 	done
 	# returns sought after key/value + remaining search pattern
-	printf '%s\n' "${_match}"              
+	#printf '%s | %s\n' "${_prune}" "${_remainder}" | sed 's:/*$::';  
+	printf '%s\n' "${_prune}"          
 }
 
 # finds a value in a yaml object, specific key-values filter out particular branches
@@ -136,7 +148,6 @@ function yamlOrder()
 #	3	if match & no next, print result (end of search path)
 function findKeyValue() 
 {
-	local listing="false"
 	# cursor position
 	local cp=0
 	# actual number of tabs between key-value and left-most
@@ -168,10 +179,10 @@ function findKeyValue()
 		# DETERMINANAT
 		[[ $((tabLength)) == $((cp)) ]] && {
 		 	match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((tabLength*2))}$(printf '%s\n' "${cv}").*$")";
-			next="$(yamlOrder ${_path} $((cp+1)))"
+			next="$(yamlOrder ${_path} $((cp+1)))";
 	 	} || { 
 			match="";
-			next="trivial"
+			next="trivial";
 		}
 
 		[[ -n ${match} ]] && 
@@ -193,30 +204,67 @@ function findKeyValue()
 # REMOVE KEY VALUE
 # MODIFY KEY VALUE
 
-function modifyKeyValue()
-{
+# finds a [KEY:VALUE] pair in a yaml object, modifies it's [VALUE], and dumps the YAML OBJECT
+#	1	if match, print modified value
+#	2	print if no match
+# function modifyKeyValue()
+# {
+# 	# cursor position
+# 	local cp=0
+# 	# actual number of tabs between key-value and left-most
+# 	local tabLength
+# 	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
+# 	local _path="${2:?}"
+# 	# path length, to determine target leaf/node
+# 	local pLength="$(yamlPathL $_path)"
+# 	#standardize input
+# 	_yaml="$(yamlStd ${_yaml})"
+# 	# strings, about which path is articulated
+# 	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
+# 	local next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
 
+# 	IFS=''
+# 	# pWave constructor
+# 	while read -r line
+# 	do
+# 		# GENERATOR
+# 		tabLength="$(( $(yamlPadL ${line})/2 ))"
 
+# 		# if moving outside the scope of the current cursor
+# 		[[ $((tabLength)) < $((cp)) ]] && 
+# 		{ 
+# 			cp="$((tabLength))";
+# 			cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
+# 		}
 
+# 		# DETERMINANAT
+# 		[[ $((tabLength)) == $((cp)) ]] && {
+# 		 	match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((tabLength*2))}$(printf '%s\n' "${cv}").*$")";
+# 			next="$(yamlOrder ${_path} $((cp+1)))"
+# 	 	} || { 
+# 			match="";
+# 			next="trivial"
+# 		}
 
+# 		[[ -n ${match} ]] && 
+# 		{ 
+# 			[[ $((cp)) < $((pLength)) ]] && { ((cp++)); }
+# 			# cv only changes on a match
+# 			cv="$(yamlOrder ${_path} ${cp})";
+# 		}
 
+# 		#  # EXECUTOR
+# 		# [[ -n "${match}" && -z ${next} ]] && {
+# 		# 	# PRINT MODIFIED KEY_VALUE
+# 		# 	modLine="$(yamlPad $((padLength)))$(printf '%s:%s\n' "${key}" "${value} | sed 's/ //g')";
+# 		# 	printf '%s\n' "$(yamlValue $line)";
+# 		# } || {
+# 		# 	# PRINT UNMODIFIED KEY_VALUE
+# 		# 	printf '%s\n' "$(yamlValue $line)";
+# 		# }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}
+# 	done < <(printf '%s\n' "${_yaml}")
+# }
 
 
 
