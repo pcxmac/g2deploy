@@ -69,22 +69,22 @@ hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | /usr/bin/awk '{print $8}')"
 hostip="$(/bin/ip --brief address show dev ${hostip} | /usr/bin/awk '{print $3}')"
 
 #echo "############################### [ META ] ########################################"
-mget "rsync://${pkgHOST}/gentoo/meta/*"		    "${SCRIPT_DIR}/meta/"
+mget "--delete-after rsync://${pkgHOST}/gentoo/meta/"       "${pkgROOT}/meta/"
 #echo "############################### [ PROFILES ] ####################################"
-mget "rsync://${pkgHOST}/gentoo/profiles/*"	    "${SCRIPT_DIR}/profiles/"
+mget "--delete-after rsync://${pkgHOST}/gentoo/profiles/"   "${pkgROOT}/profiles/" 
 #echo "############################### [ PACKAGES ] ####################################"
-mget "rsync://${pkgHOST}/gentoo/packages/*"	    "${SCRIPT_DIR}/packages/"
+mget "--delete-after rsync://${pkgHOST}/gentoo/packages/"   "${pkgROOT}/packages/" 
 #echo "############################### [ PATCHFILES ] ##################################"
-mget "rsync://${pkgHOST}/gentoo/patchfiles/*"	"${SCRIPT_DIR}/patchfiles/"
+mget "--delete-after rsync://${pkgHOST}/gentoo/patchfiles/" "${pkgROOT}/patchfiles/"
 
-owner="$(stat -c '%U' "${SCRIPT_DIR}")"
-group="$(stat -c '%G' "${SCRIPT_DIR}")"
+owner="$(stat -c '%U' "${pkgROOT}")"
+group="$(stat -c '%G' "${pkgROOT}")"
 
 echo "setting ownership to {meta} ; {profiles} ; {packages}"
 
-chown "${owner}:${group}" "${SCRIPT_DIR}/meta" -R			1>/dev/null
-chown "${owner}:${group}" "${SCRIPT_DIR}/profiles" -R		1>/dev/null
-chown "${owner}:${group}" "${SCRIPT_DIR}/packages" -R		1>/dev/null
+chown "${owner}:${group}" "${pkgROOT}/meta" -R			1>/dev/null
+chown "${owner}:${group}" "${pkgROOT}/profiles" -R		1>/dev/null
+chown "${owner}:${group}" "${pkgROOT}/packages" -R		1>/dev/null
 
 #repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
 

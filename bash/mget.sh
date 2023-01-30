@@ -29,7 +29,8 @@ function getRSYNC()
 			else
 				if [[ -n ${host} ]]
 				then
-					rsync -a --no-motd --human-readable --info=progress2 --rsync-path="sudo rsync" "$@" 
+					echo "rsync -a --no-motd --human-readable --info=progress2 --rsync-path="sudo rsync" "$@"" >> ${SCRIPT_DIR}/bash/output.log
+					rsync -avr --delete --links --no-motd --human-readable --info=progress2 --rsync-path="sudo rsync" "$@" 
 				fi
 			fi
 			waiting=0
@@ -43,7 +44,8 @@ function getRSYNC()
 
 	if [[ -z ${host} ]]
 	then
-			rsync -a --no-motd --info=progress2 --human-readable --rsync-path="sudo rsync" "${@#*rsync://}" 
+			echo "rsync -a --no-motd --human-readable --info=progress2 --rsync-path="sudo rsync" "$@"" >> ${SCRIPT_DIR}/bash/output.log
+			rsync -avr --delete --links --no-motd --info=progress2 --human-readable --rsync-path="sudo rsync" "${@#*rsync://}" 
 	fi
 }
 
@@ -162,7 +164,8 @@ function mget()
 			then
 				echo "$(getRSYNC "$*")"
 			else
-				echo "getRSYNC "$*"" > ${SCRIPT_DIR}/bash/output.log
+				#echo "$@" >> ${SCRIPT_DIR}/bash/output.log
+				#echo $@
 	            getRSYNC "$@"  # ${url} ${destination} ${args}
 			fi
 		;;
