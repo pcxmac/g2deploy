@@ -136,7 +136,7 @@ function editboot()
 	fi
 }
 
-function clear_mounts()
+function clear_mounts() 
 {
 	local offset
 	local procs
@@ -156,7 +156,7 @@ function clear_mounts()
 	then
 		dir="${dir}"
 	else
-		dir="${dir}\/"
+		dir="${dir}/"
 	fi
 
 	while [[ "$output" != 0 ]]
@@ -167,6 +167,7 @@ function clear_mounts()
 		done < <(cat /proc/mounts | \grep "$dir" | awk '{print $2}')
 		output="$(cat /proc/mounts | \grep "$dir" | wc -l)"
 	done
+
 }
 
 function mounts()

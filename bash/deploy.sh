@@ -187,6 +187,7 @@ function locales()
     done
 
 	if [[ -z "${_profile}" ]];then echo "profile does not exist for ${_selection}"; exit; fi
+
 	clear_mounts "${directory}"
 
 	buildup "${_profile}" "${directory}" "${dataset}" "${_selection}"

@@ -30,7 +30,7 @@ function getRSYNC()
 				if [[ -n ${host} ]]
 				then
 					#echo "rsync -a --no-motd --human-readable --info=progress2 --rsync-path="sudo rsync" "$@"" >> ${SCRIPT_DIR}/bash/output.log
-					rsync -avr --delete --links --no-motd --human-readable --info=progress2 --rsync-path="sudo rsync" $*
+					rsync -ar --links --no-motd --human-readable --info=progress2 --rsync-path="sudo rsync" $*
 				fi
 			fi
 			waiting=0
@@ -45,7 +45,7 @@ function getRSYNC()
 	if [[ -z ${host} ]]
 	then
 			#echo "rsync -a --no-motd --human-readable --info=progress2 --rsync-path="sudo rsync" "$@"" >> ${SCRIPT_DIR}/bash/output.log
-			rsync -avr --delete --links --no-motd --info=progress2 --human-readable --rsync-path="sudo rsync" "${@#*rsync://}" 
+			rsync -ar --links --no-motd --info=progress2 --human-readable --rsync-path="sudo rsync" "${@#*rsync://}" 
 	fi
 }
 
