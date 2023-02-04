@@ -65,7 +65,7 @@ printf "updating mlocate-db\n"
 /usr/bin/updatedb
 /usr/bin/eix-update
 
-hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | /usr/bin/awk '{print $8}')"
+hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | head -n 1 | /usr/bin/awk '{print $8}')"
 hostip="$(/bin/ip --brief address show dev ${hostip} | /usr/bin/awk '{print $3}')"
 
 printf "############################### [ META ] ########################################\n"
@@ -90,7 +90,7 @@ chown "${owner}:${group}" "${pkgROOT}/packages" -R		1>/dev/null
 
 for x in $(ls "${pkgROOT}/repository")
 do
-    printf "-------%s-------\n" ${x}
+    printf "%s\n" "${x}"
     git -C "${pkgROOT}/repository/${x}" fetch --all
     git -C "${pkgROOT}/repository/${x}" pull
 done
