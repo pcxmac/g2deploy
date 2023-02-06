@@ -68,24 +68,27 @@ function system()
 {
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
-	echo "ISSUING UPDATES"
+	echo "DEPLOY::ISSUING UPDATES"
 	emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n
 
 	echo "APPLYING NECCESSARY PRE-BUILD PATCHES"
+	cat /patches.sh | wc -l
+	sleep 10
 	sh < /patches.sh
-	rm /patches.sh
 
-	echo "EMERGE PROFILE PACKAGES"
+	#rm /patches.sh
+
+	echo "DEPLOY::EMERGE PROFILE PACKAGES"
 	emerge ${emergeOpts} $(cat /package.list)
 	rm /package.list
 
-	echo "EMERGE ZED FILE SYSTEM"
+	echo "DEPLOY::EMERGE ZED FILE SYSTEM"
 	emergeOpts="--verbose-conflicts"
 	FEATURES="-getbinpkg -buildpkg"
 	emerge ${emergeOpts} =zfs-9999 --nodeps
 
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
-	echo "POST INSTALL UPDATE !!!"
+	echo "DEPLOY::POST INSTALL UPDATE !!!"
 	emerge -b -uDN --with-bdeps=y @world --ask=n ${emergeOpts}
 
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
@@ -98,7 +101,7 @@ function system()
 
 function services() 
 {
-	echo "EXECUTING SERVICE ROUTINE"
+	echo "DEPLOY::EXECUTING SERVICE ROUTINE"
 	sh < /services.sh
 	rm /services.sh
 }
