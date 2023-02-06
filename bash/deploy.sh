@@ -68,19 +68,27 @@ function system()
 {
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
+	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
+	av="$(pquery sys-apps/portage --max 2>/dev/null)"
+	echo "DEPLOY::CHECKING PORTAGE ${av##*-}/${pv##*-}"
+
+	if [[ "${av##*-}" != "${pv##*-}" ]]
+	then 
+		emerge portage --oneshot --ask=n
+	fi
+
 	echo "DEPLOY::ISSUING UPDATES"
 	emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n
 
 	echo "APPLYING NECCESSARY PRE-BUILD PATCHES"
-	cat /patches.sh | wc -l
-	sleep 10
+	
 	sh < /patches.sh
 
 	#rm /patches.sh
 
 	echo "DEPLOY::EMERGE PROFILE PACKAGES"
 	emerge ${emergeOpts} $(cat /package.list)
-	rm /package.list
+	#rm /package.list
 
 	echo "DEPLOY::EMERGE ZED FILE SYSTEM"
 	emergeOpts="--verbose-conflicts"
@@ -120,24 +128,17 @@ function locales()
 	eselect locale set en_US.utf8
 
 	emerge-webrsync
+	emerge --sync --ask=n
 
 	eselect profile set default/linux/amd64/${key%/openrc}
 	eselect profile show
 	sleep 2
 
-	emerge --sync --ask=n
     echo "reading the news (null)..."
 	eselect news read all > /dev/null
 	echo "America/Los_Angeles" > /etc/timezone
 	emerge --config sys-libs/timezone-data
-
-	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
-	av="$(pquery sys-apps/portage --max 2>/dev/null)"
-	if [[ "${av##*-}" != "${pv##*-}" ]]
-	then 
-		emerge portage --oneshot --ask=n
-	fi
-		
+	
 }
 
 	export PYTHONPATH=""

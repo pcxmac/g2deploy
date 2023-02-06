@@ -33,9 +33,15 @@
   - pump
   - dhclient
 
+  - automated issue tracking / bug reporting.
+
+  - need to validate *.pkgs/dryrun before building in :: deploy. Some packages might not exist and will break the deployment
+
   - update needs to utilize 'profiles' in order to preserve profile specific config data 
 
   - kernel modules are wrongly installed during deployment or update or install. figure it out
+
+  - it appears some snapshots (gentoo) are not loading properly, might need to test and mask.
 
   x
 

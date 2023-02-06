@@ -2,7 +2,7 @@
 
 source ./include.sh
 
-./sync.sh
+#./sync.sh
 
 for ((x=1;x<8;x++))
 do
