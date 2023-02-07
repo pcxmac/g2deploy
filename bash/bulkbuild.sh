@@ -10,12 +10,18 @@ do
 	build="$(findKeyValue ../config/build.cfg deploy:$x/build)"
 	dset="$(findKeyValue ../config/build.cfg deploy:$x/dset)"
 
-	clear_mounts $work
+	echo "work = $work, build = $build, dataset = $dset"
+	sleep 2
 
-	zfs destroy $dset -r
-	zfs create $dset
+	if [[ -n ${work} ]]
+	then
+		clear_mounts $work
+	
+		zfs destroy $dset -r
+		zfs create $dset
 
-	./deploy.sh work=$work build=$build deploy
+		./deploy.sh work=$work build=$build deploy
 
-	./update.sh work=$work update
+		./update.sh work=$work update
+	fi
 done

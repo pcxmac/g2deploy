@@ -50,10 +50,10 @@ function patchFiles_portage()
 	if [[ -d ${offset}/etc/portage/package.mask ]];then rm  "${offset}/etc/portage/package.mask" -R;fi
 	if [[ -d ${offset}/etc/portage/package.accept_keywords ]];then rm "${offset}/etc/portage/package.accept_keywords" -R;fi
 	
-	echo -e "$(mget ${common_URI}.uses)\n$(mget ${spec_URI}.uses)" > uniq > ${offset}/etc/portage/package.use
-	echo -e "$(mget ${common_URI}.keys)\n$(mget ${spec_URI}.keys)" > uniq > ${offset}/etc/portage/package.accept_keywords
-	echo -e "$(mget ${common_URI}.mask)\n$(mget ${spec_URI}.mask)" > uniq > ${offset}/etc/portage/package.mask
-	echo -e "$(mget ${common_URI}.license)\n$(mget ${spec_URI}.license)" > uniq > ${offset}/etc/portage/package.license
+	echo -e "$(mget ${common_URI}.uses)\n$(mget ${spec_URI}.uses)" | uniq > ${offset}/etc/portage/package.use
+	echo -e "$(mget ${common_URI}.keys)\n$(mget ${spec_URI}.keys)" | uniq > ${offset}/etc/portage/package.accept_keywords
+	echo -e "$(mget ${common_URI}.mask)\n$(mget ${spec_URI}.mask)" | uniq > ${offset}/etc/portage/package.mask
+	echo -e "$(mget ${common_URI}.license)\n$(mget ${spec_URI}.license)" | uniq > ${offset}/etc/portage/package.license
 
 	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf
 

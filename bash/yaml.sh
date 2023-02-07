@@ -170,7 +170,7 @@ function findKeyValue()
 
 		# if moving outside the scope of the current cursor
 		[[ $((tabLength)) < $((cp)) ]] && 
-		{ 
+		{
 			cp="$((tabLength))";
 			cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
 		}
@@ -203,7 +203,27 @@ function findKeyValue()
 # REMOVE KEY VALUE
 # MODIFY KEY VALUE
 
+# adds a new node, match = prefix ;; path = 'root/branch/prefix:SPECIFIC/NEWKEY:NEWVALUE' ... ergo, prefix typically should have an associated value.
+#	
+#
+function insertKeyValue()
+{
+	printf 'yo';
+
+}
+
+# remove target branch, and it's children
+#	1	if match, silence output
+#	2	if cursor < match column, begin output again
+#
+function removeKeyValue()
+{
+	printf 'yo';
+
+}
+
 # finds a [KEY:VALUE] pair in a yaml object, modifies it's [VALUE], and dumps the YAML OBJECT
+# modify path = 'root/prefix/KEYVALUE:OLDVALUE:NEWVALUE'
 #	1	if match, print modified value
 #	2	print if no match
 function modifyKeyValue()
@@ -231,7 +251,7 @@ function modifyKeyValue()
 
 		# if moving outside the scope of the current cursor
 		[[ $((tabLength)) < $((cp)) ]] && 
-		{ 
+		{
 			cp="$((tabLength))";
 			cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
 		}
