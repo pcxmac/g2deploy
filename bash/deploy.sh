@@ -65,8 +65,6 @@ source ${SCRIPT_DIR}/bash/include.sh
 	patchFiles_portage "${directory}" "${_profile}"
 	patchFiles_sys "${directory}" "${_profile}"
 
-	ls ${directory}/usr/lib64/* -ail
-
 	zfs_keys "${dataset}"
 
 	pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
@@ -83,6 +81,9 @@ source ${SCRIPT_DIR}/bash/include.sh
 	#services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/package" http)/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
 	#echo "services URL = ${services_URL}"
 	#chroot "${directory}" /bin/bash -c "services ${services_URL}"
+
+	# some usr space patches are required before package build, but are then overwritten, this will reafirm the patches
+	patchFiles_sys "${directory}" "${_profile}"
 
 	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key "${dataset}"
 	clear_mounts "${directory}"

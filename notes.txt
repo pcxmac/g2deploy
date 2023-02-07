@@ -43,6 +43,8 @@
 
   - it appears some snapshots (gentoo) are not loading properly, might need to test and mask.
 
+  - I seriously need a way to test package/profile combos and check for useflags/masking issues.
+
   x
 
   - build list of dependencies for this platform, add pkgcore.

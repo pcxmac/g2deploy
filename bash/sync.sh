@@ -33,6 +33,10 @@ URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/repos" rsync)"
 #LOCATION="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/repo")"
 sed -i "s|^sync-uri.*|${URL}|g" ${pkgCONF}
 
+printf "############################ [ BINARY PACKAGES ] #################################\n"
+emaint binhost --fix
+# needs more work !!! zomg.
+
 #sed -i "s|^location.*|location = ${LOCATION}|g" ${pkgCONF}
 printf "################################# [ REPOS ] #####################################\n"
 printf "SYNCING w/ ***%s***" "${URL}"
@@ -69,13 +73,13 @@ hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | head -n 1 | /usr/bin/awk '{prin
 hostip="$(/bin/ip --brief address show dev ${hostip} | /usr/bin/awk '{print $3}')"
 
 printf "############################### [ META ] ########################################\n"
-mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${pkgROOT}/meta"
+mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${pkgROOT}"
 printf "############################### [ PROFILES ] ####################################\n"
-mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/profiles/"   "${pkgROOT}/profiles" 
+mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/profiles/"   "${pkgROOT}" 
 printf "############################### [ PACKAGES ] ####################################\n"
-mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/packages/"   "${pkgROOT}/packages" 
+mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/packages/"   "${pkgROOT}" 
 printf "############################### [ PATCHFILES ] ##################################\n"
-mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/patchfiles/" "${pkgROOT}/patckages"
+mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/patchfiles/" "${pkgROOT}"
 
 owner="$(stat -c '%U' "${pkgROOT}")"
 group="$(stat -c '%G' "${pkgROOT}")"
@@ -98,7 +102,7 @@ done
 #qmanifest -g
 #gencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc
 
-hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | /usr/bin/awk '{print $8}')"
+hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | head -n 1 | /usr/bin/awk '{print $8}')"
 hostip="$(/bin/ip --brief address show dev ${hostip} | /usr/bin/awk '{print $3}')"
 
 sed -i "s|HOST:.*|HOST: ${hostip}|g" /etc/rsync/rsyncd.motd

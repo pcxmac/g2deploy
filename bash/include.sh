@@ -86,7 +86,7 @@ function deployBuildup()
 	mkdir -p "${offset}/var/lib/portage/repos/gentoo"
 }
 
-function deploySstem()
+function deploySystem()
 {
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 

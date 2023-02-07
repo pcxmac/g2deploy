@@ -6,3 +6,4 @@ media-libs/libsndfile minimal
 media-libs/libglvnd X
 dev-libs/libbpf	static-libs
 sys-apps/dbus systemd -elogind
+media-libs/mesa xa

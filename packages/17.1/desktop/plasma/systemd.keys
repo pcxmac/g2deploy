@@ -1,2 +1,12 @@
 # PLASMA/SYSTEMD KEYS
 
+dev-haskell/c2hs                    ~amd64
+dev-haskell/cabal                   ~amd64
+dev-haskell/mtl                     ~amd64
+dev-haskell/parsec                  ~amd64
+dev-haskell/text                    ~amd64
+dev-haskell/dlist                   ~amd64
+dev-haskell/language-c              ~amd64
+dev-haskell/syb                     ~amd64
+dev-haskell/alex                    ~amd64
+dev-haskell/happy                   ~amd64
