@@ -39,9 +39,15 @@
 
   - update needs to utilize 'profiles' in order to preserve profile specific config data 
 
+
+
+
   - kernel modules are wrongly installed during deployment or update or install. figure it out
 
-  - it appears some snapshots (gentoo) are not loading properly, might need to test and mask.
+
+
+
+  - it appears some snapshots (gentoo) are not loading properly, might need to test and mask. (http/etc-hosts file)
 
   - I seriously need a way to test package/profile combos and check for useflags/masking issues.
 
@@ -65,11 +71,23 @@
 
   x
 
-  - umount is trying to mount non-existant mounts.
 
-  - should i move to git type sync ? look in to glsa/news/manifests/signing more, need comprehensive list of requirements for git -> rsync conversion.
+
+
+  - umount is trying to mount non-existant mounts. (invalid buildup procedure)
+
+
+
+
+
+  x
+
 
   - figure out why fstab is not loading up the pool/swap [install]
+
+
+
+
 
   ?
   ?
@@ -316,7 +334,7 @@ needs:
   review install function
   further updates per f/s and schema added
 
-  network adapter mapping
+  network adapter mapping (yaml...?)
 
 
 CONCEPT:
@@ -327,3 +345,21 @@ CONCEPT:
     requirement - decent machine which can host a DOM-0 VM. 
     SIZE ... needs to be at least 8TB
 
+
+#
+##  INSTALLER NOTES
+#
+#   requires:
+#
+#     off-premises kernel repository (~1TB+)
+#     off-premises user repository (NAS,remote mount,NFSv4?)
+#     off-premises standardized-root directory 
+#     off-premises patchfiles (<100MB)
+#     off-premises binpkgs--backup
+#     generator for gentoo git repos  
+#
+#     g2deploy repository
+#
+#       linkage script, that pulls in repos
+#       
+#       create baseline snapshot, replaced monthly; periodic backups must be done on File Servers.
