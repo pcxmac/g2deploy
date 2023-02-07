@@ -23,7 +23,7 @@
   - skipping modules missing program (networking)
   - adsl/pppoe
   - br2684ctl
-  - atmsigd/clip
+  - atmsigd/clipe
   - netplugd
   - ifplugd
   - ipppd
@@ -62,6 +62,8 @@
   x
 
   x
+
+  - umount is trying to mount non-existant mounts.
 
   - should i move to git type sync ? look in to glsa/news/manifests/signing more, need comprehensive list of requirements for git -> rsync conversion.
 
