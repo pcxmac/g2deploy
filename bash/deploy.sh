@@ -7,14 +7,14 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 	export PYTHONPATH=""
 
-	export -f users
-	export -f locales
-	export -f services
-	export -f system
+	export -f deployUsers
+	export -f deployLocales
+	export -f deployServices
+	export -f deploySystem
+	export -f deployServices
 
 #	export -f patchProcessor
 	export -f getG2Profile
-	export -f services
 
 	dataset=""				#	the working dataset of the installation
 	directory=""			# 	the working directory of the prescribed dataset
@@ -58,15 +58,14 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 	clear_mounts "${directory}"
 
-	buildup "${_profile}" "${directory}" "${dataset}" "${_selection}"
+	deployBuildup "${_profile}" "${directory}" "${dataset}" "${_selection}"
 	mounts "${directory}"
 
 	patchFiles_user "${directory}" "${_profile}"
 	patchFiles_portage "${directory}" "${_profile}"
+	patchFiles_sys "${directory}" "${_profile}"
 
 	ls ${directory}/usr/lib64/* -ail
-
-	sleep 100
 
 	zfs_keys "${dataset}"
 
@@ -75,13 +74,11 @@ source ${SCRIPT_DIR}/bash/include.sh
 	patchSystem "${_profile}" 'deploy' > "${directory}/patches.sh"
 	patchSystem "${_profile}" 'services' > "${directory}/services.sh"
 
-	chroot "${directory}" /bin/bash -c "locales ${_profile}"
- 	chroot "${directory}" /bin/bash -c "system"
+	chroot "${directory}" /bin/bash -c "deployLocales ${_profile}"
+ 	chroot "${directory}" /bin/bash -c "deploySystem"
 
-	patchFiles_sys "${directory}" "${_profile}"
-
-	chroot "${directory}" /bin/bash -c "users ${_profile}"
-	chroot "${directory}" /bin/bash -c "services"
+	chroot "${directory}" /bin/bash -c "deployUsers ${_profile}"
+	chroot "${directory}" /bin/bash -c "deployServices"
 
 	#services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/package" http)/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
 	#echo "services URL = ${services_URL}"
