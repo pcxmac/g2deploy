@@ -1,3 +1,5 @@
+#need a script that checks servers and distfile/++ opportunities
+
 file:///var/lib/portage/distfiles
 #rsync://pkg.hypokrites.me/gentoo-distfiles/
 rsync://mirror.leaseweb.com/gentoo/distfiles
@@ -9,7 +11,7 @@ rsync://mirror.rackspace.com/gentoo/distfiles
 
 #rsync://rsync.jp.gentoo.org/gentoo/distfiles
 #rsync://rsync.kr.gentoo.org/gentoo/distfiles
-rsync://rsync.ca.gentoo.org/gentoo/distfiles
-#rsync://rsync.us.gentoo.org/gentoo/distfiles	-- invalid
+#rsync://rsync.ca.gentoo.org/gentoo/distfiles -- timeout on gentoo module
+#rsync://rsync.us.gentoo.org/gentoo/distfiles -- ?
 
 rsync://mirror.csclub.uwaterloo.ca/gentoo-distfiles/distfiles
