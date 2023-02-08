@@ -73,13 +73,13 @@ hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | head -n 1 | /usr/bin/awk '{prin
 hostip="$(/bin/ip --brief address show dev ${hostip} | /usr/bin/awk '{print $3}')"
 
 printf "############################### [ META ] ########################################\n"
-mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/"
+mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/meta"
 printf "############################### [ PROFILES ] ####################################\n"
-mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/profiles/"   "${SCRIPT_DIR}/" 
+mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/profiles/"   "${SCRIPT_DIR}/profiles" 
 printf "############################### [ PACKAGES ] ####################################\n"
-mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/packages/"   "${SCRIPT_DIR}/" 
+mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/packages/"   "${SCRIPT_DIR}/packages" 
 printf "############################### [ PATCHFILES ] ##################################\n"
-mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/patchfiles/" "${SCRIPT_DIR}/"
+mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/patchfiles/" "${SCRIPT_DIR}/patchfiles"
 
 owner="$(stat -c '%U' "${pkgROOT}")"
 group="$(stat -c '%G' "${pkgROOT}")"
