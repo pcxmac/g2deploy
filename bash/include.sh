@@ -57,9 +57,6 @@ function deployBuildup()
 	fileasc="$(echo "${files}" | grep '.asc$')"
 	serverType="${filexz%//*}"
 
-	echo $files	$filexz $fileasc
-
-
 	case ${serverType%//*} in
 		"file:/")
 			mget "${filexz#*//}" "${offset}/"
@@ -226,6 +223,13 @@ function patchFiles_portage()
 			sed -i "/$PREFIX/c $line" "${offset}/etc/portage/make.conf"
 		fi
 	done < <(curl "${spec_URI}.conf" --silent)
+
+	cat ${offset}/etc/portage/package.mask
+	exit
+
+
+
+
 }
 
 function patchFiles_user() 

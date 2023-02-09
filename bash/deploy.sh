@@ -56,14 +56,16 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 	if [[ -z "${_profile}" ]];then echo "profile does not exist for ${_selection}"; exit; fi
 
+	# need a URL check before proceeding, ie websever check, rsync server check, ftp, etc...
+
 	clear_mounts "${directory}"
 
 	deployBuildup "${_profile}" "${directory}" "${dataset}" "${_selection}"
 	mounts "${directory}"
 
 	patchFiles_user "${directory}" "${_profile}"
-	patchFiles_portage "${directory}" "${_profile}"
 	patchFiles_sys "${directory}" "${_profile}"
+	patchFiles_portage "${directory}" "${_profile}"
 
 	zfs_keys "${dataset}"
 
