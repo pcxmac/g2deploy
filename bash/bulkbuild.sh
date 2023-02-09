@@ -13,7 +13,7 @@ do
 	if [[ -n ${work} ]]
 	then
 		clear_mounts $work
-	
+
 		zfs destroy $dset -r
 		zfs create $dset
 
