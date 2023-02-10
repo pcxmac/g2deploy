@@ -2,5 +2,8 @@
 
 #echo "no common patches";
 
-emerge x11-drivers/xf86-video-qxl
+#emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
+#emerge ${emergeOpts} x11-drivers/xf86-video-qxl
+
+#emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n

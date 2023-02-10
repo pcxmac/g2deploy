@@ -224,12 +224,6 @@ function patchFiles_portage()
 		fi
 	done < <(curl "${spec_URI}.conf" --silent)
 
-	cat ${offset}/etc/portage/package.mask
-	exit
-
-
-
-
 }
 
 function patchFiles_user() 
