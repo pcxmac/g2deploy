@@ -23,6 +23,9 @@ destination="${2:?}"
 #	
 #	
 
+	# verify route to pkgserver & zfs exports
+	checkHosts
+
 	kver="$(getKVER)"
 	kver="${kver#*linux-}"
 

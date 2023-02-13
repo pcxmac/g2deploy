@@ -47,6 +47,8 @@ export -f update_runtime
 
 directory="/"
 
+checkHosts
+
 # target user space. 
 for x in "$@"
 do

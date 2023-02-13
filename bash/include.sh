@@ -38,7 +38,7 @@ function checkHosts()
 		_port="${_serve#*::}"
 		_serve="${_serve%::*}"
 		_result="$(isHostUp ${_serve} ${_port})"
-		printf "%10s - %10s : %s  \t\t ${colY} %5s ${colY}\n" "${i}" "${_serve}" "${_port}" "[" "${_result}" "]"
+		printf "%10s - %10s : %s  \t\t ${colB} %5s ${colB}\n" "${i}" "${_serve}" "${_port}" "[" "${_result}" "]"
 		_result="$(printf '%s\n' "${_result}" | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
 
 		[[ ${_result} == "INVALID" ]] && { exit; } 
