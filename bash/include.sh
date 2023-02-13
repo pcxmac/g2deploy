@@ -3,8 +3,47 @@
 SCRIPT_DIR="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 SCRIPT_DIR="${SCRIPT_DIR%/*}"
 
+# Normal
+colN="\e[1;30m%s\e[m"	
+# Red
+colR="\e[1;31m%s\e[m"	
+# Green
+colG="\e[1;32m%s\e[m"
+# Yellow
+colY="\e[1;33m%s\e[m"
+# Blue
+colB="\e[1;34m%s\e[m"
+# Pink
+colP="\e[1;35m%s\e[m"
+# Teal
+colT="\e[1;36m%s\e[m"
+# White
+colW="\e[1;37m%s\e[m"
+
 source ${SCRIPT_DIR}/bash/mget.sh
 source ${SCRIPT_DIR}/bash/yaml.sh
+
+function checkHosts()
+{
+	local _s="http ftp rsync ssh"
+	local _result
+	local _serve
+	local _port
+	local _config="${SCRIPT_DIR}/config/host.cfg"
+
+	printf '%s\n' "checking hosts: ${_s}"
+	for i in $(printf '%s\n' ${_s})
+	do
+		_serve="$(findKeyValue ../config/host.cfg "server:pkgserver/${i}")"
+		_port="${_serve#*::}"
+		_serve="${_serve%::*}"
+		_result="$(isHostUp ${_serve} ${_port})"
+		printf "%10s - %10s : %s  \t\t ${colY} %5s ${colY}\n" "${i}" "${_serve}" "${_port}" "[" "${_result}" "]"
+		_result="$(printf '%s\n' "${_result}" | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
+
+		[[ ${_result} == "INVALID" ]] && { exit; } 
+	done
+}
 
 function getHostName()
 {
@@ -20,7 +59,7 @@ function isHostUp()
 	local port=${2}
 	# netcat
 	local result="$(nc -z -v ${host} ${port} 2>&1 | \grep 'succeeded!')"
-	[[ -n ${result} ]] && { printf '%s\n' "$result"; }
+	[[ -n ${result} ]] && { printf "${colG}\n" "OK"; } || { printf "${colR}\n" "INVALID"; }
 }
 
 function deployUsers()
@@ -144,7 +183,6 @@ function deployLocales()
 
 	eselect profile set default/linux/amd64/${key%/openrc}
 	eselect profile show
-	sleep 2
 
     echo "reading the news (null)..."
 	eselect news read all > /dev/null
@@ -196,7 +234,7 @@ function patchFiles_portage()
 	if [[ -d ${offset}/etc/portage/package.use ]];then rm "${offset}/etc/portage/package.use" -R; fi
 	if [[ -d ${offset}/etc/portage/package.mask ]];then rm  "${offset}/etc/portage/package.mask" -R;fi
 	if [[ -d ${offset}/etc/portage/package.accept_keywords ]];then rm "${offset}/etc/portage/package.accept_keywords" -R;fi
-	
+
 	echo -e "$(mget ${common_URI}.uses)\n$(mget ${spec_URI}.uses)" | uniq > ${offset}/etc/portage/package.use
 	echo -e "$(mget ${common_URI}.keys)\n$(mget ${spec_URI}.keys)" | uniq > ${offset}/etc/portage/package.accept_keywords
 	echo -e "$(mget ${common_URI}.mask)\n$(mget ${spec_URI}.mask)" | uniq > ${offset}/etc/portage/package.mask

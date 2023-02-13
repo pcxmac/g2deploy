@@ -62,7 +62,7 @@ function yamlValue()
 {
 	local stdYAML
 	stdYAML="${1:?}"
-	printf '%s\n' "${stdYAML}" | sed 's/ //g; s/^-//; s/[^:]*://g';
+	printf '%s\n' "${stdYAML#*:}" | sed 's/ //g; s/^-//'; #s/[^:]*:/';
 }
 
 # return the number of elements in a yaml path, ie [ root/partition/directory/leaf ]
@@ -159,7 +159,7 @@ function findKeyValue()
 	_yaml="$(yamlStd ${_yaml})"
 	# strings, about which path is articulated
 	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
-	local next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
+	local _next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
 
 	IFS=''
 	# pWave constructor
@@ -178,10 +178,10 @@ function findKeyValue()
 		# DETERMINANAT
 		[[ $((tabLength)) == $((cp)) ]] && {
 		 	match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((tabLength*2))}$(printf '%s\n' "${cv}").*$")";
-			next="$(yamlOrder ${_path} $((cp+1)))";
+			_next="$(yamlOrder ${_path} $((cp+1)))";
 	 	} || { 
 			match="";
-			next="trivial";
+			_next="trivial";
 		}
 
 		[[ -n ${match} ]] && 
@@ -192,7 +192,7 @@ function findKeyValue()
 		}
 
 		 # EXECUTOR
-		[[ -n "${match}" && -z ${next} ]] && { 
+		[[ -n "${match}" && -z ${_next} ]] && { 
 			printf '%s\n' "$(yamlValue $line)"
 		}
 

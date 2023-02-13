@@ -19,7 +19,10 @@ source ${SCRIPT_DIR}/bash/include.sh
 	dataset=""				#	the working dataset of the installation
 	directory=""			# 	the working directory of the prescribed dataset
 	selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
-		
+
+	# verify URL's are accessible, exit out if not.
+	checkHosts
+
     for x in "$@"
     do
         case "${x}" in

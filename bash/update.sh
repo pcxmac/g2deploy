@@ -91,10 +91,13 @@ do
 			rootDS="$(df / | tail -n 1 | awk '{print $1}')"
 			target="$(getZFSMountPoint "${rootDS}")"
 
+
 			patchFiles_portage "${directory}" "${_profile}"
 
 			pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
 			patchSystem "${_profile}" 'update' > "${directory}/patches.sh"
+
+
 
 			if [[ ${directory} == "/" ]]
 			then
@@ -105,7 +108,7 @@ do
 				chroot "${directory}" /bin/bash -c "update_runtime"
 				clear_mounts "${directory}"
 			fi
-			patchFiles_sys "${directory}" "${_profile}"
+./			patchFiles_sys "${directory}" "${_profile}"
 	;;
 	esac
 done
