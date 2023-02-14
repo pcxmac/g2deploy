@@ -31,7 +31,7 @@ function checkHosts()
 	local _port
 	local _config="${SCRIPT_DIR}/config/host.cfg"
 
-	printf '%s\n' "checking hosts: ${_s}"
+	printf '%s\n' "checking hosts:"
 	for i in $(printf '%s\n' ${_s})
 	do
 		_serve="$(findKeyValue ../config/host.cfg "server:pkgserver/${i}")"
