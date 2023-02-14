@@ -7,6 +7,7 @@ function yamlPad()
 	printf '%s\n' "$(printf "%*s%s" ${_length})"
 }
 
+# get pad length for yaml formatted string...
 function yamlPadL()
 {
 	local _key_value=${1:?}
@@ -70,8 +71,6 @@ function yamlValue()
 function yamlPathL()
 {
 	local _string="${1:?}"
-
-#	_string="$(yamlStd ${_string})"
 
     local count=0
     while [ ${_string} != ${_string#*/} ]
