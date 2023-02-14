@@ -209,26 +209,6 @@ function findKeyValue()
 #
 function insertKeyValue()
 {
-	printf 'yo';
-
-}
-
-# remove target branch, and it's children
-#	1	if match, silence output
-#	2	if cursor < match column, begin output again
-#
-function removeKeyValue()
-{
-	printf 'yo';
-
-}
-
-# finds a [KEY:VALUE] pair in a yaml object, modifies it's [VALUE], and dumps the YAML OBJECT
-# modify path = 'root/prefix/KEYVALUE:OLDVALUE:NEWVALUE'
-#	1	if match, print modified value
-#	2	print if no match
-function modifyKeyValue()
-{
 	# cursor position
 	local cp=0
 	# actual number of tabs between key-value and left-most
@@ -241,7 +221,7 @@ function modifyKeyValue()
 	_yaml="$(yamlStd ${_yaml})"
 	# strings, about which path is articulated
 	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
-	local next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
+	local _next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
 
 	IFS=''
 	# pWave constructor
@@ -260,10 +240,10 @@ function modifyKeyValue()
 		# DETERMINANAT
 		[[ $((tabLength)) == $((cp)) ]] && {
 		 	match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((tabLength*2))}$(printf '%s\n' "${cv}").*$")";
-			next="$(yamlOrder ${_path} $((cp+1)))"
+			_next="$(yamlOrder ${_path} $((cp+1)))";
 	 	} || { 
 			match="";
-			next="trivial"
+			_next="trivial";
 		}
 
 		[[ -n ${match} ]] && 
@@ -273,15 +253,123 @@ function modifyKeyValue()
 			cv="$(yamlOrder ${_path} ${cp})";
 		}
 
+		 # EXECUTOR
+		[[ -n "${match}" && -z ${_next} ]] && { 
+			printf '%s\n' "$(yamlValue $line)"
+		}
+
+	done < <(printf '%s\n' "${_yaml}")
+}
+
+# remove target branch, and it's children
+#	1	if match, silence output
+#	2	if cursor < match column, begin output again
+#
+function removeKeyValue()
+{
+	# cursor position
+	local cp=0
+	# actual number of tabs between key-value and left-most
+	local tabLength
+	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
+	local _path="${2:?}"
+	# path length, to determine target leaf/node
+	local pLength="$(yamlPathL $_path)"
+	#standardize input
+	_yaml="$(yamlStd ${_yaml})"
+	# strings, about which path is articulated
+	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
+	local _next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
+
+	IFS=''
+	# pWave constructor
+	while read -r line
+	do
+		# GENERATOR
+		tabLength="$(( $(yamlPadL ${line})/2 ))"
+
+		# if moving outside the scope of the current cursor
+		[[ $((tabLength)) < $((cp)) ]] && 
+		{
+			cp="$((tabLength))";
+			cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
+		}
+
+		# DETERMINANAT
+		[[ $((tabLength)) == $((cp)) ]] && {
+		 	match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((tabLength*2))}$(printf '%s\n' "${cv}").*$")";
+			_next="$(yamlOrder ${_path} $((cp+1)))";
+	 	} || { 
+			match="";
+			_next="trivial";
+		}
+
+		[[ -n ${match} ]] && 
+		{ 
+			[[ $((cp)) < $((pLength)) ]] && { ((cp++)); }
+			# cv only changes on a match
+			cv="$(yamlOrder ${_path} ${cp})";
+		}
+
+		 # EXECUTOR
+		[[ -n "${match}" && -z ${_next} ]] && { 
+			printf '%s\n' "$(yamlValue $line)"
+		}
+
+	done < <(printf '%s\n' "${_yaml}")
+}
+
+# finds a [KEY:VALUE] pair in a yaml object, modifies it's [VALUE], and dumps the YAML OBJECT
+# modify path = 'root/prefix/KEYVALUE:OLDVALUE:NEWVALUE'
+#	1	if match, print modified value
+#	2	print if no match
+function modifyKeyValue()
+{
+	local cp=0
+	local tabLength
+	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
+	local _path="${2:?}"
+	local _value="${3:?}"
+	local pLength="$(yamlPathL $_path)"
+	_yaml="$(yamlStd ${_yaml})"
+	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
+	local next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
+	local _key
+
+	IFS=''
+	# pWave constructor
+	while read -r line
+	do
+		# GENERATOR
+		tabLength="$(( $(yamlPadL ${line})/2 ))"
+		[[ $((tabLength)) < $((cp)) ]] && 
+		{
+			cp="$((tabLength))";
+			cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
+		}
+
+		# DETERMINANAT
+		[[ $((tabLength)) == $((cp)) ]] && {
+		 	match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((tabLength*2))}$(printf '%s\n' "${cv}").*$")";
+			next="$(yamlOrder ${_path} $((cp+1)))"
+	 	} || { 
+			match="";
+			next="trivial"
+		}
+		[[ -n ${match} ]] && 
+		{ 
+			[[ $((cp)) < $((pLength)) ]] && { ((cp++)); }
+			cv="$(yamlOrder ${_path} ${cp})";
+		}
+
 		#  # EXECUTOR
-		# [[ -n "${match}" && -z ${next} ]] && {
-		# 	# PRINT MODIFIED KEY_VALUE
-		# 	modLine="$(yamlPad $((padLength)))$(printf '%s:%s\n' "${key}" "${value} | sed 's/ //g')";
-		# 	printf '%s\n' "$(yamlValue $line)";
-		# } || {
-		# 	# PRINT UNMODIFIED KEY_VALUE
-		# 	printf '%s\n' "$(yamlValue $line)";
-		# }
+		[[ -n "${match}" && -z ${next} ]] && {
+			_key=${cv%%:*}
+		 	modLine="$(yamlPad $((tabLength*2)))$(printf '%s:%s\n' "${_key}" "${_value}" | sed 's/ //g')";
+			printf '%s\n' "${modLine}";
+		} || {
+			printf '%s\n' "${line}";
+		}
 
 	done < <(printf '%s\n' "${_yaml}")
 }
