@@ -230,7 +230,7 @@ function insertKeyValue()
 		# GENERATOR
 		tabLength="$(( $(yamlPadL ${line})/2 ))"
 
-		# if moving outside the scope of the current cursor
+		# if moving outside the scope of the current cursor (<=)
 		[[ $((tabLength)) < $((cp)) ]] && 
 		{
 			cp="$((tabLength))";
@@ -267,19 +267,16 @@ function insertKeyValue()
 #
 function removeKeyValue()
 {
-	# cursor position
 	local cp=0
-	# actual number of tabs between key-value and left-most
 	local tabLength
 	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
 	local _path="${2:?}"
-	# path length, to determine target leaf/node
 	local pLength="$(yamlPathL $_path)"
-	#standardize input
 	_yaml="$(yamlStd ${_yaml})"
-	# strings, about which path is articulated
 	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
-	local _next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
+	local next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
+	local _col=${pLength}
+	local _omit='false'
 
 	IFS=''
 	# pWave constructor
@@ -287,33 +284,35 @@ function removeKeyValue()
 	do
 		# GENERATOR
 		tabLength="$(( $(yamlPadL ${line})/2 ))"
-
-		# if moving outside the scope of the current cursor
 		[[ $((tabLength)) < $((cp)) ]] && 
 		{
 			cp="$((tabLength))";
 			cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
+
 		}
 
 		# DETERMINANAT
 		[[ $((tabLength)) == $((cp)) ]] && {
 		 	match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((tabLength*2))}$(printf '%s\n' "${cv}").*$")";
-			_next="$(yamlOrder ${_path} $((cp+1)))";
+			next="$(yamlOrder ${_path} $((cp+1)))"
 	 	} || { 
 			match="";
-			_next="trivial";
+			next="trivial"
 		}
-
 		[[ -n ${match} ]] && 
 		{ 
 			[[ $((cp)) < $((pLength)) ]] && { ((cp++)); }
-			# cv only changes on a match
 			cv="$(yamlOrder ${_path} ${cp})";
 		}
 
-		 # EXECUTOR
-		[[ -n "${match}" && -z ${_next} ]] && { 
-			printf '%s\n' "$(yamlValue $line)"
+		#  # EXECUTOR
+		[[ ${_omit} == 'true' && ${cp} == ${tabLength} ]] && { _omit='false'; }
+
+		[[ -n "${match}" && -z ${next} ]] && {
+			_col=${cp}
+			_omit='true'
+		} || {
+			[[ ${_omit} == 'false' ]] && { printf '[%s]:%s\n' "${cp}" "${line}"; }
 		}
 
 	done < <(printf '%s\n' "${_yaml}")
