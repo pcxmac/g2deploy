@@ -34,7 +34,7 @@ function checkHosts()
 	printf '%s\n' "checking hosts:"
 	for i in $(printf '%s\n' ${_s})
 	do
-		_serve="$(findKeyValue ../config/host.cfg "server:pkgserver/${i}")"
+		_serve="$(findKeyValue ${_config} "server:pkgserver/${i}")"
 		_port="${_serve#*::}"
 		_serve="${_serve%::*}"
 		_result="$(isHostUp ${_serve} ${_port})"
