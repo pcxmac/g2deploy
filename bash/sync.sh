@@ -26,6 +26,8 @@ pkgHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/host")
 pkgROOT="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/root")"
 pkgCONF="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/config")"
 
+checkHosts
+
 # initial condition calls for emerge-webrsync
 syncURI="$(cat ${pkgCONF} | grep "^sync-uri")"
 #syncLocation="$(cat ${pkgCONF} | grep "^location")"

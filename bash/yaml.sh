@@ -126,16 +126,6 @@ function yamlOrder()
 		#echo "$i $_prune :: $_remainder"
 		_prune="${_remainder%%/*}"
 		_remainder="${_remainder#*/}"
-
-		# no way to delimit nested lists, need to think about the syntax rules surrounding multiple lists, no values, etc...
-		#[[ $_prune == "-" ]] && { 
-		#	_remainder="${_remainder}"
-		#	_prune="${_prune}/${_remainder}"
-		#	_remainder="${_remainder#*:*/}"
-		#	_prune="${_prune%%/$_remainder}"
-		#}
-		#printf '%s | %s \n' "$_prune" "$_remainder"
-
 	done
 	# returns sought after key/value + remaining search pattern
 	#printf '%s | %s\n' "${_prune}" "${_remainder}" | sed 's:/*$::';  
@@ -205,23 +195,21 @@ function findKeyValue()
 # MODIFY KEY VALUE
 
 # adds a new node, match = prefix ;; path = 'root/branch/prefix:SPECIFIC/NEWKEY:NEWVALUE' ... ergo, prefix typically should have an associated value.
-#	
-#
+# path should be checked prior to insertion ... IE, user needs to check for existing node, insert is not responsible for adding another like node.
+# inserts right after parent identified. (see above)
 function insertKeyValue()
 {
-	# cursor position
 	local cp=0
-	# actual number of tabs between key-value and left-most
 	local tabLength
 	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
 	local _path="${2:?}"
-	# path length, to determine target leaf/node
+	local _newKV="${3:?}"
 	local pLength="$(yamlPathL $_path)"
-	#standardize input
 	_yaml="$(yamlStd ${_yaml})"
-	# strings, about which path is articulated
 	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
-	local _next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
+	local next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
+	local _col=${pLength}
+	local _comit='false'
 
 	IFS=''
 	# pWave constructor
@@ -229,8 +217,6 @@ function insertKeyValue()
 	do
 		# GENERATOR
 		tabLength="$(( $(yamlPadL ${line})/2 ))"
-
-		# if moving outside the scope of the current cursor (<=)
 		[[ $((tabLength)) < $((cp)) ]] && 
 		{
 			cp="$((tabLength))";
@@ -240,22 +226,31 @@ function insertKeyValue()
 		# DETERMINANAT
 		[[ $((tabLength)) == $((cp)) ]] && {
 		 	match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((tabLength*2))}$(printf '%s\n' "${cv}").*$")";
-			_next="$(yamlOrder ${_path} $((cp+1)))";
+			next="$(yamlOrder ${_path} $((cp+1)))"
 	 	} || { 
 			match="";
-			_next="trivial";
+			next="trivial";
 		}
-
 		[[ -n ${match} ]] && 
 		{ 
 			[[ $((cp)) < $((pLength)) ]] && { ((cp++)); }
-			# cv only changes on a match
 			cv="$(yamlOrder ${_path} ${cp})";
 		}
 
-		 # EXECUTOR
-		[[ -n "${match}" && -z ${_next} ]] && { 
-			printf '%s\n' "$(yamlValue $line)"
+		#  # EXECUTOR
+		[[ -n "${match}" && -z ${next} ]] && {
+			_col=${cp};
+			_comit='true';
+		} || {
+			printf '%s\n' "${line}";
+		}
+
+		[[ ${_comit} == 'true' ]] && {
+			modLine="${line}";
+			printf '%s\n' "${modLine}";
+			modLine="$(yamlPad $((tabLength*2+2)))$(printf '%s\n' "${_newKV}" | sed 's/ //g')";
+			printf '%s\n' "${modLine}";
+			_comit='false'
 		}
 
 	done < <(printf '%s\n' "${_yaml}")
@@ -288,7 +283,6 @@ function removeKeyValue()
 		{
 			cp="$((tabLength))";
 			cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
-
 		}
 
 		# DETERMINANAT
@@ -297,22 +291,21 @@ function removeKeyValue()
 			next="$(yamlOrder ${_path} $((cp+1)))"
 	 	} || { 
 			match="";
-			next="trivial"
+			next="trivial";
 		}
 		[[ -n ${match} ]] && 
 		{ 
 			[[ $((cp)) < $((pLength)) ]] && { ((cp++)); }
 			cv="$(yamlOrder ${_path} ${cp})";
 		}
-
-		#  # EXECUTOR
 		[[ ${_omit} == 'true' && ${cp} == ${tabLength} ]] && { _omit='false'; }
 
+		#  # EXECUTOR
 		[[ -n "${match}" && -z ${next} ]] && {
-			_col=${cp}
-			_omit='true'
+			_col=${cp};
+			_omit='true';
 		} || {
-			[[ ${_omit} == 'false' ]] && { printf '[%s]:%s\n' "${cp}" "${line}"; }
+			[[ ${_omit} == 'false' ]] && { printf '%s\n' "${line}"; }
 		}
 
 	done < <(printf '%s\n' "${_yaml}")
@@ -350,10 +343,10 @@ function modifyKeyValue()
 		# DETERMINANAT
 		[[ $((tabLength)) == $((cp)) ]] && {
 		 	match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((tabLength*2))}$(printf '%s\n' "${cv}").*$")";
-			next="$(yamlOrder ${_path} $((cp+1)))"
+			next="$(yamlOrder ${_path} $((cp+1)))";
 	 	} || { 
 			match="";
-			next="trivial"
+			next="trivial";
 		}
 		[[ -n ${match} ]] && 
 		{ 
