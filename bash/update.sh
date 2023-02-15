@@ -6,13 +6,12 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
-function update_runtime() {
-
+function update_runtime()
+{
 	echo "UPDATE::RUNTIME_UPDATE !"
 	exclude_atoms="-X sys-fs/zfs-kmod -X sys-fs/zfs"
 	eselect profile show
 	sudo emerge --sync --verbose --backtrack=99 --ask=n;sudo eix-update
-	
 
 	if [[ -f /patches.sh ]]
 	then

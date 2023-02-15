@@ -1,8 +1,7 @@
 goals : 
 
-  yaml mod/drop/ins
   finish install script, modify yaml (disks) at appropriate point
-  fix update so that I can update local system and modify boot to current. 
+  fix update so that I can update local system and modify boot to current. Also make sure it uses proxy, not wan
 
 
 
