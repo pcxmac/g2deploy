@@ -3,7 +3,10 @@ goals :
   finish install script, modify yaml (disks) at appropriate point
   fix update so that I can update local system and modify boot to current. Also make sure it uses proxy, not wan
 
-
+  create test-maps for functions, basis functions have -t for basis checking other functions (higher up the stack)
+  maps are json, ie { 3, "this/is/a/path", "this/is/output" }, json maps can be stored in xml, alongside the include file.
+  xml-map files will utilize 'jq' + xml query tools for commandline.
+  https://stackoverflow.com/questions/1955505/parsing-json-with-unix-tools
 
 
 

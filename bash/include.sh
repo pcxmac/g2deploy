@@ -23,6 +23,34 @@ colW="\e[1;37m%s\e[m"
 source ${SCRIPT_DIR}/bash/mget.sh
 source ${SCRIPT_DIR}/bash/yaml.sh
 
+function build_kernel()
+{
+	# needs to be reflown for multivariate kernel versions
+	#
+	#	gentoo-kernel, gentoo-kernel-bin, gentoo-sources, git-sources, vanilla*, mips* ,....
+	#	host.cfg must define march.
+
+	#pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
+	#av="$(pquery sys-apps/portage --max 2>/dev/null)"
+
+	#cv="$(eselect kernel show | tail -n 1)"
+	#cv="${cv#*linux-}"
+	#cv="${cv%-gentoo*}"
+	cv="$(uname --kernel-release)"
+	cv="${cv%-gentoo*}"
+
+	lv="$(qlist -Iv | \grep 'sys-kernel/gentoo-sources' | head -n 1)"
+	lv="${lv#*sources-}"
+
+	mv="$(printf '%s\n' "${cv}\n${lv}")"
+	mv="$(printf "$mv" | uniq)"
+
+	current="$(printf "$mv" | wc -l)"
+
+	[[ ${current} == "1" ]] 
+
+}
+
 function checkHosts()
 {
 	local _s="http ftp rsync ssh"
@@ -34,12 +62,14 @@ function checkHosts()
 	printf "checking hosts: (%s)\n" "${_config}"
 	for i in $(printf '%s\n' ${_s})
 	do
-		_serve="$(findKeyValue ${_config} "server:pkgserver/${i}")"
+		_serve="$(findKeyValue ${_config} "server:pkgserver/repo/${i}")"
 		_port="${_serve#*::}"
 		_serve="${_serve%::*}"
 		_result="$(isHostUp ${_serve} ${_port})"
-		printf "%10s - %10s : %s  \t\t ${colB} %5s ${colB}\n" "${i}" "${_serve}" "${_port}" "[" "${_result}" "]"
-		_result="$(printf '%s\n' "${_result}" | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
+		_retval="$(printf "${colB} %s ${colB}" '[' "${_result}" ']')"
+		printf "\t %-30s : %5s %s \n" "server:pkgserver/repo/${i}" "${_port}" "$_retval" 
+		# 										filter for color
+		_result="$(printf '%s\n'\t\t"${_result}" | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
 
 		[[ ${_result} == "INVALID" ]] && { exit; } 
 	done
@@ -407,7 +437,6 @@ function pkgProcessor()
 	diffPkgs="$(awk 'FNR==NR {a[$0]++; next} !($0 in a)' <(echo "${iBase}") <(echo "${allPkgs}"))"
 	echo "${diffPkgs}" | sed '/^#/d' | sed '/^$/d'
 }
-
 
 function install_modules()
 {

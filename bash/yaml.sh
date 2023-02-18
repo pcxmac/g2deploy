@@ -82,6 +82,7 @@ function yamlPathL()
 }
 
 # [cursor] : [remainder] : [current path]
+
 function yamlPath() 
 {
 	# last slash added to ensure conditional statement inside for loop terminates when last two keys are the same, ie. ../disk/disk

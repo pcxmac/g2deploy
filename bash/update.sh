@@ -11,7 +11,7 @@ function update_runtime()
 	echo "UPDATE::RUNTIME_UPDATE !"
 	exclude_atoms="-X sys-fs/zfs-kmod -X sys-fs/zfs"
 	eselect profile show
-	sudo emerge --sync --verbose --backtrack=99 --ask=n;sudo eix-update
+	PORTAGE_RSYNC_EXTRA_OPTS="--stats" sudo emerge --sync --verbose --backtrack=99 --ask=n;sudo eix-update
 
 	if [[ -f /patches.sh ]]
 	then
@@ -89,6 +89,8 @@ do
 		update)
 			echo "patch_portage ${directory} ${_profile} "
 
+			sleep 10
+
 			rootDS="$(df / | tail -n 1 | awk '{print $1}')"
 			target="$(getZFSMountPoint "${rootDS}")"
 
@@ -114,6 +116,8 @@ do
 	esac
 done
 
+echo "#############################"
+
 for x in "$@"
 do
 	case "${x}" in
@@ -125,8 +129,9 @@ do
 				echo "update boot ! @ ${efi_part} @ ${dataset} :: ${directory} >> + $(getKVER)"
 				echo "mount ${efi_part} ${directory}/boot"
 				mount "${efi_part}" "${directory}/boot"
-				echo "....."
+				echo "edit boot -- ${kversion}" "${dataset}" "${directory}"
 				editboot "${kversion}" "${dataset}" "${directory}"
+				echo "install modules -- ${directory}"
 				install_modules "${directory}"
 				umount "${directory}/boot"
 			else
