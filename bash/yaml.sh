@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# return a pad, given the argument's value (white space)
+# return a pad, given the argument's value (white space) ... probably needs to be superseeded with printf %##s
 function yamlPad()
 {
 	local _length=${1:?}
@@ -23,8 +23,11 @@ function yamlStd()
 	local _yaml
 
 	# option to use string or file
-	[[ -p /dev/stdin ]] && { _yaml="$(cat -)"; } || { _yaml="${1:?}"; }
+	[[ -p /dev/stdin ]] && { _yaml="$(cat -)"; ordo="stdin"; } || { _yaml="${1:?}"; ordo="parametric"; }
 	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
+
+	echo "$_yaml" > ./output.txt
+	echo "$ordo" >> ./output.txt
 
 	# filtration
 	_yaml="$(printf "${_yaml}" | sed 's/#.*$//')";											# clear out comments
@@ -45,6 +48,8 @@ function yamlStd()
 		[[ -n ${tabLength} ]] && { break; } 
 	done < <(printf '%s\n' "${_yaml}" | \grep -iP '^\s.*[a-z]')
 	IFS="${_tmp}"
+
+	#tabLength=2
 
 	# rebuild yaml with 2x tabs
 	IFS=''
@@ -147,10 +152,15 @@ function findKeyValue()
 	# path length, to determine target leaf/node
 	local pLength="$(yamlPathL $_path)"
 	#standardize input
-	_yaml="$(yamlStd ${_yaml})"
+	echo "$_yaml" > ./outrun.txt
+
+	_yaml="$(yamlStd "${_yaml}")"
 	# strings, about which path is articulated
 	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
 	local _next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
+
+	echo "$_yaml" > ./out.txt
+	echo "$_path" >> ./out.txt
 
 	IFS=''
 	# pWave constructor

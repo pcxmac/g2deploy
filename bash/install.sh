@@ -7,6 +7,9 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
+# verify route to pkgserver & zfs exports
+
+
 function generateYAML() {
 
 source="${1:?}"
@@ -23,8 +26,7 @@ destination="${2:?}"
 #	
 #	
 
-	# verify route to pkgserver & zfs exports
-	checkHosts
+	
 
 	kver="$(getKVER)"
 	kver="${kver#*linux-}"
@@ -194,11 +196,13 @@ function prepare_disks() {
 	local vYAML="${1:?}"
 
 	# prepare_disks only supports one disk right now, further work to findkeyValue (list properties), and the following code required.
-	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
-	local dpath="$(findKeyValue "${vYAML}" install/disks/path)"
-	local dtype="$(findKeyValue "${vYAML}" install/disks/format)"
-	local dpool="$(findKeyValue "${vYAML}" install/disks/pool)"
-	local boot_partition="$(findKeyValue "${vYAML}" install/boot/partition)"
+	local disk="$(findKeyValue "${vYAML}" 'install/disks/-')"
+	local dpath="$(findKeyValue "${vYAML}" 'install/disks/path')"
+	local dtype="$(findKeyValue "${vYAML}" 'install/disks/format')"
+	local dpool="$(findKeyValue "${vYAML}" 'install/disks/pool')"
+	local boot_partition="$(findKeyValue $vYAML 'install/boot/partition')"
+
+	echo "find key values ???" 2>&1
 
 	install_partition=${disk#*-}
 	disk="$(echo ${install_partition%[0-9]*})"	# only supports one disk at the moment, with no mappable partitioning
@@ -383,12 +387,15 @@ function install_system() {
 		case "${x,,}" in
 			work=*)
 				_source=${x#*=}
+				#checkHosts
 			;;
 			init)
 				selection="init"
+				checkHosts
 			;;
 			add)
 				selection="add"
+				checkHosts
 			;;
 		esac
 	done
@@ -403,8 +410,17 @@ function install_system() {
 				# determine if adding to an existing pool... or not.
 				if [[ "${selection,,}" == "init" ]]
 				then
-					prepare_disks "${vYAML}"
+					echo "prepare disks---------------"
+					#echo "$vYAML"
+					#echo "you saw this !!!!!! ^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+					#sleep 10
+					prepare_disks "$vYAML"
+
+					exit
+
+					echo "install_system"
 					install_system "${vYAML}"
+					echo "setup_boot"
 					setup_boot "${vYAML}"
 					echo "modifying boot record ..."
 					modify_boot "${vYAML}"
@@ -416,7 +432,9 @@ function install_system() {
 					modify_boot "${vYAML}"
 
 					# solve - mv: cannot move '/srv/zfs/test/plasma/boot/LINUX//pkg.hypokrites.me/kernels/current/6.1.1-gentoo/' to '/srv/zfs/test/plasma/boot/LINUX/6.1.1-gentoo': Directory not empty
-
+	#echo "synchronizing disks"
+	#sync
+	#echo "exiting installer script..."
 				fi	
 			;;
 		esac
@@ -428,13 +446,10 @@ function install_system() {
 			config)
 				vYAML="$(generateYAML ${_source} ${_destination})"
 				echo -e "${vYAML}"
-				echo "------------------------------------------"
 				#echo "$(findKeyValue "${vYAML}" install/disks/path)"
 			;;
 		esac
 	done
 
 
-	echo "synchronizing disks"
-	sync
-	echo "exiting installer script..."
+

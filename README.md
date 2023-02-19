@@ -30,7 +30,7 @@
 
   <u>./update.sh</u> <b>work=pool/set update</b><span style="color:green"> (only update runtime)</span>
 
-  <u>./update.sh</u> <b>update</b><span style="color:green"> (update root system)</span>
+  <u>./update.sh</u> <b>work=/ update</b><span style="color:green"> (update root system)</span>
 
 ###
 ##### <u>NEW DISK + LOCAL OR REMOTE SOURCE</u>

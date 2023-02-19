@@ -318,27 +318,39 @@ function patchFiles_sys()
 
 function editboot() 
 {
-
+	# doesn't handle duplicate entries well
 	local VERSION="${1:?}"
 	local DATASET="${2:?}"
 	local offset="${3:?}/boot"
 	local POOL="${DATASET%/*}"
 	local UUID="$(blkid | \grep "LABEL=\"$POOL\"" | awk '{print $3}' | tr -d '"' | uniq)"
-	local line_number=$(\grep -n "ZFS=${DATASET} " "${offset}/EFI/boot/refind.conf" | cut -f1 -d:)
+	local lines=$(\grep -n "ZFS=${DATASET} " "${offset}/EFI/boot/refind.conf" | cut -f1 -d:)
 	local menuL
 	local loadL
 	local initrdL
+	local line_number
+
+	echo "VERSION = $VERSION" 2>&1
+	echo "dataset = $DATASET" 2>&1
+	echo "offset $offset" 2>&1
+	echo "pool = $POOL" 2>&1
+	echo "uuid = $UUID" 2>&1
+	echo " line number = $line_number" 2>&1
 
 	sed -i "/default_selection/c default_selection ${DATASET}" "${offset}/EFI/boot/refind.conf"
 
-	if [[ -n "${line_number}" ]]
+	if [[ -n "${lines}" ]]
 	then
-		menuL="$((line_number-5))"
-		loadL="$((line_number-2))"
-		initrdL="$((line_number-1))"
-		sed -i "${menuL}s|menuentry.*|menuentry \"Gentoo Linux ${VERSION} ${DATASET}\" |" ${offset}/EFI/boot/refind.conf
-		sed -i "${loadL}s|loader.*|loader \\/linux\\/${VERSION}\\/vmlinuz|" ${offset}/EFI/boot/refind.conf
-		sed -i "${initrdL}s|initrd.*|initrd \\/linux\\/${VERSION}\\/initramfs|" ${offset}/EFI/boot/refind.conf
+		line_number="$(printf $lines | head -n 1)"
+		#for line_number in ${lines}
+		#do
+			menuL="$((line_number-5))"
+			loadL="$((line_number-2))"
+			initrdL="$((line_number-1))"
+			sed -i "${menuL}s|menuentry.*|menuentry \"Gentoo Linux ${VERSION} ${DATASET}\" |" ${offset}/EFI/boot/refind.conf
+			sed -i "${loadL}s|loader.*|loader \\/linux\\/${VERSION}\\/vmlinuz|" ${offset}/EFI/boot/refind.conf
+			sed -i "${initrdL}s|initrd.*|initrd \\/linux\\/${VERSION}\\/initramfs|" ${offset}/EFI/boot/refind.conf
+		#done
 	else
 		echo " " >> "${offset}/EFI/boot/refind.conf"
 		echo "menuentry \"Gentoo Linux $VERSION $DATASET\"" >> "${offset}/EFI/boot/refind.conf"
@@ -535,6 +547,13 @@ function getHostZPool ()
 	local pool="$(mount | \grep " / " | awk '{print $1}')"
 	pool="${pool%/*}"
 	echo "${pool}"
+}
+
+function getZFSDataSet ()
+{
+	local mountpt="${1:?}"
+	local dataset="$(zfs get mountpoint "${mountpt}" 2>/dev/null | sed -n 2p | awk '{print $1}')"
+	if [[ -n ${dataset} ]]; then echo "$(echo ${dataset} | sed 's:/*$::')"; fi
 }
 
 function getZFSMountPoint ()

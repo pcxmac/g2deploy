@@ -44,6 +44,7 @@ function update_runtime()
 export PYTHONPATH=""
 export -f update_runtime
 
+dataset="$(getZFSDataSet /)"
 directory="/"
 
 checkHosts
@@ -59,11 +60,11 @@ do
 
 			if [[ ${directory} == "${target}" ]]
 			then
-				echo "cannot update mounted root file system (ZFS) !"
-				echo "**${directory}** ?? **${target}**"
-				exit
+				dataset="$(getZFSDataSet /)"
+				directory="/"
+				echo "updating rootfs @ ${dataset} :: ${directory}"
 			else
-				echo "shazaam!"
+				#echo "shazaam!"
 				dataset="${x#*=}"
 			fi
 		;;
@@ -94,8 +95,8 @@ do
 			rootDS="$(df / | tail -n 1 | awk '{print $1}')"
 			target="$(getZFSMountPoint "${rootDS}")"
 
-
-			patchFiles_portage "${directory}" "${_profile}"
+			# doesn't work well for specific installs
+			#patchFiles_portage "${directory}" "${_profile}"
 
 			pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
 			patchSystem "${_profile}" 'update' > "${directory}/patches.sh"
@@ -111,7 +112,7 @@ do
 				chroot "${directory}" /bin/bash -c "update_runtime"
 				clear_mounts "${directory}"
 			fi
-./			patchFiles_sys "${directory}" "${_profile}"
+			patchFiles_sys "${directory}" "${_profile}"
 	;;
 	esac
 done
