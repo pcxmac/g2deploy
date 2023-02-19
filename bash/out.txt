@@ -1,2 +1,25 @@
-
-Install
+install:test/g2
+  disks:
+    -/dev/sdb3
+    pool:test
+    dataset:g2
+    path:/srv/zfs/test
+    format:zfs
+    compression:lz4
+    encryption:aes-gcm-256
+      key:/srv/crypto/zfs.key
+  source:jupiter/hardened@safe
+    host:
+    pool:jupiter
+    dataset:hardened
+    snapshot:safe
+    format:zfs
+  kernel:6.1.12-gentoo
+  boot:EFI
+    partition:/dev/sdb2
+    loader:refind
+  swap:file
+    location:test/swap
+    format:zfsdataset,noCoW
+  profile:default/linux/amd64/17.1/desktop/gnome
+install/source/host

@@ -200,7 +200,8 @@ function prepare_disks() {
 	local dpath="$(findKeyValue "${vYAML}" 'install/disks/path')"
 	local dtype="$(findKeyValue "${vYAML}" 'install/disks/format')"
 	local dpool="$(findKeyValue "${vYAML}" 'install/disks/pool')"
-	local boot_partition="$(findKeyValue $vYAML 'install/boot/partition')"
+
+	local boot_partition="$(findKeyValue "${vYAML}" 'install/boot/partition')"
 
 	echo "find key values ???" 2>&1
 
@@ -232,6 +233,8 @@ function prepare_disks() {
 	sync
 
 	mkfs.vfat "${boot_partition}" -I
+
+#########################################################
 
 	if [[ ! -d ${dpath} && ${dtype} != "zfs" ]]
 	then 
@@ -410,19 +413,9 @@ function install_system() {
 				# determine if adding to an existing pool... or not.
 				if [[ "${selection,,}" == "init" ]]
 				then
-					echo "prepare disks---------------"
-					#echo "$vYAML"
-					#echo "you saw this !!!!!! ^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-					#sleep 10
 					prepare_disks "$vYAML"
-
-					exit
-
-					echo "install_system"
 					install_system "${vYAML}"
-					echo "setup_boot"
 					setup_boot "${vYAML}"
-					echo "modifying boot record ..."
 					modify_boot "${vYAML}"
 				fi 
 				if [[ "${selection,,}" == "add" ]]
