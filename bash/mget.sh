@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#	1 source/tree/branch	-->	destination/D/			... copy branch in to D/
+#	1 source/tree/leaf		-->	destination/D/			... copy leaf in to D/
 #	2 source/tree/branch/	--> destination/D/			... copy contents of branch in to D/
-#	3 source/tree/branch 	--> destination/D			... copy branch as D
+#	3 source/tree/leaf	 	--> destination/D			... copy leaf as D
 
 #	1> source/tree/branch/*	-->	destination/D/			<INVALID!>, don't allow wildcards right now, it causes variability in command line args --unstable!
 #	2> source/tree/branch/ 	--> destination/D			<RE-ASSIGN>, add / to end of D , ergo D/
@@ -109,7 +109,7 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 			then
 				wget -O - --reject "index.*" -q --show-progress --no-parent "${url}" 2>/dev/null
 			else
-				echo "mget : ${url} ==> ${destination%/*}" 2>&1
+				#echo "mget : ${url} ==> ${destination%/*}" 2>&1
 				wget -r --reject "index.*" -q --show-progress --no-parent "${url}" -P "${destination%/*}" 2>&1 | pv --progress 1>/dev/null
 			fi
 			waiting=0
@@ -139,7 +139,7 @@ function getFTP()
 			then
 				wget -O - --reject "index.*" -q --show-progress  --no-parent "${url}" 2>/dev/null
 			else
-				echo "mget : ${url} ==> ${destination}" 2>&1
+				#echo "mget : ${url} ==> ${destination}" 2>&1
 				wget -r --reject "index.*" -q --show-progress  --no-parent "${url}" -P "${destination}" 2>&1 | pv --progress 1>/dev/null
 			fi
 
@@ -167,7 +167,7 @@ function mget()
 	local destination="$(printf '%s\n' "${2}" | sed 's/\*//g')"
 	[[ -n "$(printf "${url}" | grep '/$')" && -z "$(printf "${destination}" | grep '/$')" ]] && { destination="${destination}/"; } 
 
-	echo "$url --> $destination"
+	#echo "$url --> $destination"
 
 	# mget types
 	case ${url%://*} in
@@ -178,7 +178,11 @@ function mget()
 				echo "$(getFTP ${url})"
 			else
 				getFTP "${url}" "${destination}"
-				cp ${destination}/${url#*://}/* ${destination}/ -Rp
+				[[ -d ${destination}/${url#*://} ]] && {
+					cp ${destination}/${url#*://}/* ${destination}/ -Rp
+				} || {
+					cp ${destination}/${url#*://} ${destination}/ -p
+				}
 				url=${url#*://}
 				url=${url%%/*}
 				rm ${destination:?}/${url:?} -R
@@ -190,7 +194,11 @@ function mget()
 				echo "$(getHTTP ${url})"
 			else
 				getHTTP "${url}" "${destination}" 
-				cp ${destination%/*}/${url#*://}/* ${destination}/ -Rp 
+				[[ -d ${destination}/${url#*://} ]] && {
+					cp ${destination}/${url#*://}/* ${destination}/ -Rp
+				} || {
+					cp ${destination}/${url#*://} ${destination}/ -p
+				}
 				url=${url#*://}
 				url=${url%%/*}
 				rm ${destination%/*}/${url:?} -R 
