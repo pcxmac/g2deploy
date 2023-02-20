@@ -26,9 +26,6 @@ function yamlStd()
 	[[ -p /dev/stdin ]] && { _yaml="$(cat -)"; ordo="stdin"; } || { _yaml="${1:?}"; ordo="parametric"; }
 	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
 
-	echo "$_yaml" > ./output.txt
-	echo "$ordo" >> ./output.txt
-
 	# filtration
 	_yaml="$(printf "${_yaml}" | sed 's/#.*$//')";											# clear out comments
 	_yaml="$(printf "${_yaml}" | sed '/^[[:space:]]*$/d')";									# delete empty lines
@@ -48,8 +45,6 @@ function yamlStd()
 		[[ -n ${tabLength} ]] && { break; } 
 	done < <(printf '%s\n' "${_yaml}" | \grep -iP '^\s.*[a-z]')
 	IFS="${_tmp}"
-
-	#tabLength=2
 
 	# rebuild yaml with 2x tabs
 	IFS=''
