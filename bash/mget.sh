@@ -5,11 +5,11 @@
 #	3 source/tree/branch 	--> destination/D			... copy branch as D
 
 #	1> source/tree/branch/*	-->	destination/D/			<INVALID!>, don't allow wildcards right now, it causes variability in command line args --unstable!
-#	2> source/tree/branch/ 	--> destination/D			<INVALID>, this must break.
+#	2> source/tree/branch/ 	--> destination/D			<RE-ASSIGN>, add / to end of D , ergo D/
 #	3> source/tree/branch/*	-->	destination/D			<INVALID>, this must break.		--filtered to read branch/ destination/D { invalid, 2> }
 #	\						--> destination/D/*			<INVALID>, this must break.		--filtered to read \ destination/D/ {1;2}
 
-#	summary : 1,2,3 work, 3> reverts to 2>, all other cases are filtered by sed 's|g'
+#	summary : 1,2,3 work, 2> reverts to 2, all other cases are filtered by sed 's|g' -- no returns, or breaks, every case should work.
 
 #	all copies are recursive, and attempt to preserve permissions
 
@@ -163,13 +163,13 @@ function mget()
 	local _source
 
 	# filter out invalid use cases
-		# source_URL
 	local url="$(printf '%s\n' "${1:?}" | sed 's/\*//g')"
-		# local destination
 	local destination="$(printf '%s\n' "${2}" | sed 's/\*//g')"
-	#[[ -n "$(printf "${destination}" | grep '\*$')" ]] && { printf 'invalid destination *'; return; }
-	#[[ -n "$(printf "${url}" | grep '/\*$')"  && -z "$(printf "${destination}" | grep '/$')" ]] && { printf 'invalid src/* to destination\n'; return; }
-	[[ -n "$(printf "${url}" | grep '/$')" && -z "$(printf "${destination}" | grep '/$')" ]] && { printf 'invalid src/ to destination\n'; return; }
+	[[ -n "$(printf "${url}" | grep '/$')" && -z "$(printf "${destination}" | grep '/$')" ]] && { destination="${destination}/"; } 
+
+	echo "$url --> $destination"
+
+	# mget types
 	case ${url%://*} in
 
 		ftp*)
@@ -178,11 +178,10 @@ function mget()
 				echo "$(getFTP ${url})"
 			else
 				getFTP "${url}" "${destination}"
-				_source="$(${destination}/${url#*://})"
-				cp ${source%} ${destination}/ -Rp
+				cp ${destination}/${url#*://}/* ${destination}/ -Rp
 				url=${url#*://}
 				url=${url%%/*}
-#				rm ${destination:?}/${url:?} -R
+				rm ${destination:?}/${url:?} -R
 			fi
 		;;
 		http*)
@@ -191,7 +190,7 @@ function mget()
 				echo "$(getHTTP ${url})"
 			else
 				getHTTP "${url}" "${destination}" 
-				mv ${destination%/*}/${url#*://} ${destination%/*}
+				cp ${destination%/*}/${url#*://}/* ${destination}/ -Rp 
 				url=${url#*://}
 				url=${url%%/*}
 				rm ${destination%/*}/${url:?} -R 
