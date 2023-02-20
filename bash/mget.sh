@@ -1,13 +1,16 @@
 #!/bin/bash
 
-#	source/tree/branch	-->	destination/D/			... copy branch in to D/
-#	source/tree/branch/	--> destination/D/			... copy contents of branch in to D/
-#	source/tree/branch 	--> destination/D			... copy branch as D
-#	source/tree/branch/*-->	destination/D/			... copy contents of branch in to D/
-#	source/tree/branch/ --> destination/D			<INVALID>, this must break.
-#	source/tree/branch/*-->	destination/D			<INVALID>, this must break.
-#						--> destination/D/*			<INVALID, this must break.
-#
+#	1 source/tree/branch	-->	destination/D/			... copy branch in to D/
+#	2 source/tree/branch/	--> destination/D/			... copy contents of branch in to D/
+#	3 source/tree/branch 	--> destination/D			... copy branch as D
+
+#	1> source/tree/branch/*	-->	destination/D/			<INVALID!>, don't allow wildcards right now, it causes variability in command line args --unstable!
+#	2> source/tree/branch/ 	--> destination/D			<INVALID>, this must break.
+#	3> source/tree/branch/*	-->	destination/D			<INVALID>, this must break.		--filtered to read branch/ destination/D { invalid, 2> }
+#	\						--> destination/D/*			<INVALID>, this must break.		--filtered to read \ destination/D/ {1;2}
+
+#	summary : 1,2,3 work, 3> reverts to 2>, all other cases are filtered by sed 's|g'
+
 #	all copies are recursive, and attempt to preserve permissions
 
 #	working ...
@@ -23,7 +26,7 @@
 #	smb			""					smb://user@host/directory/file		*samba							|	
 #	serial		""					serial://device:params/	./file		*kermit							|	serial transfer
 
-# 	dependencies : [curl]	[wget]	[scp]	[sleep]	[]	[]	[]	[]
+# 	dependencies : [wget]	[scp]	[sleep]	[]	[]	[]	[]
 
 #	support for stdin & stdout
 #	
@@ -33,6 +36,10 @@
 #	
 #	limitations, only supports local writes, or "getting"
 #	see mput, for standardized "sending"
+#
+#	supports timingout 							
+#	supports extensible options (like rsync)	(*)
+#	supports testing w/ test_map.xml file		(-t)
 
 function getSSH()
 {
@@ -46,7 +53,8 @@ function getRSYNC()
 	local rCode=""
 	local pause=60
 	local uri=""
-	local destination="${2:?}"			#  there should always be a destination for rsync, this method does not support streaming
+	#  there should always be a destination for rsync, this method does not support streaming
+	local destination="${2:?}"			
 
 	host="${host#*://}"
 	host="${host%%/*}"
@@ -149,13 +157,19 @@ function getFTP()
 
 function mget()
 {
-
-	local destination="${2}"	# destination_FS, can be empty, stream output (ie no output file specified)
+	# destination_FS, can be empty, stream output (ie no output file specified)
 	local offset
 	local host
 	local _source
-	local url="${1:?}" # source_URL
 
+	# filter out invalid use cases
+		# source_URL
+	local url="$(printf '%s\n' "${1:?}" | sed 's/\*//g')"
+		# local destination
+	local destination="$(printf '%s\n' "${2}" | sed 's/\*//g')"
+	#[[ -n "$(printf "${destination}" | grep '\*$')" ]] && { printf 'invalid destination *'; return; }
+	#[[ -n "$(printf "${url}" | grep '/\*$')"  && -z "$(printf "${destination}" | grep '/$')" ]] && { printf 'invalid src/* to destination\n'; return; }
+	[[ -n "$(printf "${url}" | grep '/$')" && -z "$(printf "${destination}" | grep '/$')" ]] && { printf 'invalid src/ to destination\n'; return; }
 	case ${url%://*} in
 
 		ftp*)
@@ -164,10 +178,11 @@ function mget()
 				echo "$(getFTP ${url})"
 			else
 				getFTP "${url}" "${destination}"
-				mv ${destination}/${url#*://} ${destination}/
+				_source="$(${destination}/${url#*://})"
+				cp ${source%} ${destination}/ -Rp
 				url=${url#*://}
 				url=${url%%/*}
-				rm ${destination:?}/${url:?} -R
+#				rm ${destination:?}/${url:?} -R
 			fi
 		;;
 		http*)
