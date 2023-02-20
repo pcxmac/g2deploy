@@ -1,5 +1,39 @@
 #!/bin/bash
 
+#	source/tree/branch	-->	destination/D/			... copy branch in to D/
+#	source/tree/branch/	--> destination/D/			... copy contents of branch in to D/
+#	source/tree/branch 	--> destination/D			... copy branch as D
+#	source/tree/branch/*-->	destination/D/			... copy contents of branch in to D/
+#	source/tree/branch/ --> destination/D			<INVALID>, this must break.
+#	source/tree/branch/*-->	destination/D			<INVALID>, this must break.
+#						--> destination/D/*			<INVALID, this must break.
+#
+#	all copies are recursive, and attempt to preserve permissions
+
+#	working ...
+#	file 		(display total size, destination, source, progress)		*RSYNC
+#	rsync		""														*RSYNC
+#	ssh			""														*SCP
+#	http		""														*WGET
+#	(s/t)ftp(s)	""														*WGET	(only supports ()ftp currently)
+
+#	to be ...	(may require non standard services)
+#	net			""					net://host:9000/	./file			*NETCAT/SOCAT/(bash+/dev/tcp)	| 	requires netcat on host
+#	nfs			""					nfs://user@host/share/file			*nfsv4							|	
+#	smb			""					smb://user@host/directory/file		*samba							|	
+#	serial		""					serial://device:params/	./file		*kermit							|	serial transfer
+
+# 	dependencies : [curl]	[wget]	[scp]	[sleep]	[]	[]	[]	[]
+
+#	support for stdin & stdout
+#	
+#	ex.		cat ./file | mget . ${destination}
+#	ex.		mget ${url} | ./destination
+#	ex.		mget <(cat file) ./destination
+#	
+#	limitations, only supports local writes, or "getting"
+#	see mput, for standardized "sending"
+
 function getSSH()
 {
 	echo "getSSH"
@@ -51,7 +85,8 @@ function getRSYNC()
 
 function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 {
-	local destination="${2}"		# empty if streaming/serial output requested
+	# empty if streaming/serial output requested
+	local destination="${2}"		
 	local url="${1:?}"
 	local waiting=1
 	local httpCode=""
