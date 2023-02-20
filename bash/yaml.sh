@@ -147,15 +147,10 @@ function findKeyValue()
 	# path length, to determine target leaf/node
 	local pLength="$(yamlPathL $_path)"
 	#standardize input
-	echo "$_yaml" > ./outrun.txt
-
 	_yaml="$(yamlStd "${_yaml}")"
 	# strings, about which path is articulated
 	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
 	local _next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
-
-	echo "$_yaml" > ./out.txt
-	echo "$_path" >> ./out.txt
 
 	IFS=''
 	# pWave constructor

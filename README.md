@@ -96,6 +96,7 @@
   ├── repos                     synchronized too, via sync.sh
   ├── snapshots                 synchronized too, via sync.sh
   ├── distfiles                 synchronized too, via sync.sh
+  ├── repository                (cgit hosted) git repos for gentoo
   ├── meta                      meta package information, for meta builds (patches, configs, portage is not perfect)
 ```
   
