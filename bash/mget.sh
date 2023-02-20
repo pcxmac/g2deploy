@@ -96,7 +96,7 @@ function getFTP()
 			then
 				wget -O - --reject "index.*" -q --show-progress  --no-parent "${url}" 2>/dev/null
 			else
-				echo "mget : ${url} ==> ${destination%/*}" 2>&1
+				echo "mget : ${url} ==> ${destination}" 2>&1
 				wget -r --reject "index.*" -q --show-progress  --no-parent "${url}" -P "${destination}" 2>&1 | pv --progress 1>/dev/null
 			fi
 
