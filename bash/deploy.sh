@@ -77,6 +77,21 @@ source ${SCRIPT_DIR}/bash/include.sh
 	patchSystem "${_profile}" 'deploy' > "${directory}/patches.sh"
 	patchSystem "${_profile}" 'services' > "${directory}/services.sh"
 
+	#	theory of operation , system bootsup, firewall takes over, builds network stack, and triggers a sync on the dom-0
+	#	sync on dom-0, will update the host.cfg, all derivative activities should be accurate, firewall will trigger a sync
+	#	on any network changes, configs should be immediate, regular file syncs should continue to be periodic.
+	#	eBPF will serve as the internetworker of choice for synchronizing host + extra host activities.
+
+	# networking -preworkup -- a prelude for a networking patch script, most likely only on install, but something like this
+	# is required to build up the deployment ... thinking.
+	pkgHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/host")"
+	bldHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:buildserver/host")"
+	pkgIP="$(getent ahostsv4 ${pkgHOST} | head -n 1 | awk '{print $1}')"
+	bldIP="$(getent ahostsv4 ${bldHOST} | head -n 1 | awk '{print $1}')"
+	sed -i "/${pkgHOST}$/c${pkgIP}\t${pkgHOST}" ${directory}/etc/hosts
+	sed -i "/${bldHOST}$/c${bldIP}\t${bldHOST}" ${directory}/etc/hosts
+	################ work around ############################################################################################# 
+
 	chroot "${directory}" /bin/bash -c "deployLocales ${_profile}"
  	chroot "${directory}" /bin/bash -c "deploySystem"
 
