@@ -197,6 +197,7 @@ function mget()
 			fi
 		;;
 
+		# NEEDS A LOT OF WORK !
 		ssh)
 			host=${url#*://}
 			_source=${host#*:/}
@@ -208,6 +209,8 @@ function mget()
 			cp ${destination}/__temp/* ${destination} -Rp
 			rm ${destination}/__temp -R
 		;;
+
+		# Pending review .. and a test schema
 		rsync|file|*)
 			if [[ -z ${destination} ]]
 			then
