@@ -9,5 +9,5 @@ pool=$1
 
 clear_mounts $(getZFSMountPoint ${pool})
 
-zpool export ${pool}
+#zpool export ${pool}
 

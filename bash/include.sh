@@ -4,9 +4,9 @@ SCRIPT_DIR="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 SCRIPT_DIR="${SCRIPT_DIR%/*}"
 
 # Normal
-colN="\e[1;30m%s\e[m"	
+colN="\e[1;30m%s\e[m"
 # Red
-colR="\e[1;31m%s\e[m"	
+colR="\e[1;31m%s\e[m"
 # Green
 colG="\e[1;32m%s\e[m"
 # Yellow

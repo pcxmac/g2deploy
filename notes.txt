@@ -13,6 +13,8 @@ goals :
   (concept-btrfs) ./deploy build=plasma work=btrfs_mount/subvol\
   (concept-ext4,...) ./deploy build=plasma work=/path/to/rootfs deploy </span>
 
+  the server still has issues running http+ services underload, causing missed mounts, missed downloads, etc...
+
 [ BACKEND SPEC. | BUILD SERVER ]  :: { to reference pkgmx.sh & profile.sh for profiling machines and maintaining bin_pkgs }
   ?       TIME MACHINE BASED REPO REFERENCE (requires metadata build, snapshots...) - GOAL to hit year 2000 /w distfile fetcher
   ?       CUSTOM STAGE 3 GENERATOR FOR TIME MACHINE BUILDS
