@@ -1,5 +1,10 @@
 goals : 
 
+  Friday - 
+    KERNEL BLD service
+    zfs page file generator
+    
+
   finish install script, modify yaml (disks) at appropriate point
   fix update so that I can update local system and modify boot to current. Also make sure it uses proxy, not wan
 

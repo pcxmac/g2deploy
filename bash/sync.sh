@@ -109,6 +109,9 @@ hostip="$(/bin/ip --brief address show dev ${hostip} | /usr/bin/awk '{print $3}'
 
 sed -i "s|HOST:.*|HOST: ${hostip}|g" /etc/rsync/rsyncd.motd
 sed -i "s|DATE:.*|DATE: $(date)|g" /etc/rsync/rsyncd.motd
+sed -i "s|HTTP:.*|HTTP: http://${pkgHOST}|g" /etc/rsync/rsyncd.motd
+sed -i "s|RSYNC:.*|RSYNC: rsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
+sed -i "s|FTP:.*|FTP: ftp://${pkgHOST}|g" /etc/rsync/rsyncd.motd
 
 eix-update
 updatedb
