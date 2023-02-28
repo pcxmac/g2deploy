@@ -25,6 +25,8 @@ source ${SCRIPT_DIR}/bash/yaml.sh
 
 function build_kernel()
 {
+	#boot=${1:?}		# need to integrate boot better
+
 	# needs to be reflown for multivariate kernel versions
 	#
 	#	gentoo-kernel, gentoo-kernel-bin, gentoo-sources, git-sources, vanilla*, mips* ,....
@@ -42,17 +44,18 @@ function build_kernel()
 	lv="$(qlist -Iv | \grep 'sys-kernel/gentoo-sources' | head -n 1)"
 	lv="${lv#*sources-}"
 
-	mv="$(printf '%s\n' "${cv}\n${lv}")"
-	mv="$(printf "$mv" | uniq)"
+	#[[ ${cv} == ${lv} ]] && { current='true'; } || { current='false'; } 
 
-	current="$(printf "$mv" | wc -l)"
+	echo "cv = $cv ; lv = $lv ; current = $current"
 
-	[[ ${current} == "1" ]] 
 
+
+	#av = 
 }
 
 function checkHosts()
 {
+	#local _r=""
 	local _s="http ftp rsync ssh"
 	local _result
 	local _serve
@@ -81,6 +84,60 @@ function getHostName()
 	url=${url#*://}
 	url=${url%%/*}
 	printf '%s\n' ${url}
+}
+
+function isURL()
+{
+	local _code
+	local _URL=${1:?}
+	local sType="${_URL%://*}"
+	_code="$(curl --write-out "%{http_code}\n" --silent --output /dev/null "$_URL")"
+	case $sType in
+		ftp)
+			case $_code in
+				226)		_code='OK'
+				;;
+				*)			_code='not supported'
+				;;
+			esac
+		;;
+		http)
+			case $_code in
+				200)		_code='OK'
+				;;
+				*)			_code='not supported'
+				;;
+			esac
+		;;
+		rsync)
+
+		 	_host="${_URL#*rsync://}"
+		 	_args="${_host#*/}"
+		 	_host="${_host%%/*}"
+		 	_code="$(rsync $_host::$_args 2>&1)"
+
+		# 	# type cases definitions
+		 	[[ -n "$(printf "$_code" | grep 'failed: No such file or directory')" ]] && { _code="none"; }
+		 	[[ -n "$(printf "$_code" | grep '@ERROR: Unknown module')" ]] && { _code="no_module"; }
+
+		 	case $_code in
+		 		no_module)	_code='INVALID'
+		 		;;
+		 		none)		_code='INVALID'
+		 		;;
+		 		000)		_code='INVALID'
+		 		;;
+		 		*)			_code='OK'
+		 		;;
+		 	esac
+		;;
+		*)
+			_code="unsupported"
+		;;
+	esac
+
+	[[ ${_code} == "OK" ]] && { printf "${colG}\n" "OK"; } || { printf "${colR}\n" "INVALID"; }
+
 }
 
 function isHostUp()
@@ -452,6 +509,8 @@ function pkgProcessor()
 
 	diffPkgs="$(awk 'FNR==NR {a[$0]++; next} !($0 in a)' <(echo "${iBase}") <(echo "${allPkgs}"))"
 	echo "${diffPkgs}" | sed '/^#/d' | sed '/^$/d'
+
+#	sleep 20
 }
 
 function install_modules()
