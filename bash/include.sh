@@ -25,28 +25,60 @@ source ${SCRIPT_DIR}/bash/yaml.sh
 
 function build_kernel()
 {
-	#boot=${1:?}		# need to integrate boot better
+	#cv = current running kernel
+	#lv = current installed current	(may only need to be 'installed', not emerged)
+	#nv = current unmasked most current package, would need to be installed, after emerging
 
-	# needs to be reflown for multivariate kernel versions
-	#
-	#	gentoo-kernel, gentoo-kernel-bin, gentoo-sources, git-sources, vanilla*, mips* ,....
-	#	host.cfg must define march.
-
-	#pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
-	#av="$(pquery sys-apps/portage --max 2>/dev/null)"
-
-	#cv="$(eselect kernel show | tail -n 1)"
-	#cv="${cv#*linux-}"
-	#cv="${cv%-gentoo*}"
 	cv="$(uname --kernel-release)"
 	cv="${cv%-gentoo*}"
 
 	lv="$(qlist -Iv | \grep 'sys-kernel/gentoo-sources' | head -n 1)"
 	lv="${lv#*sources-}"
 
-	#[[ ${cv} == ${lv} ]] && { current='true'; } || { current='false'; } 
+	nv="$(equery -CN list -po gentoo-sources | grep -v '\[M' | awk '{print $4}' | tail -n 1)"
+	nv="${nv%:*}"
+	nv="${nv##*-}"
 
-	echo "cv = $cv ; lv = $lv ; current = $current"
+	echo "cv = $cv ; lv = $lv ; nv  = $nv"
+	_compare="${nv}\n${lv}"
+
+	[[ ${cv} == ${nv} ]] && ${}
+
+	# lv, the currently highest installed version, will not be at the bottom if there is a newer unmasked version
+	[[ ${lv} != "$(printf $_compare | sort --version-sort | tail -n 1)" ]] && { 
+		emerge $emergeOpts sys-kernel/gentoo-sources-$nv;
+		#lv=${nv}
+		eselect kernel set linux-${lv}-gentoo
+
+		_kernels_current="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/root")"
+		_kernel='/usr/src/linux/'
+
+
+		cat ${_kernels_current}/*/config* > /usr/src/linux/.config
+
+		# if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
+
+		(cd ${_kernel}; make clean)
+		(cd ${_kernel}; make olddefconfig -j$(nproc) )
+		(cd ${_kernel}; make modules_install)
+		(cd ${_kernel}; make install)
+		FEATURES="-getbinpkg -buildpkg" \emerge =zfs-kmod-9999 =zfs-9999
+		genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
+		sync
+
+		mkdir /boot/${nv}-gentoo
+		mv /boot/config-${nv}-gentoo /boot/${nv}-gentoo/
+		mv /boot/initramfs-${nv}-gentoo.img /boot/${nv}-gentoo/initramfs
+		mv /boot/vmlinuz-${nv}-gentoo /boot/${nv}-gentoo/vmlinuz
+		mv /boot/System.map-${nv}-gentoo /boot/${nv}-gentoo/
+
+		mv ${_kernels_current}/current/* ${_kernels_current}/deprecated/
+		mv /boot/${nv}-gentoo/ ${_kernels_current}/current/
+
+		cp ${_kernels_current}/current/${nv}-gentoo/ /boot/LINUX -Rp 
+	}
+
+
 
 
 
@@ -121,9 +153,9 @@ function isURL()
 		 	[[ -n "$(printf "$_code" | grep '@ERROR: Unknown module')" ]] && { _code="no_module"; }
 
 		 	case $_code in
-		 		no_module)	_code='INVALID'
+		 		no_module)	_code='no module'
 		 		;;
-		 		none)		_code='INVALID'
+		 		none)		_code='no file/folder'
 		 		;;
 		 		000)		_code='INVALID'
 		 		;;
