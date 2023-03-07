@@ -23,7 +23,8 @@ echo "EXT_NETWORK = $EXT_NETWORK"
 
 sed -i "/pkg.hypokrites.me$/c$EXT_ADDR\tpkg.hypokrites.me" /etc/hosts
 sed -i "/build.hypokrites.me$/c$EXT_ADDR\tbuild.hypokrites.me" /etc/hosts
-sed -i "/^.server.bind/c server.bind = \"$EXT_ADDR\"" /etc/lighttpd/lighttpd.conf
+sed -i "/^server.bind/c server.bind = \"$EXT_ADDR\"" /etc/lighttpd/lighttpd.conf
+
 
 rc-service lighttpd restart
 rc-service sshd restart
@@ -275,6 +276,10 @@ $IPT -N DROP_ICMP
 $IPT -A INPUT -p icmp -i $EXT_INTER --j DROP_ICMP
 $IPT -A DROP_ICMP -j LOG --log-prefix "IPT: DROP ICMP - "
 $IPT -A DROP_ICMP -j $IDROP
+
+#$IPT -N ACCEPT_TCP
+$IPT -A INPUT -p tcp -i $EXT_INTER --sport 873 -m conntrack --ctstate ESTABLISHED -j ACCEPT
+#$IPT -A ACCEPT_TCP -p tcp -j ACCEPT
 
 $IPT -N DROP_TCP
 $IPT -A INPUT -p tcp -i $EXT_INTER --j DROP_TCP

@@ -178,7 +178,7 @@ function isHostUp()
 	local port=${2}
 
 	# netcat
-	local result="$(nc -z -v ${host} ${port} 2>&1 | \grep 'open')"
+	local result="$(nc -z -v ${host} ${port} 2>&1 | \grep -E 'open|succeeded')"
 	[[ -n ${result} ]] && { printf "${colG}\n" "OK"; } || { printf "${colR}\n" "INVALID"; }
 }
 
