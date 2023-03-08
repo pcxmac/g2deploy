@@ -1,10 +1,13 @@
 #!/bin/bash
 
-#	when refactoring to many types of F/S, rememeber, disks are configured, before operation, so sense F/S type, and use path
+#	when refactoring to many types of F/S, remember, disks are configured, before operation, so sense F/S type, and use path
 #	to realize important qualifiers, like boot-parts/datasets/subvols,etc....
 #
 #	ergo, a path is what will be used to determine specs, except in the cases like boot disk partitions where EFI is constant.
-#	&&, layered procs/funcs must be used to seamlessly and effeciently apply uniform application across many F/S types. 
+#	&&, layered procs/funcs must be used to seamlessly and efficiently apply uniform application across many F/S types. 
+#	mounts are assumed prior to spec'ing or operations. It is the responsibility of the 'master' to push mounts before operating on them.
+
+# 	thees functions will eventually be superseded by python  
 
 
 SCRIPT_DIR="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
@@ -30,21 +33,23 @@ colW="\e[1;37m%s\e[m"
 source ${SCRIPT_DIR}/bash/mget.sh
 source ${SCRIPT_DIR}/bash/yaml.sh
 
+# scope of this function is to build a new kernel, and update portage/kernels
 function build_kernel()
 {
 
 	#	ex.	build_kernel
 
 	_bootPart=${1:?}
-	_fsType="$(df ${_bootPart} | awk '{print $2}')"
+	_fsType="$(df ${_bootPart} | awk '{print $2}' | tail -n 1)"
 	_rootFS=""
 
 	case ${_fsType} in
 		zfs)
-			_rootFS="real_root=ZFS=$(getZFS ${_bootPart})"
+			_rootFS="real_root=ZFS=$(getZFSDataSet ${_bootPart})"
 		;;
 		*)
-			printf "unsupported file system type. ${0} for ${1}"
+			printf "unsupported file system type. >[${0}] @ $_fsType for >[${1}]\n"
+			return
 		;;
 	esac
 
@@ -52,11 +57,10 @@ function build_kernel()
 	#lv = current installed current	(may only need to be 'installed', not emerged)
 	#nv = current unmasked most current package, would need to be installed, after emerging
 
-	# running kernel
+	# current kernel
 	cv="$(uname --kernel-release)"
 	cv="${cv%-gentoo*}"
 
-	# LV HAS TO POINT TO THE KERNEL-CURRENT REPO, ALSO GOOD TO CHECK IF ALREADY EMERGED OFCOURSE
 	# installed version, latest
 	iv="$(qlist -Iv | \grep 'sys-kernel/gentoo-sources' | head -n 1)"
 	iv="${iv#*sources-}"
@@ -71,98 +75,59 @@ function build_kernel()
 	nv="${nv%:*}"
 	nv="${nv##*-}"
 
-	# boot kernel, assigned @ /boot/...conf
-	#	* get current rootfs (ex. jupiter/gnome)
-	#	* find if exists @ boot
-	#	* if so, what is $bv, kernel assigned to rootfs.
-
-	echo "cv = $cv ; lv = $lv ; nv  = $nv"
+	#echo "cv = $cv ; lv = $lv ; nv  = $nv"
 	_compare="${nv}\n${lv}"
 
+	echo "lv = $lv ; nv = $nv ; iv = $iv ; cv = $cv"
 
-	# build a new kernel ?	-- nv > lv	... make clean, make olddefconfig ...
-
-	# 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	[[ ${cv} == ${nv} ]] && ${}
+	# do nothing case, as it is already installed
+	[[ ${lv} == ${nv} ]] && { return; }
 
 	# lv, the currently highest installed version, will not be at the bottom if there is a newer unmasked version
-	[[ ${lv} != "$(printf $_compare | sort --version-sort | tail -n 1)" ]] && { 
-
-		#echo "emerge $emergeOpts sys-kernel/gentoo-sources-$nv"
-		#sleep 30
-
-		#emerge $emergeOpts =sys-kernel/gentoo-sources-$nv --ask=n;
-		lv=${nv}
-		eselect kernel set linux-${lv}-gentoo
-
-		eselect kernel show
-		sleep 30
+	[[ ${lv} != "$(printf $_compare | sort --version-sort | tail -n 1)" ]] && {
 
 		_kernels_current="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/root")"
 		_kernel='/usr/src/linux/'
 
+		# if the installed version, is not the latest, install the latest...
+		# if the newest version is not the latest version, it needs a config, because it was just installed
 
-		cat ${_kernels_current}/*/config* > /usr/src/linux/.config
 
-		# if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
+		#[[ ${iv} == ${nv} ]] 
 
-		(cd ${_kernel}; make clean)
-		(cd ${_kernel}; make olddefconfig -j$(nproc) )
+	 	[[ ${iv} != ${nv} ]] && {
+			echo "installing new version of gentoo-sources."
+			emerge $emergeOpts =sys-kernel/gentoo-sources-${nv}; 
+			cat ${_kernels_current}/*/config* > /usr/src/linux/.config;
+			iv=${nv}
+			# if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
+			(cd ${_kernel}; make clean)
+			(cd ${_kernel}; make olddefconfig)
+		}
+
+		eselect kernel set linux-${nv}-gentoo
+		eselect kernel show
+		sleep 1
+
+		(cd ${_kernel}; make -j$(nproc) )
 		(cd ${_kernel}; make modules_install)
-		(cd ${_kernel}; make install)
-		FEATURES="-getbinpkg -buildpkg" \emerge =zfs-kmod-9999 =zfs-9999
-		genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
+		(INSTALL_PATH=/tmp/$$/ cd ${_kernel}; make install)
+		# requires /etc/portage/bashrc to sign module
+		FEATURES="-getbinpkg -buildpkg" \emerge =zfs-kmod-9999
+		#genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
 		sync
 
 		mkdir /boot/${nv}-gentoo
-		mv /boot/config-${nv}-gentoo /boot/${nv}-gentoo/
-		mv /boot/initramfs-${nv}-gentoo.img /boot/${nv}-gentoo/initramfs
-		mv /boot/vmlinuz-${nv}-gentoo /boot/${nv}-gentoo/vmlinuz
-		mv /boot/System.map-${nv}-gentoo /boot/${nv}-gentoo/
+		mv /tmp/$$/config-${nv}-gentoo /boot/${nv}-gentoo/
+		mv /tmp/$$/initramfs-${nv}-gentoo.img /boot/${nv}-gentoo/initramfs
+		mv /tmp/$$/vmlinuz-${nv}-gentoo /boot/${nv}-gentoo/vmlinuz
+		mv /tmp/$$/System.map-${nv}-gentoo /boot/${nv}-gentoo/
 
+		# replace portage/kernels/current with current
 		mv ${_kernels_current}/current/* ${_kernels_current}/deprecated/
-		mv /boot/${nv}-gentoo/ ${_kernels_current}/current/
-
-		cp ${_kernels_current}/current/${nv}-gentoo/ /boot/LINUX -Rp 
+		mv /tmp/$$/${nv}-gentoo/ ${_kernels_current}/current/
 	}
 
-
-
-
-
-	#av = 
 }
 
 function checkHosts()
