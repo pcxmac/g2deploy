@@ -61,7 +61,7 @@ function build_kernel()
 	cv="$(uname --kernel-release)"
 	cv="${cv%-gentoo*}"
 
-	# installed version, latest
+	# installed version, latests
 	iv="$(qlist -Iv | \grep 'sys-kernel/gentoo-sources' | head -n 1)"
 	iv="${iv#*sources-}"
 
@@ -92,8 +92,10 @@ function build_kernel()
 		# if the installed version, is not the latest, install the latest...
 		# if the newest version is not the latest version, it needs a config, because it was just installed
 
-
-		#[[ ${iv} == ${nv} ]] 
+		[[ ${iv} == ${nv} ]] && { 
+			echo "cleaning up existing kernel build..."
+			#(cd ${_kernel}; make clean); 
+		}
 
 	 	[[ ${iv} != ${nv} ]] && {
 			echo "installing new version of gentoo-sources."
@@ -101,31 +103,42 @@ function build_kernel()
 			cat ${_kernels_current}/*/config* > /usr/src/linux/.config;
 			iv=${nv}
 			# if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
-			(cd ${_kernel}; make clean)
 			(cd ${_kernel}; make olddefconfig)
 		}
 
-		eselect kernel set linux-${nv}-gentoo
+		# suffix might need to be altered to fit possible versioning which meddles with -gentoo
+		_suffix="gentoo"
+		eselect kernel set linux-${nv}-${_suffix}
 		eselect kernel show
 		sleep 1
 
 		(cd ${_kernel}; make -j$(nproc) )
 		(cd ${_kernel}; make modules_install)
-		(INSTALL_PATH=/tmp/$$/ cd ${_kernel}; make install)
+
+		_offset=/tmp/$$
+
+		mkdir -p ${_offset}/${nv}-${_suffix}
+
+		(cd ${_kernel}; INSTALL_PATH=/tmp/$$/ make install)
 		# requires /etc/portage/bashrc to sign module
 		FEATURES="-getbinpkg -buildpkg" \emerge =zfs-kmod-9999
 		#genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
-		sync
 
-		mkdir /boot/${nv}-gentoo
-		mv /tmp/$$/config-${nv}-gentoo /boot/${nv}-gentoo/
-		mv /tmp/$$/initramfs-${nv}-gentoo.img /boot/${nv}-gentoo/initramfs
-		mv /tmp/$$/vmlinuz-${nv}-gentoo /boot/${nv}-gentoo/vmlinuz
-		mv /tmp/$$/System.map-${nv}-gentoo /boot/${nv}-gentoo/
+		(cd ${_offset}/${nv}-${_suffix}/; tar cfvz ./modules.tar.gz /lib/modules/${nv}-${_suffix}; )
+
+		mv ${_offset}/config-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/
+		mv ${_offset}/vmlinuz-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/vmlinuz
+		mv ${_offset}/System.map-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/
+
+		# initramfs is per install
+		#mv ${_offset}/initramfs-${nv}-${_suffix}.img ${_offset}/${nv}-${_suffix}/initramfs
 
 		# replace portage/kernels/current with current
-		mv ${_kernels_current}/current/* ${_kernels_current}/deprecated/
-		mv /tmp/$$/${nv}-gentoo/ ${_kernels_current}/current/
+		mv ${_kernels_current}/kernels/current/* ${_kernels_current}/kernels/deprecated/
+		mv ${_offset}/${nv}-${_suffix}/ ${_kernels_current}/kernels/current/
+
+		sync
+
 	}
 
 }
