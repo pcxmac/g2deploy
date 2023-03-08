@@ -41,7 +41,7 @@
   
   <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe boot=zfs://saturn/g2 add</b> <span style="color:green">(add to existing pool, only add boot record</span> <span style="color:red"></span>
 
-  <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe add=zfs:///dev/sdj:/saturn/g2 config</b> <span style="color:green">(only show yaml config)</span> <span style="color:red"></span>
+  <u>./install.sh</u> <b>work=zfs://root@localhost:/test/hardened@safe boot=zfs:///dev/sdj:/saturn/g2 config</b> <span style="color:green">(only show yaml config)</span> <span style="color:red"></span>
 
 ###
 ##### <u>MIRROR URL FOR TYPE OF RESOURCE + PROTOCOL </u>
@@ -107,10 +107,10 @@
 
       path spec - 'KEY:VALUE/NEXT_KEY:NEXT_VALUE/ETC/ETC/LIST_ITEMS/-'
 
-      findKeyValue    ../config/boot.cfg    'bootcfg:jupiter/menuentry:jupiter/gnome/options/-'
-      insertKeyValue  ${STRING}             'this/is/what/i/am/looking:for'
-      modifyKeyValue  ../config/object.yaml 'where/is'
-      removeKeyValue  ${YAMLOBJECT}         'path:name/to/target:value'
+      findKeyValue    ../config/boot.cfg    'bootcfg:jupiter/menuentry:jupiter-gnome/options/-'
+      insertKeyValue  ${STRING}             'this/is/what/i/am/looking:for' 'inserts_under:looking_for'
+      modifyKeyValue  ../config/object.yaml 'where/is:that' 'change_to_this_from_that'
+      removeKeyValue  ${YAMLOBJECT}         'path:name/to/target/remove:this_and_everything_under_it'
 
       * lists are found via '/-'
       * values identify branches with identical key names, ':' is used to isolate particular branches via value.
