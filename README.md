@@ -100,3 +100,36 @@
   ├── meta                      meta package information, for meta builds (patches, configs, portage is not perfect)
 ```
   
+  #### <u> YAML UTILITY </u>
+
+    use YAML w/ BASH, to pass yaml objects as strings or file references.
+    functions:
+
+      path spec - 'KEY:VALUE/NEXT_KEY:NEXT_VALUE/ETC/ETC/LIST_ITEMS/-'
+
+      findKeyValue    ../config/boot.cfg    'bootcfg:jupiter/menuentry:jupiter/gnome/options/-'
+      insertKeyValue  ${STRING}             'this/is/what/i/am/looking:for'
+      modifyKeyValue  ../config/object.yaml 'where/is'
+      removeKeyValue  ${YAMLOBJECT}         'path:name/to/target:value'
+
+      * lists are found via '/-'
+      * values identify branches with identical key names, ':' is used to isolate particular branches via value.
+
+  #### <u> MGET UTILITY </u>
+
+    mget <REMOTE/LOCAL URI> <LOCAL>
+    ex. mget http://pkg.hypokrites/me/distfiles/distfile.tar.gz ./
+
+    supports -> rsync:// file:// http:// ftp://
+    waiting on ssh/scp support
+
+  #### <u> BASTION FIREWALL </u>
+
+    this script is a precursor to 1.X + services, firewall, ... are integrated.
+    requires a unified runtime or multiplicity of configs supporting builds for different distros.
+    BPF Inclusion during 1.X : 'partial integrals'
+
+  #### <u> TESTING PLAN </u>
+
+    YAML Configs, bind test vectors with strict output parameters
+    Each component script will have a testing facility w/ a parameter for loading a vector set.

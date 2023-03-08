@@ -1,5 +1,12 @@
 #!/bin/bash
 
+#	when refactoring to many types of F/S, rememeber, disks are configured, before operation, so sense F/S type, and use path
+#	to realize important qualifiers, like boot-parts/datasets/subvols,etc....
+#
+#	ergo, a path is what will be used to determine specs, except in the cases like boot disk partitions where EFI is constant.
+#	&&, layered procs/funcs must be used to seamlessly and effeciently apply uniform application across many F/S types. 
+
+
 SCRIPT_DIR="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 SCRIPT_DIR="${SCRIPT_DIR%/*}"
 
@@ -25,30 +32,103 @@ source ${SCRIPT_DIR}/bash/yaml.sh
 
 function build_kernel()
 {
+
+	#	ex.	build_kernel
+
+	_bootPart=${1:?}
+	_fsType="$(df ${_bootPart} | awk '{print $2}')"
+	_rootFS=""
+
+	case ${_fsType} in
+		zfs)
+			_rootFS="real_root=ZFS=$(getZFS ${_bootPart})"
+		;;
+		*)
+			printf "unsupported file system type. ${0} for ${1}"
+		;;
+	esac
+
 	#cv = current running kernel
 	#lv = current installed current	(may only need to be 'installed', not emerged)
 	#nv = current unmasked most current package, would need to be installed, after emerging
 
+	# running kernel
 	cv="$(uname --kernel-release)"
 	cv="${cv%-gentoo*}"
 
-	lv="$(qlist -Iv | \grep 'sys-kernel/gentoo-sources' | head -n 1)"
-	lv="${lv#*sources-}"
+	# LV HAS TO POINT TO THE KERNEL-CURRENT REPO, ALSO GOOD TO CHECK IF ALREADY EMERGED OFCOURSE
+	# installed version, latest
+	iv="$(qlist -Iv | \grep 'sys-kernel/gentoo-sources' | head -n 1)"
+	iv="${iv#*sources-}"
 
+	# latest, built version (kernels/current)
+	lv="$(getKVER)"
+	lv="${lv%-gentoo*}"
+	lv="${lv#*linux-}"
+
+	# newest version available through portage
 	nv="$(equery -CN list -po gentoo-sources | grep -v '\[M' | awk '{print $4}' | tail -n 1)"
 	nv="${nv%:*}"
 	nv="${nv##*-}"
 
+	# boot kernel, assigned @ /boot/...conf
+	#	* get current rootfs (ex. jupiter/gnome)
+	#	* find if exists @ boot
+	#	* if so, what is $bv, kernel assigned to rootfs.
+
 	echo "cv = $cv ; lv = $lv ; nv  = $nv"
 	_compare="${nv}\n${lv}"
+
+
+	# build a new kernel ?	-- nv > lv	... make clean, make olddefconfig ...
+
+	# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	[[ ${cv} == ${nv} ]] && ${}
 
 	# lv, the currently highest installed version, will not be at the bottom if there is a newer unmasked version
 	[[ ${lv} != "$(printf $_compare | sort --version-sort | tail -n 1)" ]] && { 
-		emerge $emergeOpts sys-kernel/gentoo-sources-$nv;
-		#lv=${nv}
+
+		#echo "emerge $emergeOpts sys-kernel/gentoo-sources-$nv"
+		#sleep 30
+
+		#emerge $emergeOpts =sys-kernel/gentoo-sources-$nv --ask=n;
+		lv=${nv}
 		eselect kernel set linux-${lv}-gentoo
+
+		eselect kernel show
+		sleep 30
 
 		_kernels_current="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/root")"
 		_kernel='/usr/src/linux/'

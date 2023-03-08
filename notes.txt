@@ -82,6 +82,8 @@ goals :
 
   - figure out why fstab is not loading up the pool/swap [install]
 
+  - figure out how to have non-leaf nodes in YAML w/ forward slashes '/'
+
   ?
   ?
   ?
