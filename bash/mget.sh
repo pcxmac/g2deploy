@@ -176,18 +176,16 @@ function mget()
 			if [[ -z ${destination} ]]
 			then
 				echo "$(getFTP ${url})"
-				echo "shall not"
+				#echo "shall not"
 			else
 				getFTP "${url}" "${destination}"
 				[[ -d ${destination}/${url#*://} ]] && {
-					echo "glop"
 					cp ${destination}/${url#*://}/ ${destination}/ -Rp
 				} || {
-					echo "singular"
 					cp ${destination}/${url#*://} ${destination}/ -p
 				}
 
-				echo "${destination}/${url#*://}"
+				#echo "${destination}/${url#*://}"
 
 				url=${url#*://}
 				url=${url%%/*}
@@ -200,7 +198,6 @@ function mget()
 				echo "$(getHTTP ${url})"
 			else
 				getHTTP "${url}" "${destination}" 
-				echo "precusor"
 				[[ -d ${destination}/${url#*://} ]] && {
 					cp ${destination}/${url#*://}/ ${destination}/ -Rp
 				} || {
