@@ -37,8 +37,6 @@ source ${SCRIPT_DIR}/bash/yaml.sh
 function build_kernel()
 {
 
-	#	ex.	build_kernel
-
 	_bootPart=${1:?}
 	_fsType="$(df ${_bootPart} | awk '{print $2}' | tail -n 1)"
 	_rootFS=""
@@ -52,10 +50,6 @@ function build_kernel()
 			return
 		;;
 	esac
-
-	#cv = current running kernel
-	#lv = current installed current	(may only need to be 'installed', not emerged)
-	#nv = current unmasked most current package, would need to be installed, after emerging
 
 	# current kernel
 	cv="$(uname --kernel-release)"
@@ -89,12 +83,9 @@ function build_kernel()
 		_kernels_current="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/root")"
 		_kernel='/usr/src/linux/'
 
-		# if the installed version, is not the latest, install the latest...
-		# if the newest version is not the latest version, it needs a config, because it was just installed
-
 		[[ ${iv} == ${nv} ]] && { 
 			echo "cleaning up existing kernel build..."
-			#(cd ${_kernel}; make clean); 
+			(cd ${_kernel}; make clean); 
 		}
 
 	 	[[ ${iv} != ${nv} ]] && {
@@ -133,14 +124,13 @@ function build_kernel()
 		# initramfs is per install
 		#mv ${_offset}/initramfs-${nv}-${_suffix}.img ${_offset}/${nv}-${_suffix}/initramfs
 
-		# replace portage/kernels/current with current
-		mv ${_kernels_current}/kernels/current/* ${_kernels_current}/kernels/deprecated/
+		[[ "$(ls -ail ${_kernels_current}/kernels/current/ | wc -l)" != '2' ]] && {
+			mv ${_kernels_current}/kernels/current/* ${_kernels_current}/kernels/deprecated/
+		}
 		mv ${_offset}/${nv}-${_suffix}/ ${_kernels_current}/kernels/current/
 
 		sync
-
 	}
-
 }
 
 function checkHosts()
@@ -610,6 +600,8 @@ function install_modules()
 	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/kernel ftp)"
 
 	kver="${kver#*linux-}"
+
+	echo "mget "${ksrc}${kver}/" "${offset}/boot/LINUX/""
 
 	mget "${ksrc}${kver}/" "${offset}/boot/LINUX/"
 

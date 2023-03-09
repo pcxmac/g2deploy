@@ -1,5 +1,23 @@
 goals : 
 
+YADAYADA
+
+  update update work=/ still bonks the portage/repos/gentoo.conf and points esync to global. 
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------
+
+
+
+
+
+
   Friday -                 
     KERNEL BLD service      (update)
     zfs page file generator (installer) 
