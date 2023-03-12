@@ -1,7 +1,9 @@
-rsync://mirror.rackspace.com/gentoo/snapshots
-#rsync://rsync31.us.gentoo.org/gentoo/snapshots
-#rsync://rsync.nl.gentoo.org/gentoo/snapshots
-#rsync://rsync.uk.gentoo.org/gentoo/snapshots
+#
+#rsync://mirror.rackspace.com/gentoo/snapshots
+#0o
+rsync://rsync31.us.gentoo.org/gentoo/snapshots
+rsync://rsync.nl.gentoo.org/gentoo/snapshots
+rsync://rsync.uk.gentoo.org/gentoo/snapshots
 #rsync://rsync.jp.gentoo.org/gentoo/snapshots
 #rsync://rsync.kr.gentoo.org/gentoo/snapshots
 #rsync://rsync.ca.gentoo.org/gentoo/snapshots

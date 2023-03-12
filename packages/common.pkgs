@@ -241,7 +241,6 @@ dev-python/pyparsing
 dev-python/PySocks
 dev-python/requests
 dev-python/setuptools
-dev-python/setuptools_scm
 dev-python/tomli
 dev-python/urllib3
 dev-python/wheel

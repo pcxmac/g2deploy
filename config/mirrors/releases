@@ -11,7 +11,7 @@ rsync://mirror.leaseweb.com/gentoo/releases/
 #https://mirrors.rit.edu/gentoo/
 rsync://mirrors.rit.edu/gentoo/releases/
 #https://mirror.rackspace.com/gentoo/
-rsync://mirror.rackspace.com/gentoo/releases/
+#rsync://mirror.rackspace.com/gentoo/releases/
 
 rsync://mirror.csclub.uwaterloo.ca/gentoo-distfiles/releases/
 rsync://mirrors.tera-byte.com/gentoo/releases/
