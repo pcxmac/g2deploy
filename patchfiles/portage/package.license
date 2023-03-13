@@ -1,0 +1,7 @@
+# COMMON LICENSES (17.X)
+
+sys-kernel/linux-firmware linux-fw-redistributable
+sys-kernel/linux-firmware no-source-code
+sys-firmware/intel-microcode intel-ucode
+sys-apps/man-pages-posix freedist
+# GNOME LICENSE

@@ -101,14 +101,15 @@ do
 			pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
 			patchSystem "${_profile}" 'update' > "${directory}/patches.sh"
 
-
-
 			if [[ ${directory} == "/" ]]
 			then
 				update_runtime
 			else
 				clear_mounts "${directory}"
 				mounts "${directory}"
+				echo "check now"
+				sleep 30
+
 				chroot "${directory}" /bin/bash -c "update_runtime"
 				clear_mounts "${directory}"
 			fi

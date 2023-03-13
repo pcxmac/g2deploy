@@ -1,8 +1,0 @@
-
-
-
-
-This directory is only tracking generic boot/refind information & patched over genkernel 
-(need to submit pull request for zfs) + libfuse files (waiting for original source)
-
-System specific user files like /root and /home + /etc/ are omitted. 
