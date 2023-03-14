@@ -399,7 +399,7 @@ function patchFiles_portage()
 	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles rsync)"	
 	common_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/common" | sed 's/ //g' | sed "s/\"/'/g")"
 	spec_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/${_profile}" | sed 's/ //g' | sed "s/\"/'/g")"
-0
+
 	mget "${psrc}/portage" "${offset}/etc/" 
 
 	# if directories exist for new sources, zap them
@@ -597,7 +597,7 @@ function pkgProcessor()
 	diffPkgs="$(awk 'FNR==NR {a[$0]++; next} !($0 in a)' <(echo "${iBase}") <(echo "${allPkgs}"))"
 	echo "${diffPkgs}" | sed '/^#/d' | sed '/^$/d'
 
-#	sleep 20
+	#	sleep 20
 }
 
 function install_modules()
