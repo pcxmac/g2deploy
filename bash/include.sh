@@ -91,7 +91,7 @@ function build_kernel()
 
 	 	[[ ${iv} != ${nv} ]] && {
 			echo "installing new version of gentoo-sources."
-			emerge $emergeOpts =sys-kernel/gentoo-sources-${nv}0s; 
+			emerge $emergeOpts =sys-kernel/gentoo-sources-${nv}; 
 			cat ${_kernels_current}/*/config* > /usr/src/linux/.config;
 			iv=${nv}
 			# if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
