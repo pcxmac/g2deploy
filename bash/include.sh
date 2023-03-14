@@ -40,6 +40,7 @@ function build_kernel()
 	_bootPart=${1:?}
 	_fsType="$(df ${_bootPart} | awk '{print $2}' | tail -n 1)"
 	_rootFS=""
+	emergeOpts="--ask=n"
 
 	case ${_fsType} in
 		zfs)
@@ -90,7 +91,7 @@ function build_kernel()
 
 	 	[[ ${iv} != ${nv} ]] && {
 			echo "installing new version of gentoo-sources."
-			emerge $emergeOpts =sys-kernel/gentoo-sources-${nv}; 
+			emerge $emergeOpts =sys-kernel/gentoo-sources-${nv}0s; 
 			cat ${_kernels_current}/*/config* > /usr/src/linux/.config;
 			iv=${nv}
 			# if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
