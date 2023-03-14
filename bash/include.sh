@@ -84,25 +84,27 @@ function build_kernel()
 		_kernels_current="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/root")"
 		_kernel='/usr/src/linux/'
 
-		[[ ${iv} == ${nv} ]] && { 
-			echo "cleaning up existing kernel build..."
-			(cd ${_kernel}; make clean); 
-		}
-
 	 	[[ ${iv} != ${nv} ]] && {
 			echo "installing new version of gentoo-sources."
 			emerge $emergeOpts =sys-kernel/gentoo-sources-${nv}; 
-			cat ${_kernels_current}/*/config* > /usr/src/linux/.config;
-			iv=${nv}
-			# if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
-			(cd ${_kernel}; make olddefconfig)
-		}
+		}	
 
 		# suffix might need to be altered to fit possible versioning which meddles with -gentoo
 		_suffix="gentoo"
 		eselect kernel set linux-${nv}-${_suffix}
 		eselect kernel show
 		sleep 1
+
+		rm /usr/src/linux/.config
+		cat ${_kernels_current}/kernels/current/${lv}-gentoo/config* > /usr/src/linux/.config;
+		iv=${nv}
+		# if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
+		(cd ${_kernel}; make clean);
+		echo "--- cleaned ---"
+		(cd ${_kernel}; make olddefconfig)
+		echo "--- olddefconfig ---"
+		(cd ${_kernel}; make prepare)
+		echo "--- prepared ---"
 
 		(cd ${_kernel}; make -j$(nproc) )
 		(cd ${_kernel}; make modules_install)
