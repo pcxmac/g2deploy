@@ -69,11 +69,8 @@ source ${SCRIPT_DIR}/bash/include.sh
 	patchFiles_user "${directory}" "${_profile}"
 	patchFiles_sys "${directory}" "${_profile}"
 	patchFiles_portage "${directory}" "${_profile}"
-
 	zfs_keys "${dataset}"
-
 	pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
-
 	patchSystem "${_profile}" 'deploy' > "${directory}/patches.sh"
 	patchSystem "${_profile}" 'services' > "${directory}/services.sh"
 

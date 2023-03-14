@@ -380,8 +380,8 @@ function patchSystem()
 			curl "$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/${profile}.services" | sed 's/ //g')" --silent | sed '/^#/d'
 		;;
 		update)
-				# ${profile}.update
-				echo "echo '...';"
+			curl "$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/common.updates" | sed 's/ //g')" --silent | sed '/^#/d'
+			curl "$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/${profile}.updates" | sed 's/ //g')" --silent | sed '/^#/d'
 		;;
 		fix=*)
 				# ${profile}.fix-0xXXXXXXXX (hex)
@@ -399,7 +399,7 @@ function patchFiles_portage()
 	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles rsync)"	
 	common_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/common" | sed 's/ //g' | sed "s/\"/'/g")"
 	spec_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/${_profile}" | sed 's/ //g' | sed "s/\"/'/g")"
-
+0
 	mget "${psrc}/portage" "${offset}/etc/" 
 
 	# if directories exist for new sources, zap them
@@ -424,7 +424,8 @@ function patchFiles_portage()
 		then
 			sed -i "/$PREFIX/c $line" "${offset}/etc/portage/make.conf"
 		fi
-	done < <(curl "${common_URI}.conf" --silent)
+	# drop empty lines and comments
+	done < <(curl "${common_URI}.conf" --silent | sed 's/#.*$//' | sed '/^[[:space:]]*$/d')
 
 	while read -r line; do
 		((LineNum+=1))
@@ -434,8 +435,8 @@ function patchFiles_portage()
 		then
 			sed -i "/$PREFIX/c $line" "${offset}/etc/portage/make.conf"
 		fi
-	done < <(curl "${spec_URI}.conf" --silent)
-
+	# drop empty lines and comments
+	done < <(curl "${spec_URI}.conf" --silent | sed 's/#.*$//' | sed '/^[[:space:]]*$/d' )
 }
 
 function patchFiles_user() 
@@ -566,6 +567,7 @@ function mounts()
 	# need a fusable link mechanism, not fuse, rather a modular/extenisble system of interlinking assets.
 
 	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"
+	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/distfiles "${offset}/var/lib/portage/distfiles"
 
 }
 

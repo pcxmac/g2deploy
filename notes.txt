@@ -2,12 +2,12 @@ goals :
 
 YADAYADA
 
-  update update work=/ still bonks the portage/repos/gentoo.conf and points esync to global. 
+  x 
+  sed -S unrecognized command @ plasmad deploy right before locales generation. 
+  hosts file needs to reflect the current pkg-server ON { deploy / update / install } ...
+  clear mounts is not nullifying tmp or other mounts unless in parent directory ,,.. verify/reproduce
 
-
-
-
-
+  need a tmpfs option for deployments, prior to copying. (--test-deployment) perhaps. work=/tmp/directory
 
 
 

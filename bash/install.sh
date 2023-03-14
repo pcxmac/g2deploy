@@ -417,12 +417,16 @@ function install_system() {
 					install_system "${vYAML}"
 					setup_boot "${vYAML}"
 					modify_boot "${vYAML}"
+					# PATCH SYSTEM - POST INSTALL
+
 				fi 
 				if [[ "${selection,,}" == "add" ]]
 				then
 					install_system "${vYAML}"
 					echo "modifying boot record ..."
 					modify_boot "${vYAML}"
+					# PATCH SYSTEM - POST INSTALL
+					# 
 
 					# solve - mv: cannot move '/srv/zfs/test/plasma/boot/LINUX//pkg.hypokrites.me/kernels/current/6.1.1-gentoo/' to '/srv/zfs/test/plasma/boot/LINUX/6.1.1-gentoo': Directory not empty
 	#echo "synchronizing disks"

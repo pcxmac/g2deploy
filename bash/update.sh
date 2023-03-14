@@ -8,6 +8,8 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 function update_runtime()
 {
+	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+
 	echo "UPDATE::RUNTIME_UPDATE !"
 	exclude_atoms="-X sys-fs/zfs-kmod -X sys-fs/zfs"
 	eselect profile show
@@ -107,8 +109,16 @@ do
 			else
 				clear_mounts "${directory}"
 				mounts "${directory}"
-				echo "check now"
-				sleep 30
+
+				# networking -preworkup -- a prelude for a networking patch script, most likely only on install, but something like this
+				# is required to build up the deployment ... thinking.
+				pkgHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/host")"
+				bldHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:buildserver/host")"
+				pkgIP="$(getent ahostsv4 ${pkgHOST} | head -n 1 | awk '{print $1}')"
+				bldIP="$(getent ahostsv4 ${bldHOST} | head -n 1 | awk '{print $1}')"
+				sed -i "/${pkgHOST}$/c${pkgIP}\t${pkgHOST}" ${directory}/etc/hosts
+				sed -i "/${bldHOST}$/c${bldIP}\t${bldHOST}" ${directory}/etc/hosts
+				################ work around ############################################################################################# 
 
 				chroot "${directory}" /bin/bash -c "update_runtime"
 				clear_mounts "${directory}"
