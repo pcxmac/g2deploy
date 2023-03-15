@@ -27,6 +27,14 @@ source ${SCRIPT_DIR}/bash/include.sh
     do
         case "${x}" in
             work=*)
+
+				# derive work location type: { tmpfs ; zfs ; btrfs ; xfs|ext4 }
+
+				_location="${x#*work=}"
+
+				
+
+
                 #? zfs= btrfs= generic= tmpfs=
 				directory=$(getZFSMountPoint "${x#*=}")
 				if [[ -n ${directory} ]]
