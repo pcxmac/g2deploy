@@ -303,7 +303,7 @@ function deploySystem()
 
 	if [[ "${av##*-}" != "${pv##*-}" ]]
 	then 
-		emerge portage --oneshot --ask=n
+		emerge ${emergeOpts} portage --oneshot --ask=n
 	fi
 
 	echo "DEPLOY::ISSUING UPDATES"
@@ -409,12 +409,14 @@ function patchFiles_portage()
 	if [[ -d ${offset}/etc/portage/package.license ]];then rm "${offset}/etc/portage/package.license" -R; fi
 	if [[ -d ${offset}/etc/portage/package.use ]];then rm "${offset}/etc/portage/package.use" -R; fi
 	if [[ -d ${offset}/etc/portage/package.mask ]];then rm  "${offset}/etc/portage/package.mask" -R;fi
+	if [[ -d ${offset}/etc/portage/package.unmask ]];then rm  "${offset}/etc/portage/package.unmask" -R;fi
 	if [[ -d ${offset}/etc/portage/package.accept_keywords ]];then rm "${offset}/etc/portage/package.accept_keywords" -R;fi
 
 	# compile common and spec rules in to /etc/portage/*.use|accept*|mask|license
 	echo -e "$(mget ${common_URI}.uses)\n$(mget ${spec_URI}.uses)" | uniq > ${offset}/etc/portage/package.use
 	echo -e "$(mget ${common_URI}.keys)\n$(mget ${spec_URI}.keys)" | uniq > ${offset}/etc/portage/package.accept_keywords
 	echo -e "$(mget ${common_URI}.mask)\n$(mget ${spec_URI}.mask)" | uniq > ${offset}/etc/portage/package.mask
+	echo -e "$(mget ${common_URI}.unmask)\n$(mget ${spec_URI}.unmask)" | uniq > ${offset}/etc/portage/package.unmask
 	echo -e "$(mget ${common_URI}.license)\n$(mget ${spec_URI}.license)" | uniq > ${offset}/etc/portage/package.license
 
 	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf

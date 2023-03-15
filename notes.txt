@@ -4,9 +4,9 @@ YADAYADA
 
   x 
   x
-  hosts file needs to reflect the current pkg-server ON { deploy / update } ...
+  x
   clear mounts is not nullifying tmp or other mounts unless in parent directory ,,.. verify/reproduce
-
+  fix the emerge opts for update_runtime, stop building the same fucking packages over and over again
   need a tmpfs option for deployments, prior to copying. (--test-deployment) perhaps. work=/tmp/directory
 
 
