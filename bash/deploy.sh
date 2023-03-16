@@ -41,7 +41,7 @@ source ${SCRIPT_DIR}/bash/include.sh
 				then	
 					echo "${directory}..."
         	        dataset="${x#*=}"
-					if [[ -n "$(zfs list -t snapshot | \grep "${dataset}@safe")" ]];then zfs destroy "${dataset}@safe"; echo "deleting ${dataset}@safe";fi
+					#if [[ -n "$(zfs list -t snapshot | \grep "${dataset}@safe")" ]];then zfs destroy "${dataset}@safe"; echo "deleting ${dataset}@safe";fi
 				else
 					echo "dataset does not exist, exiting."
 					exit
@@ -52,7 +52,7 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 	echo "DIRECTORY == ${directory}"
 
-	if [[ -z "${directory}" ]];then echo "Non Existant Work Location for ${dataset}"; exit; fi
+	if [[ -z "${directory}" ]];then echo "Non Existent Work Location for ${dataset}"; exit; fi
 
 	for x in "$@"
     do

@@ -13,7 +13,14 @@ function update_runtime()
 	echo "UPDATE::RUNTIME_UPDATE !"
 	exclude_atoms="-X sys-fs/zfs-kmod -X sys-fs/zfs"
 	eselect profile show
-	PORTAGE_RSYNC_EXTRA_OPTS="--stats" sudo emerge --sync --verbose --backtrack=99 --ask=n;sudo eix-update
+
+	#nmap pkg.hypokrites.me
+
+	#eix dev-haskell/c2hs
+
+	sleep 10
+
+	PORTAGE_RSYNC_EXTRA_OPTS="--stats" sudo emerge --sync --verbose --backtrack=99 --ask=y;sudo eix-update
 
 	if [[ -f /patches.sh ]]
 	then

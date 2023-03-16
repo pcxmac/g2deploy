@@ -19,5 +19,7 @@ do
 
 		./deploy.sh work=$work build=$build deploy
 		./update.sh work=$work update
+
+		zfs snapshot ${dset}@safe
 	fi
 done
