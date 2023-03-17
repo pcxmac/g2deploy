@@ -15,12 +15,10 @@ function update_runtime()
 	eselect profile show
 
 	#nmap pkg.hypokrites.me
-
 	#eix dev-haskell/c2hs
+	#sleep 10
 
-	sleep 10
-
-	PORTAGE_RSYNC_EXTRA_OPTS="--stats" sudo emerge --sync --verbose --backtrack=99 --ask=y;sudo eix-update
+	PORTAGE_RSYNC_EXTRA_OPTS="--stats" sudo emerge --sync --verbose --backtrack=99 --ask=n;sudo eix-update
 
 	if [[ -f /patches.sh ]]
 	then
@@ -44,10 +42,12 @@ function update_runtime()
 	then 
 		emerge portage --oneshot --ask=n
 	fi
-		
-	sudo emerge -b -uDN --with-bdeps=y @world --ask=n --binpkg-respect-use=y --binpkg-changed-deps=y ${exclude_atoms}
+
+	emerge --info ${emergeOpts} > /update.emerge.info
+
+	sudo emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n ${exclude_atoms}
 	eselect news read new
-	
+
 }
 
 export PYTHONPATH=""
@@ -109,6 +109,7 @@ do
 
 			pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
 			patchSystem "${_profile}" 'update' > "${directory}/patches.sh"
+			patchFiles_portage "${directory}" "${_profile}"
 
 			if [[ ${directory} == "/" ]]
 			then
@@ -128,9 +129,9 @@ do
 				################ work around ############################################################################################# 
 
 				chroot "${directory}" /bin/bash -c "update_runtime"
+				patchFiles_sys "${directory}" "${_profile}"
 				clear_mounts "${directory}"
 			fi
-			patchFiles_sys "${directory}" "${_profile}"
 	;;
 	esac
 done

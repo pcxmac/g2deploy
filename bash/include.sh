@@ -302,7 +302,8 @@ function deploySystem()
 	echo "DEPLOY::CHECKING PORTAGE ${av##*-}/${pv##*-}"
 
 	if [[ "${av##*-}" != "${pv##*-}" ]]
-	then 
+	then
+		emerge --info ${emergeOpts} > /deploy.emerge.info
 		emerge ${emergeOpts} portage --oneshot --ask=n
 	fi
 

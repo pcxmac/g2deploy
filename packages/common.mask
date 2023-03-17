@@ -5,6 +5,8 @@
 
 <=sys-libs/glibc-2.35
 
->=sys-kernel/gentoo-sources-6.2.0
-<=sys-kernel/gentoo-sources-5.0
+>=sys-kernel/gentoo-sources-6.3.0
+<sys-kernel/gentoo-sources-5.15
+
+<media-libs/mesa-23.0.0-r1
 

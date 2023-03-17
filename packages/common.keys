@@ -10,3 +10,4 @@ app-admin/haskell-updater           ~amd64
 dev-haskell/extensible-exceptions   ~amd64
 dev-lang/ghc                        ~amd64
 
+media-libs/mesa						~amd64

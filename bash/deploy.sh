@@ -107,7 +107,7 @@ source ${SCRIPT_DIR}/bash/include.sh
 	#echo "services URL = ${services_URL}"
 	#chroot "${directory}" /bin/bash -c "services ${services_URL}"
 
-	# some usr space patches are required before package build, but are then overwritten, this will reafirm the patches
+	# some usr space patches are required before package build, but are then overwritten, this will reaffirm the patches
 	patchFiles_sys "${directory}" "${_profile}"
 
 	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key "${dataset}"
