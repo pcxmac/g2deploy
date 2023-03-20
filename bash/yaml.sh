@@ -361,37 +361,3 @@ function modifyKeyValue()
 
 	done < <(printf '%s\n' "${_yaml}")
 }
-
-	# alternate source provider
-
-
-	std_o="# Install Config for @ ${dhost}:123456\n"
-	std_o="${std_o}  install: ${dpool}/${ddataset}\n"
-	std_o="${std_o}    disks: ZORO\n"
-	std_o="${std_o}      - /dev/sda3\n"
-	std_o="${std_o}      - /dev/sdb3\n"
-	std_o="${std_o}      - /dev/sdc3\n"
-	std_o="${std_o}      - /dev/sdd3\n"
-	std_o="${std_o}      pool: ${dpool}\n"
-	std_o="${std_o}      dataset: ${ddataset}\n"
-	std_o="${std_o}      path: ${dpath}\n"
-	std_o="${std_o}      format: zfs\n"
-	std_o="${std_o}      compression: lz4\n"
-	std_o="${std_o}      encryption: aes-gcm-256\n"
-	std_o="${std_o}        key: /srv/crypto/zfs.key\n"
-	std_o="${std_o}    source: ${spool}/${sdataset}@${ssnapshot}\n"
-	std_o="${std_o}      host:    MUH HOST\n"
-	std_o="${std_o}      pool: /source\n"
-	std_o="${std_o}      dataset:der_set\n"
-	std_o="${std_o}      snapshot:   ein_shoot\n"
-	std_o="${std_o}      format: 432sfd.,dfs\n"
-	std_o="${std_o}    kernel: ${kver}\n"
-	std_o="${std_o}    boot: EFI\n"
-	std_o="${std_o}      partition:/dev/sda2\n"
-	std_o="${std_o}      loader: refind\n"
-	std_o="${std_o}      HELP: YOYOMA\n"
-	std_o="${std_o}    swap: file\n"
-	std_o="${std_o}      location: ${dpool}/swapr\n"
-	std_o="${std_o}      format: 'zfs dataset, no CoW'\n"
-	std_o="${std_o}    profile: END_OF_LINE\n"
-

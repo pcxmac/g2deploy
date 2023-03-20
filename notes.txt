@@ -6,9 +6,14 @@ YADAYADA
   x
   x
   clear mounts is not nullifying tmp or other mounts unless in parent directory ,,.. verify/reproduce
-  fix the emerge opts for update_runtime, stop building the same fucking packages over and over again
+  x
   need a tmpfs option for deployments, prior to copying. (--test-deployment) perhaps. work=/tmp/directory
   zfs functions appear broken, key change is complaining about leading slash in directory w/ given pool/dataset ?
+  focus on installer, switch to yaml only configs (preconfig)
+  create a tmpfs testing mounting scheme for installs --test
+  integrate new kernels in update (--kernel)
+  bring in a yaml<>refind filter, make adjustments in yaml, read to, write back.
+  integrate a public-wireguard interface for all instances, same pre-shared key, inter-groper
 
 
 ------------------------------------------------------------------------------
