@@ -190,6 +190,7 @@ function mget()
 			then
 				echo "$(getFTP ${url})"
 			else
+				echo "$(getFTP ${url})"
 				getFTP "${url}" "${destination}"		
 			fi
 		;;
@@ -198,6 +199,7 @@ function mget()
 			then
 				echo "$(getHTTP ${url})"
 			else
+				echo "$(getHTTP ${url})"
 				getHTTP "${url}" "${destination}" 
 			fi
 		;;

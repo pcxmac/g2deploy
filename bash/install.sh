@@ -288,7 +288,7 @@ function setup_boot() {
 	local disk="$(findKeyValue "${vYAML}" install/disks/-)"
 	local ddataset="$(findKeyValue "${vYAML}" install/disks/dataset)"
 	local dpath="$(findKeyValue "${vYAML}" install/disks/path)"
-	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles ftp)/boot/*"
+	local boot_src="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles ftp)"
 	local boot_partition="$(findKeyValue "${vYAML}" install/boot/partition)"
 
 	local dstDir="${dpath}/${ddataset}"
@@ -296,7 +296,7 @@ function setup_boot() {
 	disk=${disk#*-}
 
 	mount "${boot_partition}" "${dstDir}/boot"
-	mget "${boot_src}" "${dstDir}/boot"
+	mget "${boot_src}/boot/" "${dstDir}"
 	install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR ... MGET BREAKS IF THIS IS BEFORE THE PARENT, APPARENTLY MGET NEEDS AN EMPTY FOLDER...
 	umount "${dstDir}/boot"
 }
