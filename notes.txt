@@ -18,9 +18,9 @@ YADAYADA
     INTER-NET will have to be prescribed, config'd, or db-lookup (DNS). 
     i.<domain>.tld = 10.0.0.0/8
     
-    LOCAL-NET = 172.16.0.0  (local lan infrastructure)
-    SUB-NET = 192.168.0.0 (container space per VM, machine)
-    INTER-NET = 10.0.0.0 (tunnelling interface ip space)
+    LOCAL-NET = 172.16-31.0.0/12  (local lan infrastructure)
+    SUB-NET = 192.168.0.0/16 (container space per VM, machine)
+    INTER-NET = 10.0.0.0/8 (tunnelling interface ip space)
 
 
   hierarchy ( dns records are retrieved through a secure keyhole )
