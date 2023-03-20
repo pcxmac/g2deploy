@@ -5,10 +5,10 @@
 ###### - Create a reliable build service for testing package combinations
 
 ### Version/Feature Targets:
-###### - 0.X <span style="color:red">Currently in pre-release</span>
+###### - 0.X <span style="color:red">Currently in pre-release</span> 
 ###### - 0.1 Stable installs, updates and deployments w/ ZFS 
 ###### - 0.2 Stable installs, updates and deployments w/ ZFS;BTRFS;XFS;EXT4
-###### - 0.3 Method for integrating 'g2deploy' in to a new environment (installer)
+###### - 0.3 Method for integratiang 'g2deploy' in to a new environment (installer)
 ###### - 0.4 Meta Package Manager w/ package repo (git based)
 ###### - 0.5 Profiling for updates/installs
 ###### - 0.6 Patch-Fixes + signed binary packages
