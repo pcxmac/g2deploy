@@ -41,6 +41,25 @@
 #	supports extensible options (like rsync)	(*)
 #	supports testing w/ test_map.xml file		(-t)
 
+function dirCount()
+{
+	_url="${1:?}"
+	_proto="${_url%://*}"
+	_url="${_url#${_proto}://*}"
+	_host="${_url%%/*}"
+	_url="${_url#*${_host}}"
+	_url="$(printf $_url | sed 's/\/$//' | sed 's/^\///')"
+	_count=0
+	#echo "proto: $_proto | host = $_host | url = $_url | *url = ${_url#*/}"
+	while [[ ${_url} != ${_url#*/} ]]
+	do
+		((_count++))
+		_url="${_url#*/}"
+	done
+	printf '%s\n' $_count
+}
+
+
 function getSSH()
 {
 	echo "getSSH"
@@ -107,10 +126,10 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 		then
 			if [[ -z ${destination} ]]
 			then
-				wget -O - --reject "index.*" -q --show-progress --no-parent "${url}" 2>/dev/null
+				wget -nH --cut-dirs=$(dirCount ${url}) -O - --reject "index.*" -q --show-progress --no-parent "${url}" 2>/dev/null
 			else
 				#echo "mget : ${url} ==> ${destination%/*}" 2>&1
-				wget -r --reject "index.*" -q --show-progress --no-parent "${url}" -P "${destination%/*}" 2>&1 | pv --progress 1>/dev/null
+				wget -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress --no-parent "${url}" -P "${destination%/*}" 2>&1 | pv --progress 1>/dev/null
 			fi
 			waiting=0
 		else
@@ -130,6 +149,8 @@ function getFTP()
 	local ftpCode=""
 	local pause=60
 
+	#echo "cutdirs = $(dirCount $url)" 2>&1
+
 	while [[ ${waiting} == 1 ]]
 	do
 		ftpCode="$(wget -NS --spider "${url%\**}" 2>&1 | \grep "No such file *."  | awk '{print $2}')"
@@ -137,13 +158,11 @@ function getFTP()
 		then
 			if [[ -z ${destination} ]]
 			then
-				wget -O - --reject "index.*" -q --show-progress  --no-parent "${url}" 2>/dev/null
+				wget -nH --cut-dirs=$(dirCount ${url}) -O - --reject "index.*" -q --show-progress  --no-parent "${url}" 2>/dev/null
 			else
 				#echo "mget : ${url} ==> ${destination}" 2>&1
-				wget -r --reject "index.*" -q --show-progress  --no-parent "${url}" -P "${destination}" 2>&1 | pv --progress 1>/dev/null
+				wget -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress  --no-parent "${url}" -P "${destination}" 2>&1 | pv --progress 1>/dev/null
 			fi
-
-
 			waiting=0
 		else
 			waiting=1
@@ -165,9 +184,12 @@ function mget()
 	# filter out invalid use cases
 	local url="$(printf '%s\n' "${1:?}" | sed 's/\*//g')"
 	local destination="$(printf '%s\n' "${2}" | sed 's/\*//g')"
+
 	[[ -n "$(printf "${url}" | grep '/$')" && -z "$(printf "${destination}" | grep '/$')" ]] && { destination="${destination}/"; } 
 
 	#echo "$url --> $destination"
+
+	#echo "$(dirCount $url)"
 
 	# mget types
 	case ${url%://*} in
@@ -179,16 +201,15 @@ function mget()
 				#echo "shall not"
 			else
 				getFTP "${url}" "${destination}"
-				[[ -d ${destination}/${url#*://} ]] && {
-					cp ${destination}/${url#*://}/ ${destination}/ -Rp
-				} || {
-					cp ${destination}/${url#*://} ${destination}/ -p
-				}
+			#	[[ -d ${destination}/${url#*://} ]] && {
+			#		cp ${destination}/${url#*://}/ ${destination}/ -Rp
+			#	} || {
+			#		cp ${destination}/${url#*://} ${destination}/ -p
+			#	}
 
 				#echo "${destination}/${url#*://}"
-
-				url=${url#*://}
-				url=${url%%/*}
+				#url=${url#*://}
+				#url=${url%%/*}
 				#rm ${destination:?}/${url:?} -R
 			fi
 		;;
@@ -198,14 +219,14 @@ function mget()
 				echo "$(getHTTP ${url})"
 			else
 				getHTTP "${url}" "${destination}" 
-				[[ -d ${destination}/${url#*://} ]] && {
-					cp ${destination}/${url#*://}/ ${destination}/ -Rp
-				} || {
-					cp ${destination}/${url#*://} ${destination}/ -p
-				}
-				url=${url#*://}
-				url=${url%%/*}
-				rm ${destination%/*}/${url:?} -R 
+				#[[ -d ${destination}/${url#*://} ]] && {
+				#	cp ${destination}/${url#*://}/ ${destination}/ -Rp
+				#} || {
+				#	cp ${destination}/${url#*://} ${destination}/ -p
+				#}
+				#url=${url#*://}
+				#url=${url%%/*}
+				#rm ${destination%/*}/${url:?} -R 
 			fi
 		;;
 

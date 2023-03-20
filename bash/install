@@ -385,10 +385,10 @@ function install_system()
 	fi
 }
 
-	dataset=""				#	the working dataset of the installation
-	directory=""			# 	the working directory of the prescribed dataset
-	profile=""				#	the build profile of the install
-	selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
+	dataset="";				#	the working dataset of the installation
+	directory="";			# 	the working directory of the prescribed dataset
+	profile="";				#	the build profile of the install
+	selection="";			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
 
 	for x in "$@"
 	do
@@ -404,6 +404,9 @@ function install_system()
 			add)
 				selection="add"
 				checkHosts
+			;;
+			update)
+				echo "update this working directory + boot env"
 			;;
 		esac
 	done

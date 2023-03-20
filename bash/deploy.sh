@@ -16,9 +16,9 @@ source ${SCRIPT_DIR}/bash/include.sh
 #	export -f patchProcessor
 	export -f getG2Profile
 
-	dataset=""				#	the working dataset of the installation
-	directory=""			# 	the working directory of the prescribed dataset
-	selection=""			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
+	dataset="";				#	the working dataset of the installation
+	directory="";			# 	the working directory of the prescribed dataset
+	selection="";			# 	the precursor for the profile, ie musl --> 17.0/musl/hardened { selection --> profile }
 
 	# verify URL's are accessible, exit out if not.
 	checkHosts
