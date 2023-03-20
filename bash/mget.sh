@@ -50,7 +50,6 @@ function dirCount()
 	_url="${_url#*${_host}}"
 	_url="$(printf $_url | sed 's/\/$//' | sed 's/^\///')"
 	_count=0
-	#echo "proto: $_proto | host = $_host | url = $_url | *url = ${_url#*/}"
 	while [[ ${_url} != ${_url#*/} ]]
 	do
 		((_count++))
@@ -90,7 +89,6 @@ function getRSYNC()
 			else
 				if [[ -n ${host} ]]
 				then
-					#echo "rsync -a --no-motd --human-readable --info=progress2 --rsync-path="sudo rsync" "$@"" >> ${SCRIPT_DIR}/bash/output.log
 					rsync -ar --links --no-motd --human-readable --info=progress2 --rsync-path="sudo rsync" $*
 				fi
 			fi
@@ -105,7 +103,6 @@ function getRSYNC()
 
 	if [[ -z ${host} ]]
 	then
-			#echo "rsync -a --no-motd --human-readable --info=progress2 --rsync-path="sudo rsync" "$@"" >> ${SCRIPT_DIR}/bash/output.log
 			rsync -ar --links --no-motd --info=progress2 --human-readable --rsync-path="sudo rsync" "${@#*rsync://}" 
 	fi
 }
@@ -128,7 +125,6 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 			then
 				wget -nH --cut-dirs=$(dirCount ${url}) -O - --reject "index.*" -q --show-progress --no-parent "${url}" 2>/dev/null
 			else
-				#echo "mget : ${url} ==> ${destination%/*}" 2>&1
 				wget -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress --no-parent "${url}" -P "${destination%/*}" 2>&1 | pv --progress 1>/dev/null
 			fi
 			waiting=0
@@ -160,7 +156,6 @@ function getFTP()
 			then
 				wget -nH --cut-dirs=$(dirCount ${url}) -O - --reject "index.*" -q --show-progress  --no-parent "${url}" 2>/dev/null
 			else
-				#echo "mget : ${url} ==> ${destination}" 2>&1
 				wget -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress  --no-parent "${url}" -P "${destination}" 2>&1 | pv --progress 1>/dev/null
 			fi
 			waiting=0
@@ -187,10 +182,6 @@ function mget()
 
 	[[ -n "$(printf "${url}" | grep '/$')" && -z "$(printf "${destination}" | grep '/$')" ]] && { destination="${destination}/"; } 
 
-	#echo "$url --> $destination"
-
-	#echo "$(dirCount $url)"
-
 	# mget types
 	case ${url%://*} in
 
@@ -198,19 +189,8 @@ function mget()
 			if [[ -z ${destination} ]]
 			then
 				echo "$(getFTP ${url})"
-				#echo "shall not"
 			else
-				getFTP "${url}" "${destination}"
-			#	[[ -d ${destination}/${url#*://} ]] && {
-			#		cp ${destination}/${url#*://}/ ${destination}/ -Rp
-			#	} || {
-			#		cp ${destination}/${url#*://} ${destination}/ -p
-			#	}
-
-				#echo "${destination}/${url#*://}"
-				#url=${url#*://}
-				#url=${url%%/*}
-				#rm ${destination:?}/${url:?} -R
+				getFTP "${url}" "${destination}"		
 			fi
 		;;
 		http*)
@@ -219,14 +199,6 @@ function mget()
 				echo "$(getHTTP ${url})"
 			else
 				getHTTP "${url}" "${destination}" 
-				#[[ -d ${destination}/${url#*://} ]] && {
-				#	cp ${destination}/${url#*://}/ ${destination}/ -Rp
-				#} || {
-				#	cp ${destination}/${url#*://} ${destination}/ -p
-				#}
-				#url=${url#*://}
-				#url=${url%%/*}
-				#rm ${destination%/*}/${url:?} -R 
 			fi
 		;;
 
