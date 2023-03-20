@@ -14,7 +14,24 @@ YADAYADA
   integrate new kernels in update (--kernel)
   bring in a yaml<>refind filter, make adjustments in yaml, read to, write back.
   integrate a public-wireguard interface for all instances, same pre-shared key, inter-groper
+    establish a 'protocol-lite' for inquiring about a local-net, works on SUB net as well. 
+    INTER-NET will have to be prescribed, config'd, or db-lookup (DNS). 
+    i.<domain>.tld = 10.0.0.0/8
+    
+    LOCAL-NET = 172.16.0.0  (local lan infrastructure)
+    SUB-NET = 192.168.0.0 (container space per VM, machine)
+    INTER-NET = 10.0.0.0 (tunnelling interface ip space)
 
+
+  hierarchy ( dns records are retrieved through a secure keyhole )
+
+    <domain>.tld (public facing interface)
+
+    i.domain.tld = private.ip (lookup via private/secure dns only) [ auto config wg tunnel ]
+    keyhole.domain.tld  (public service or app such as tunnelling, web-app, etc...)
+    machine.domain.tld  (a floating ip, which is forwardable locally, ex. home computer )
+    VM.domain.tld ( a VM which resides on a local machine, is routed through a virtual switch )
+    service/app.machine.domain.tld - example { proxy.keyhole2.hypokrites.net } [ where the keyhole could be a proxy itself, in the cloud ]
 
 ------------------------------------------------------------------------------
 
