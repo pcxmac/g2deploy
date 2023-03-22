@@ -5,7 +5,7 @@ YADAYADA
   x 
   x
   x
-  clear mounts is not nullifying tmp or other mounts unless in parent directory ,,.. verify/reproduce
+  [waiting to reproduce] clear mounts is not nullifying tmp or other mounts unless in parent directory ,,.. verify/reproduce
   x
   need a tmpfs option for deployments, prior to copying. (--test-deployment) perhaps. work=/tmp/directory
   zfs functions appear broken, key change is complaining about leading slash in directory w/ given pool/dataset ?
@@ -18,9 +18,95 @@ YADAYADA
     INTER-NET will have to be prescribed, config'd, or db-lookup (DNS). 
     i.<domain>.tld = 10.0.0.0/8
     
-    LOCAL-NET = 172.16-31.0.0/12  (local lan infrastructure)
-    SUB-NET = 192.168.0.0/16 (container space per VM, machine)
-    INTER-NET = 10.0.0.0/8 (tunnelling interface ip space)
+
+    -- PER DOMAIN
+    LOCAL-NET = 172.16-31.0.0/12  (local lan infrastructure)    HW.SWITCH   lan-router-dhcp
+    SUB-NET = 192.168.0.0/16 (container space per VM, machine)  VIRBR0      fw-dhcp
+    INTER-NET = 10.0.0.0/8 (tunnelling interface ip space)                  dom-o dhcp
+    
+    fw.branch-execution
+                                                            0.0.0.0
+    ------------------------------------------------> WAN   
+      |           |                   |
+      droplets    linode instance     cable_modem           (10.x.x.x)
+                                        |router             10.1.0.1  
+                                        |
+    ----------------------------------->| LAN               
+        |       |       |   |   |       |machine            172.16.0.100
+                            |                               (172.16-31.x.x)
+    ----------------------->| VIRBR0                        192.168.0.1
+    |   |   |   |
+    containers  web browser                                 (192.168.x.x)
+
+    veth -> virbr0 <bridge> ethX -> router -> wan_if <- router (keyhole)
+    
+    * every machine has a valid IP, with in the domain of local lan infrastructure (172)
+    * every container has a wg instance, in the context of the subnet (192)
+    * every router has a valid public IP, along with a wg (10) hub vif, 
+
+    <bridge> real_ip (172,no masking) granted by router
+    ^
+    |
+    |--------- default route 
+    |
+    |--------- container
+    |
+    |
+    |VIRBR0
+
+
+
+
+  (physical)
+
+
+
+domain.tld
+cloud_router (hub for domain / dom.0 service pointer)
+10.0.0.1
+load balancers can form bi,tri,quad,n shapes, the function of rerouting, dns regulation, would fall under the fw
+example, a quad balancer, could serve 4 keyholes to different load functions/geographies. those geographies would 
+have to start their router, say geoip or hostname would serve as a determinant, with respect to figuring /
+prioritizing the balancer link, this would require a protocol to serve the arch. the fw could also share block-lists,
+or other connection information. This protocol needs some attendance, it needs to be 'survivable' and self-aware.
+intrinsic *geometric-balancing w/ prescribable operations/declarations. BPF. 
+
+in the intermediary, a simple bastion.sh fw will serve as a basic fw, service provider, and basic logical subset for linking
+across hardware/software. 
+
+
+modem/router (out of bounds infrastructure)
+
+
+
+  router  << responsible for routing to internet, transparently through unassociated networking (wg link)
+  10.0.0.100
+
+    w/s - serves as a router, for it's dependencies
+    172.16.0.100
+      vm1
+
+      vm2
+
+      container1
+      container2
+      container3
+
+      default-route (local application route)
+
+    server
+    172.16.0.101
+      vm1
+      vm2
+      vm3
+      vm4
+      vm5
+      192.168.0.22
+
+      containerX
+
+
+
 
 
   hierarchy ( dns records are retrieved through a secure keyhole )
@@ -35,8 +121,18 @@ YADAYADA
 
 ------------------------------------------------------------------------------
 
+  initramfs thinking : 
 
+    for all installs, because a 'new' dataset, partition, or what ever is being added, there is an entirely
+    new key being generated for the instance, because of this a new initramfs is always needed, unless there is no key.
+    for all updates, involving new kernels, a new initramfs is always required.
+    for all key-rolls, a new initramfs is needed. --rotate 
 
+    update:
+
+      --rotate = roll in new zfs keys, where ever applicable. old keys are never deleted, and backups can be sent to profile subsystem
+      --kernel = update the kernel and associated modules, boot entries
+      --user = ALWAYS used, portage/userspace
 
 
 

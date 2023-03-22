@@ -311,12 +311,12 @@ function modify_boot() {
 	local dstDir="${dpath}/${ddataset}"
 	local _kver="$(getKVER)"
 
-	mounts ${dstDir}
+	mounts  ${dstDir}
 	mount "${boot_partition}" "${dstDir}/boot"
 	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source/ "${dstDir}/usr/src/"
 	chroot "${dstDir}" /usr/bin/eselect kernel set ${_kver}
 	chroot "${dstDir}" /usr/bin/genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
-	mv ${dstDir}/boot/initramfs-${_kver#*linux-}.img ${dstDir}/boot/LINUX/${_kver#*linux-}/initramfs
+	mv ${dstDir}/boot/initramfs-${_kver#*linux-}.img ${dstDir}/LINUX/${_kver#*linux-}/
 	editboot "${kversion}" "${dpool}/${ddataset}" "${dstDir}"
 	clear_mounts ${dstDir}
 }

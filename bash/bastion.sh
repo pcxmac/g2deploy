@@ -4,6 +4,8 @@
 
 # REQUIRES NETWORK DHCP COMPLETE ...
 
+# sets up IP space, wg connections, and services... for now. 
+
 IPT="/sbin/iptables"
 SYSCTL="/usr/sbin/sysctl"
 
