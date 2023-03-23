@@ -33,7 +33,7 @@ colW="\e[1;37m%s\e[m"
 source ${SCRIPT_DIR}/bash/mget.sh
 source ${SCRIPT_DIR}/bash/yaml.sh
 
-function wg_
+#function wg_
 
 
 

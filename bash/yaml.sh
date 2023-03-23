@@ -142,7 +142,7 @@ function findKeyValue()
 	local cp=0
 	# actual number of tabs between key-value and left-most
 	local tabLength
-	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
+	local _yaml="${1:?}";		# YAML FILE, 2 spaced.
 	local _path="${2:?}"
 	# path length, to determine target leaf/node
 	local pLength="$(yamlPathL $_path)"
@@ -197,7 +197,7 @@ function insertKeyValue()
 {
 	local cp=0
 	local tabLength
-	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
+	local _yaml="${1:?}";		# YAML FILE, 2 spaced.
 	local _path="${2:?}"
 	local _newKV="${3:?}"
 	local pLength="$(yamlPathL $_path)"
@@ -260,7 +260,7 @@ function removeKeyValue()
 {
 	local cp=0
 	local tabLength
-	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
+	local _yaml="${1:?}";		# YAML FILE, 2 spaced.
 	local _path="${2:?}"
 	local pLength="$(yamlPathL $_path)"
 	_yaml="$(yamlStd ${_yaml})"
@@ -315,7 +315,7 @@ function modifyKeyValue()
 {
 	local cp=0
 	local tabLength
-	local _yaml="${1:?}"		# YAML FILE, 2 spaced.
+	local _yaml="${1:?}";		# YAML FILE, 2 spaced.
 	local _path="${2:?}"
 	local _value="${3:?}"
 	local pLength="$(yamlPathL $_path)"
