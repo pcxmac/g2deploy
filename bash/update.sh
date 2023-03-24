@@ -132,9 +132,19 @@ do
 				patchFiles_sys "${directory}" "${_profile}"
 				clear_mounts "${directory}"
 			fi
-	;;
+		;;
 	esac
 done
+
+for x in $@
+do
+	case "${x}" in
+		--kernel)
+			build_kernel ${directory}
+		;;
+	esac
+done
+
 
 echo "#############################"
 
@@ -142,17 +152,31 @@ for x in "$@"
 do
 	case "${x}" in
 		bootpart=*)
+
+			local _kver="$(getKVER)"
+			pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/host")"
+			pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/root")"
+
 			efi_part="${x#*=}"
 			type_part="$(blkid "${efi_part}")"
 			if [[ ${type_part} == *"TYPE=\"vfat\""* ]];
 			then
+				# mount boot partition
 				echo "update boot ! @ ${efi_part} @ ${dataset} :: ${directory} >> + $(getKVER)"
 				echo "mount ${efi_part} ${directory}/boot"
 				mount "${efi_part}" "${directory}/boot"
+				# edit boot record, refind
 				echo "edit boot -- ${kversion}" "${dataset}" "${directory}"
 				editboot "${kversion}" "${dataset}" "${directory}"
 				echo "install modules -- ${directory}"
+				# assert new initramfs
+				mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source/ "${directory}/usr/src/"
+				chroot "${directory}" /usr/bin/eselect kernel set ${_kver}
+				chroot "${directory}" /usr/bin/genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
+				mv ${dstDir}/boot/initramfs-${_kver#*linux-}.img ${directory}/boot/LINUX/${_kver#*linux-}/initramfs
+				# install kernel modules to runtime
 				install_modules "${directory}"
+				# unmount the boot partition
 				umount "${directory}/boot"
 			else
 				echo "no mas"

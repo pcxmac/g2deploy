@@ -116,10 +116,13 @@ function build_kernel()
 		# if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
 		(cd ${_kernel}; make clean);
 		echo "--- cleaned ---"
+		sleep 3
 		(cd ${_kernel}; make olddefconfig)
 		echo "--- olddefconfig ---"
+		sleep 3
 		(cd ${_kernel}; make prepare)
 		echo "--- prepared ---"
+		sleep 3
 
 		(cd ${_kernel}; make -j$(nproc) )
 		(cd ${_kernel}; make modules_install)

@@ -180,6 +180,10 @@ function mget()
 	local url="$(printf '%s\n' "${1:?}" | sed 's/\*//g')"
 	local destination="$(printf '%s\n' "${2}" | sed 's/\*//g')"
 
+
+	#echo "${url} >> ${destination}" 2>&1
+	[[ ! -f ${destination} && ! -d ${destination} ]] && { printf "exiting, invalid destination..."; }
+
 	[[ -n "$(printf "${url}" | grep '/$')" && -z "$(printf "${destination}" | grep '/$')" ]] && { destination="${destination}/"; } 
 
 	# mget types
@@ -188,18 +192,18 @@ function mget()
 		ftp*)
 			if [[ -z ${destination} ]]
 			then
-				echo "$(getFTP ${url})"
+				echo "getFTP ${url}"
 			else
-				echo "$(getFTP ${url})"
+				#echo "getFTP ${url}"
 				getFTP "${url}" "${destination}"		
 			fi
 		;;
 		http*)
 			if [[ -z ${destination} ]]
 			then
-				echo "$(getHTTP ${url})"
+				echo "getHTTP ${url}"
 			else
-				echo "$(getHTTP ${url})"
+				#echo "getHTTP ${url}"
 				getHTTP "${url}" "${destination}" 
 			fi
 		;;
