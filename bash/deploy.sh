@@ -74,12 +74,19 @@ source ${SCRIPT_DIR}/bash/include.sh
 	deployBuildup "${_profile}" "${directory}" "${dataset}" "${_selection}"
 	mounts "${directory}"
 
+	echo "patchfiles : user"
 	patchFiles_user "${directory}" "${_profile}"
+	echo "patchfiles : system"
 	patchFiles_sys "${directory}" "${_profile}"
+	echo "patchfiles : portage"
 	patchFiles_portage "${directory}" "${_profile}"
+	echo "zfs keys ..."
 	zfs_keys "${dataset}"
+	echo "package processor ..."
 	pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
+	echo "add patches"
 	patchSystem "${_profile}" 'deploy' > "${directory}/patches.sh"
+	echo "add services"
 	patchSystem "${_profile}" 'services' > "${directory}/services.sh"
 
 	#	theory of operation , system bootsup, firewall takes over, builds network stack, and triggers a sync on the dom-0

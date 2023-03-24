@@ -451,6 +451,7 @@ function patchFiles_portage()
 	# drop empty lines and comments
 	done < <(curl "${common_URI}.conf" --silent | sed 's/#.*$//' | sed '/^[[:space:]]*$/d')
 
+
 	while read -r line; do
 		((LineNum+=1))
 		PREFIX=${line%=*}
