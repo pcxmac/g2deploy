@@ -49,6 +49,10 @@ source ${SCRIPT_DIR}/bash/yaml.sh
 
 
 # scope of this function is to build a new kernel, and update portage/kernels
+# this function is designed to be used in a 'master' environment, ie a dom0, or root file system.
+# it will want to update the 'master' source after building. 
+# ASSERTION - repo for kernel source, has to be resident on the local file system.
+# update will have to test for this...
 function build_kernel()
 {
 
@@ -56,6 +60,9 @@ function build_kernel()
 	_fsType="$(df ${_bootPart} | awk '{print $2}' | tail -n 1)"
 	_rootFS=""
 	emergeOpts="--ask=n"
+
+	_kernels_current="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/root")"
+	_kernel='/usr/src/linux/'
 
 	case ${_fsType} in
 		zfs)
@@ -75,6 +82,16 @@ function build_kernel()
 	iv="$(qlist -Iv | \grep 'sys-kernel/gentoo-sources' | head -n 1)"
 	iv="${iv#*sources-}"
 
+	# current source version (usr/src)
+	sv="$(eselect kernel list | tail -n $(($(eselect kernel list | wc -l)-1)) | awk '{print $2}' | sort -r | head -n 1)"
+	sv="${sv%-gentoo*}"
+	sv="${sv#*linux-}"
+
+	# master version (pkg.server)
+	mv="$(\ls ${_kernels_current}/source/ | \grep -v 'linux$')"
+	mv="${mv%-gentoo*}"
+	mv="${mv#*linux-}"
+
 	# latest, built version (kernels/current)
 	lv="$(getKVER)"
 	lv="${lv%-gentoo*}"
@@ -88,16 +105,15 @@ function build_kernel()
 	#echo "cv = $cv ; lv = $lv ; nv  = $nv"
 	_compare="${nv}\n${lv}"
 
-	echo "lv = $lv ; nv = $nv ; iv = $iv ; cv = $cv"
+	echo "lv = $lv ; nv = $nv ; iv = $iv ; cv = $cv ; sv = $sv ; mv = $mv"
+
+	return
 
 	# do nothing case, as it is already installed
 	[[ ${lv} == ${nv} ]] && { return; }
 
 	# lv, the currently highest installed version, will not be at the bottom if there is a newer unmasked version
 	[[ ${lv} != "$(printf $_compare | sort --version-sort | tail -n 1)" ]] && {
-
-		_kernels_current="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/root")"
-		_kernel='/usr/src/linux/'
 
 	 	[[ ${iv} != ${nv} ]] && {
 			echo "installing new version of gentoo-sources."

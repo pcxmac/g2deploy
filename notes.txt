@@ -2,6 +2,7 @@ goals :
 
 YADAYADA
 
+  migrate ssh-fuse links to nfsv4. Requires Dom0. 
   x 
   x
   x
