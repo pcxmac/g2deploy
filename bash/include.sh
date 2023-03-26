@@ -60,7 +60,7 @@ function build_kernel()
 
 	_flag="${2}"
 	_bootPart=${1:?}
-	_fsType="$(df ${_bootPart} | awk '{print $2}' | tail -n 1)"
+	_fsType="$(\df -Th ${_bootPart} | awk '{print $2}' | tail -n 1)"
 	_rootFS=""
 	emergeOpts="--ask=n"
 

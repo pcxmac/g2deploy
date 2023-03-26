@@ -8,6 +8,7 @@ YADAYADA
   migrate ssh-fuse links to nfsv4. Requires Dom0. 
   x 
   x
+  need a way to guarantee awk '{print $x}' is where it should be. also sort by column guaranteed. [zsh and bash don't output the same!]
   x
   [waiting to reproduce] clear mounts is not nullifying tmp or other mounts unless in parent directory ,,.. verify/reproduce
   x
