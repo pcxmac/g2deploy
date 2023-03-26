@@ -25,7 +25,7 @@ YADAYADA
 
     -- PER DOMAIN
     LOCAL-NET = 172.16-31.0.0/12  (local lan infrastructure)    HW.SWITCH   lan-router-dhcp
-    SUB-NET = 192.168.0.0/16 (container space per VM, machine)  VIRBR0      fw-dhcp
+    MAC-NET = 192.168.0.0/16 (container space per VM, machine)  VIRBR0      fw-dhcp
     INTER-NET = 10.0.0.0/8 (tunnelling interface ip space)                  dom-o dhcp
     
     fw.branch-execution
@@ -43,6 +43,14 @@ YADAYADA
     containers  web browser                                 (192.168.x.x)   16 bits
 
     IPV6 requires = 60 bits of addressable space for translating this scheme. 
+
+    RFC 4193 Block 	Prefix/L 	Global ID (random) 	Subnet ID 	Number of addresses in subnet
+	                  48 bits 	                    16 bits 	  64 bits
+    fd00::/8 	      fd 	      xx:xxxx:xxxx 	      yyyy 	      18446744073709551616
+
+    2^16 subnets ; [ 2^24 domains ; 2^20 machines ; 2^16 service providers ; 2^4 personalities ? ]
+
+
 
     veth -> virbr0 <bridge> ethX -> router -> wan_if <- router (keyhole)
     
