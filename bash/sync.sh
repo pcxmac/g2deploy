@@ -66,6 +66,10 @@ printf "############################### [ DISTFILES ] ##########################
 printf "SYNCING w/ ***%s***" "${URL}"
 rsync -avI --info=progress2 --timeout=300 --ignore-existing --ignore-times --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
+# build the latest kernel
+printf "############################### [ KERNEL ] ########################################\n"
+build_kernel /
+sleep 3
 
 printf "updating mlocate-db\n"
 /usr/bin/updatedb

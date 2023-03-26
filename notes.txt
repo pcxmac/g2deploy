@@ -2,6 +2,9 @@ goals :
 
 YADAYADA
 
+
+  [scope]move build kernel to sync, install and update will pull in source/kernel... initramfs per kernel change or install. 
+
   migrate ssh-fuse links to nfsv4. Requires Dom0. 
   x 
   x

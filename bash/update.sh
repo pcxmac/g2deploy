@@ -136,16 +136,18 @@ do
 	esac
 done
 
-for x in $@
-do
-	case "${x}" in
-		# only builds a kernel, if it's on a master (ie access to [pkg.server/root/]source/... thru current context)
-		--kernel)
-			_kernels_current="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/root")"
-			[[ -d ${_kernels_current} ]] && { build_kernel ${directory}; } || { printf 'will pull from remote repo...'; }
-		;;
-	esac
-done
+# update and install need a genkernel function (for new or updated image files.)
+
+# for x in $@
+# do
+# 	case "${x}" in
+# 		# only builds a kernel, if it's on a master (ie access to [pkg.server/root/]source/... thru current context)
+# 		--kernel)
+# 			_kernels_current="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/root")"
+# 			[[ -d ${_kernels_current} ]] && { build_kernel ${directory}; } || { printf 'will pull from remote repo...'; }
+# 		;;
+# 	esac
+# done
 
 for x in "$@"
 do

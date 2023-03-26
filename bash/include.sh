@@ -56,6 +56,9 @@ source ${SCRIPT_DIR}/bash/yaml.sh
 function build_kernel()
 {
 
+	# need to validate the 'current kernel' to ensure it's config is real. 
+
+	_flag="${2}"
 	_bootPart=${1:?}
 	_fsType="$(df ${_bootPart} | awk '{print $2}' | tail -n 1)"
 	_rootFS=""
@@ -105,19 +108,25 @@ function build_kernel()
 	#echo "cv = $cv ; lv = $lv ; nv  = $nv"
 	_compare="${nv}\n${lv}"
 
-	echo "lv = $lv ; nv = $nv ; iv = $iv ; cv = $cv ; sv = $sv ; mv = $mv"
-
-	return
+	#echo "lv = $lv ; nv = $nv ; iv = $iv ; cv = $cv ; sv = $sv ; mv = $mv ; compare = $_compare"
 
 	# do nothing case, as it is already installed
-	[[ ${lv} == ${nv} ]] && { return; }
+	[[ ${lv} == ${nv} ]] && { printf "up to date.\n"; return; };
 
 	# lv, the currently highest installed version, will not be at the bottom if there is a newer unmasked version
 	[[ ${lv} != "$(printf $_compare | sort --version-sort | tail -n 1)" ]] && {
 
-	 	[[ ${iv} != ${nv} ]] && {
-			echo "installing new version of gentoo-sources."
+	 	[[ ${iv} != ${nv} || ${sv} != ${nv} ]] && { 
+
+			[[ ${_flag} == "-q" ]] && { printf "build new kernel\n"; return; };
+			
+			echo "installing new version of gentoo-sources.";
+			
 			emerge $emergeOpts =sys-kernel/gentoo-sources-${nv}; 
+		
+		} || {	# in the case the current kernel-package is installed, OR, the source version, is the newest package-version and the local version isn't the newest.
+			[[ ${_flag} == "-q" ]] && { printf "build old kernel.\n"; return; };
+			[[ ! ${_flag} == "-f" ]] && { printf "kernel ${mv} exists.\n"; return; };
 		}	
 
 		# suffix might need to be altered to fit possible versioning which meddles with -gentoo
@@ -152,6 +161,8 @@ function build_kernel()
 		FEATURES="-getbinpkg -buildpkg" \emerge =zfs-kmod-9999
 		#genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
 
+		# MOVE KERNELS TO $pkg.root/kernels/current, after depricating older kernel
+
 		(cd ${_offset}/${nv}-${_suffix}/; tar cfvz ./modules.tar.gz /lib/modules/${nv}-${_suffix}; )
 
 		mv ${_offset}/config-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/
@@ -162,12 +173,18 @@ function build_kernel()
 		#mv ${_offset}/initramfs-${nv}-${_suffix}.img ${_offset}/${nv}-${_suffix}/initramfs
 
 		[[ "$(ls -ail ${_kernels_current}/kernels/current/ | wc -l)" != '2' ]] && {
+			[[ -d ${_kernels_current}/kernels/deprecated/$(getKVER) ]] && { rm ${_kernels_current}/kernels/deprecated/$(getKVER) -R; };
 			mv ${_kernels_current}/kernels/current/* ${_kernels_current}/kernels/deprecated/
-		}
+		};
 		mv ${_offset}/${nv}-${_suffix}/ ${_kernels_current}/kernels/current/
 
+		# rsync/diff over to new kernel source, change directory to reflect current kernel mget
+
+		sv="$(eselect kernel list | tail -n $(($(eselect kernel list | wc -l)-1)) | awk '{print $2}' | sort -r | head -n 1)"
+		[[ -f ${_kernels_current}/source/$(getKVER) ]] && { mv ${_kernels_current}/source/$(getKVER) ${_kernels_current}/source/${sv}; };
+		mget ${_kernel} ${_kernels_current}/source/${sv};
 		sync
-	}
+	};
 }
 
 function checkHosts()
@@ -662,9 +679,9 @@ function install_modules()
 function getKVER() 
 {
 	local url_kernel="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/kernel" ftp)"
-	local kver="$(curl "$url_kernel" --silent | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep "\-gentoo")"
+	local kver="$(curl "$url_kernel" --silent | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep "\-gentoo" | sort -r | head -n 1 )" 
 	kver="linux-${kver}"
-	echo "${kver}"
+	printf '%s\n' "${kver}"
 }
 
 function decompress() 
