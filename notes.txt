@@ -30,17 +30,19 @@ YADAYADA
     
     fw.branch-execution
                                                             0.0.0.0
-    ------------------------------------------------> WAN   
+    ------------------------------------------------> WAN             
       |           |                   |
-      droplets    linode instance     cable_modem           (10.x.x.x)
+      droplets    linode instance     cable_modem           (10.x.x.x)  24 bits
                                         |router             10.1.0.1  
                                         |
     ----------------------------------->| LAN               
         |       |       |   |   |       |machine            172.16.0.100
-                            |                               (172.16-31.x.x)
+                            |                               (172.16-31.x.x) 20 bits
     ----------------------->| VIRBR0                        192.168.0.1
     |   |   |   |
-    containers  web browser                                 (192.168.x.x)
+    containers  web browser                                 (192.168.x.x)   16 bits
+
+    IPV6 requires = 60 bits of addressable space for translating this scheme. 
 
     veth -> virbr0 <bridge> ethX -> router -> wan_if <- router (keyhole)
     
