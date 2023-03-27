@@ -88,8 +88,6 @@ function update_runtime()
 
 }
 
-return
-
 export PYTHONPATH=""
 export -f update_runtime
 
