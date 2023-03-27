@@ -6,6 +6,44 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
+function update_kernel()
+{
+	local _kver="$(getKVER)"
+	pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/host")"
+	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/root")"
+
+	efi_part="${1:?}"
+	# gets rid of trailing slash in order to fit with next sequence.
+	_directory="$(printf '%s\n' "${2:?}" | sed 's/\/$//g')"
+	type_part="$(blkid "${efi_part}")"
+
+	if [[ ${type_part} == *"TYPE=\"vfat\""* ]];
+	then
+		# mount boot partition
+		echo "update boot ! @ ${efi_part} @ ${dataset} :: ${_directory} >> + $(getKVER)"
+		echo "mount ${efi_part} ${_directory}/boot"
+		mount "${efi_part}" "${_directory}/boot"
+		# edit boot record, refind
+		echo "edit boot -- ${kversion}" "${dataset}" "${_directory}"
+		editboot "${kversion}" "${dataset}" "${_directory}/"
+		echo "install modules -- ${_directory}/"
+
+		# install kernel modules to runtime
+		install_modules "${_directory}/"
+
+		# assert new initramfs
+		mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source/ "${_directory}/usr/src/"
+		chroot "${_directory}/" /usr/bin/eselect kernel set ${_kver}
+		chroot "${_directory}/" /usr/bin/genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
+		mv ${_directory}/boot/initramfs-${_kver#*linux-}.img ${_directory}/boot/LINUX/${_kver#*linux-}/initramfs
+		# unmount the boot partition
+		umount "${_directory}/boot"
+	else
+		echo "no mas"
+	fi
+}
+
+
 function update_runtime()
 {
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
@@ -49,6 +87,8 @@ function update_runtime()
 	eselect news read new
 
 }
+
+return
 
 export PYTHONPATH=""
 export -f update_runtime
@@ -154,34 +194,8 @@ do
 	case "${x}" in
 		bootpart=*)
 
-			local _kver="$(getKVER)"
-			pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/host")"
-			pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/root")"
-
 			efi_part="${x#*=}"
-			type_part="$(blkid "${efi_part}")"
-			if [[ ${type_part} == *"TYPE=\"vfat\""* ]];
-			then
-				# mount boot partition
-				echo "update boot ! @ ${efi_part} @ ${dataset} :: ${directory} >> + $(getKVER)"
-				echo "mount ${efi_part} ${directory}/boot"
-				mount "${efi_part}" "${directory}/boot"
-				# edit boot record, refind
-				echo "edit boot -- ${kversion}" "${dataset}" "${directory}"
-				editboot "${kversion}" "${dataset}" "${directory}"
-				echo "install modules -- ${directory}"
-				# assert new initramfs
-				mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source/ "${directory}/usr/src/"
-				chroot "${directory}" /usr/bin/eselect kernel set ${_kver}
-				chroot "${directory}" /usr/bin/genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
-				mv ${dstDir}/boot/initramfs-${_kver#*linux-}.img ${directory}/boot/LINUX/${_kver#*linux-}/initramfs
-				# install kernel modules to runtime
-				install_modules "${directory}"
-				# unmount the boot partition
-				umount "${directory}/boot"
-			else
-				echo "no mas"
-			fi
+			update_kernel ${efi_part} ${directory}
 		;;
 	esac
 done

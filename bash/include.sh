@@ -660,18 +660,15 @@ function pkgProcessor()
 
 function install_modules()
 {
-	local offset="${1:?}"
+	local offset="$(printf '%s\n' "${1:?}" | sed 's/\/$//g')"
 	local kver="$(getKVER)"
 	local ksrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/kernel ftp)"
 
 	kver="${kver#*linux-}"
 
-	echo "mget "${ksrc}${kver}/" "${offset}/boot/LINUX/""
-
 	mget "${ksrc}${kver}/" "${offset}/boot/LINUX/"
-
-	mget "${ksrc}${kver}/modules.tar.gz" "${offset}/"
-	echo "decompressing ${ksrc}${kver}" 2>&1
+	mget "${ksrc}${kver}/modules.tar.gz" "${offset}/modules.tar.gz"
+	echo "decompressing ${ksrc}${kver}/modules.tar.gz" 2>&1
 	pv "${offset}/modules.tar.gz" | tar xzf - -C "${offset}/"
 	rm "${offset}/modules.tar.gz"	
 }

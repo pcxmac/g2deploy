@@ -123,9 +123,13 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 		then
 			if [[ -z ${destination} ]]
 			then
-				wget -nH --cut-dirs=$(dirCount ${url}) -O - --reject "index.*" -q --show-progress --no-parent "${url}" 2>/dev/null
+					wget -nH --cut-dirs=$(dirCount ${url}) -O - --reject "index.*" -q --show-progress --no-parent "${url}" 2>/dev/null
 			else
-				wget -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress --no-parent "${url}" -P "${destination%/*}" 2>&1 | pv --progress 1>/dev/null
+				[[ ${destination} != "$(printf '%s\n' "${destination}" | sed 's/\/$//g')" ]] && { 
+					wget -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress --no-parent "${url}" -P "${destination%/*}" 2>&1 | pv --progress 1>/dev/null
+				} || {
+					wget -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress --no-parent "${url}" -O "${destination%/*}" 2>&1 | pv --progress 1>/dev/null
+				};
 			fi
 			waiting=0
 		else
@@ -136,6 +140,13 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 		fi
 	done
 }
+
+# singleton vs directory copy, needs to be differentiated by -O /path/file || -P /directory/
+# directory requires trailing slash, file will need more than a directory in it's field. 
+
+# ex. mget <url> -O /file     OR		mget <url> -P /
+# if [[ $dst != "$(printf '%s\n' "$dst" | sed 's/\/$//g')" ]] && { is a directory } || { is a file }
+# always, there must be an explicit and new desstination, ALWAYS !!! OTHERWISE PRESTO in your local dir bull crapityyapitty.
 
 function getFTP()
 {
@@ -156,7 +167,11 @@ function getFTP()
 			then
 				wget -nH --cut-dirs=$(dirCount ${url}) -O - --reject "index.*" -q --show-progress  --no-parent "${url}" 2>/dev/null
 			else
-				wget -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress  --no-parent "${url}" -P "${destination}" 2>&1 | pv --progress 1>/dev/null
+				[[ ${destination} != "$(printf '%s\n' "${destination}" | sed 's/\/$//g')" ]] && { 
+					wget -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress  --no-parent "${url}" -P "${destination}" 2>&1 | pv --progress 1>/dev/null
+				} || {
+					wget -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress  --no-parent "${url}" -O "${destination}" 2>&1 | pv --progress 1>/dev/null
+				};
 			fi
 			waiting=0
 		else
@@ -179,6 +194,10 @@ function mget()
 	# filter out invalid use cases
 	local url="$(printf '%s\n' "${1:?}" | sed 's/\*//g')"
 	local destination="$(printf '%s\n' "${2}" | sed 's/\*//g')"
+
+	#echo "url = $url : destination = $destination"
+
+	#return
 
 	#[[ -n "$(printf "${url}" | grep '/$')" && -z "$(printf "${destination}" | grep '/$')" ]] && { destination="${destination}/"; } 
 
