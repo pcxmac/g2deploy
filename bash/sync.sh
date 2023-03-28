@@ -81,16 +81,12 @@ rsync -avI --info=progress2 --timeout=300 --ignore-existing --ignore-times --no-
 
 # build the latest kernel
 printf "############################### [ KERNEL ] ########################################\n"
-echo "$(find "${pkgROOT}/kernels/" -type f -exec echo Found file {} \;)"
-[[ -z "$(find "${pkgROOT}/kernels/" -type f -exec echo Found file {} \;)" ]] && {
+0[[ -z "$(find "${pkgROOT}/kernels/" -type f -exec echo Found file {} \;)" ]] && {
     _kver=$(getKVER);
-    echo $_kver;
     _kver="${_kver#*linux-}";
-    echo $_kver;
     mkdir -p ${pkgROOT}/kernels/current/${_kver};
     mkdir -p ${pkgROOT}/kernels/deprecated;
     mkdir -p ${pkgROOT}/kernels/compat;
-    echo "mkdir -p ${pkgROOT}/kernels/current/${_kver};";
     zcat /proc/config.gz > ${pkgROOT}/kernels/current/${_kver}/config.default;
 }
 [[ -z "$(find "${pkgROOT}/source/" -type f -exec echo Found file {} \;)" ]] && { mkdir -p ${pkgROOT}/source; };
