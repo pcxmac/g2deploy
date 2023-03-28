@@ -2,7 +2,7 @@
 
 # backend data-server synchronization (no arguments) 
 #
-#   /var/lib/portage
+#   /server:pkgROOT
 
 #       ---- FETCH FROM INTERNET <<< INSTANTIABLE
 #       /snapshots (snapshots from gentoo, [rsync] )
@@ -80,7 +80,7 @@ printf "SYNCING w/ ***%s***" "${URL}"
 rsync -avI --info=progress2 --timeout=300 --ignore-existing --ignore-times --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
 # build the latest kernel
-printf "############################### [ KERNEL ] ########################################\n"
+printf "########################## [ KERNEL | SOURCE ] ###################################\n"
 0[[ -z "$(find "${pkgROOT}/kernels/" -type f -exec echo Found file {} \;)" ]] && {
     _kver=$(getKVER);
     _kver="${_kver#*linux-}";
