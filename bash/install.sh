@@ -7,7 +7,7 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
-# verify route to pkgserver & zfs exports
+# verify route to pkgROOT & zfs exports
 
 
 function generateYAML() {
@@ -300,8 +300,8 @@ function modify_boot() {
 
 	local vYAML="${1:?}"
 
-	pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/host")"
-	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/root")"
+	pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
+	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
 
 	local boot_partition="$(findKeyValue "${vYAML}" install/boot/partition)"
 	local dpool="$(findKeyValue "${vYAML}" install/disks/pool)"

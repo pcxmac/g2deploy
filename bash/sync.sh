@@ -3,15 +3,27 @@
 # backend data-server synchronization (no arguments) 
 #
 #   /var/lib/portage
+
+#       ---- FETCH FROM INTERNET <<< INSTANTIABLE
 #       /snapshots (snapshots from gentoo, [rsync] )
 #       /releases (releases from gentoo [rsync] )
 #       /distfiles (distfiles for gentoo [rsync] )
+
+#       --- BUILT INTERNALLY, BY INTERNAL META RULES <<< INSTANTIABLE
+#       /kernels    ( 'official' kernel builds, for distribution )
+#       /source
+#       /binpkgs
+
+#       --- USER DISCRETIONARY, FETCH FROM INTERNET (have to clone first, future yaml config ?)
 #       /repository (git repos for gentoo, plus associated)
+
+#       --- INITIALLY SOURCED FROM THIS REPO, SYNC'S to HOST.CFG PKG.SERVER  (deploy to)
 #       /meta       ( meta package configuration files (for mpm.sh) )
 #       /profiles   ( system profiles, for roaming/continuity/backup purposes )
 #       /packages   ( binary packages, built by portage/emerge )
-#       /kernels    ( 'official' kernel builds, for distribution )
-#       /repos      (soft/hard link to maintained repo @ [/repository] )
+#       /patchfiles ( custom binaries and text files, for patching over regular portage files, ie, bugs that are only resolved locally )
+
+
 #
 #       https://www.gentoo.org/glep/glep-0074.html (MANIFESTS)   
 #       
@@ -22,9 +34,9 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
-pkgHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/host")"
-pkgROOT="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/root")"
-pkgCONF="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/config")"
+pkgHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/host")"
+pkgROOT="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root")"
+pkgCONF="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/config")"
 
 checkHosts
 
@@ -32,10 +44,11 @@ checkHosts
 syncURI="$(cat ${pkgCONF} | grep "^sync-uri")"
 #syncLocation="$(cat ${pkgCONF} | grep "^location")"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/repos" rsync)"
-#LOCATION="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/repo")"
+#LOCATION="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/repo")"
 sed -i "s|^sync-uri.*|${URL}|g" ${pkgCONF}
 
 printf "############################ [ BINARY PACKAGES ] #################################\n"
+[[ ! -d ${pkgROOT}/binpkgs ]] && { mkdir -p ${pkgROOT}/binpkgs; };
 emaint binhost --fix
 # needs more work !!! zomg.
 
@@ -68,27 +81,57 @@ rsync -avI --info=progress2 --timeout=300 --ignore-existing --ignore-times --no-
 
 # build the latest kernel
 printf "############################### [ KERNEL ] ########################################\n"
+echo "$(find "${pkgROOT}/kernels/" -type f -exec echo Found file {} \;)"
+[[ -z "$(find "${pkgROOT}/kernels/" -type f -exec echo Found file {} \;)" ]] && {
+    _kver=$(getKVER);
+    echo $_kver;
+    _kver="${_kver#*linux-}";
+    echo $_kver;
+    mkdir -p ${pkgROOT}/kernels/current/${_kver};
+    mkdir -p ${pkgROOT}/kernels/deprecated;
+    mkdir -p ${pkgROOT}/kernels/compat;
+    echo "mkdir -p ${pkgROOT}/kernels/current/${_kver};";
+    zcat /proc/config.gz > ${pkgROOT}/kernels/current/${_kver}/config.default;
+}
+[[ -z "$(find "${pkgROOT}/source/" -type f -exec echo Found file {} \;)" ]] && { mkdir -p ${pkgROOT}/source; };
+
 build_kernel /
-sleep 3
 
 printf "updating mlocate-db\n"
 /usr/bin/updatedb
 /usr/bin/eix-update
 
-hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | head -n 1 | /usr/bin/awk '{print $8}')"
-hostip="$(/bin/ip --brief address show dev ${hostip} | /usr/bin/awk '{print $3}')"
+# host.cfg uses 'root' as a localizable variable, must be defined, before finding the key values, dependent on 'root'
+#root="${pkgROOT}"
 
 printf "############################### [ META ] ########################################\n"
-mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/meta"
+#mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/meta"
+_meta="$(eval echo "$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root/meta")")"
+mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/meta"        "${_meta}"
+#echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/meta"        "${_meta}""
+
 printf "############################### [ PROFILES ] ####################################\n"
-mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/profiles/"   "${SCRIPT_DIR}/profiles" 
+#mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/profiles/"   "${SCRIPT_DIR}/profiles" 
+_profiles="$(eval echo "$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root/profiles")")"
+mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/profiles"    "${_profiles}"
+#echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/profiles"    "${_profiles}""
+
 printf "############################### [ PACKAGES ] ####################################\n"
-mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/packages/"   "${SCRIPT_DIR}/packages" 
+#mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/packages/"   "${SCRIPT_DIR}/packages" 
+_packages="$(eval echo "$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root/packages")")"
+mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/packages"    "${_packages}"
+#echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/packages"    "${_packages}""
+
 printf "############################### [ PATCHFILES ] ##################################\n"
-mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/patchfiles/" "${SCRIPT_DIR}/patchfiles"
+#mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/patchfiles/" "${SCRIPT_DIR}/patchfiles"
+_patchfiles="$(eval echo "$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root/patchfiles")")"
+#echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_patchfiles}""
+mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_patchfiles}"
+
+sleep 30
 
 owner="$(stat -c '%U' "${pkgROOT}")"
-group="$(stat -c '%G' "${pkgROOT}")"
+group="$(stat -c '%G' "${pkgROOT}")" 
 
 printf "setting ownership to {meta} ; {profiles} ; {packages}\n"
 

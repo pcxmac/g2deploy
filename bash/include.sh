@@ -38,8 +38,8 @@ source ${SCRIPT_DIR}/bash/yaml.sh
 function update_kernel()
 {
 	local _kver="$(getKVER)"
-	pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/host")"
-	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/root")"
+	pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
+	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
 
 	efi_part="${1:?}"
 	# gets rid of trailing slash in order to fit with next sequence.
@@ -134,7 +134,7 @@ function build_kernel()
 	_rootFS=""
 	emergeOpts="--ask=n"
 
-	_kernels_current="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/root")"
+	_kernels_current="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root")"
 	_kernel='/usr/src/linux/'
 
 	case ${_fsType} in
@@ -155,17 +155,19 @@ function build_kernel()
 	iv="$(qlist -Iv | \grep 'sys-kernel/gentoo-sources' | head -n 1)"
 	iv="${iv#*sources-}"
 
-	# current source version (usr/src)
-	sv="$(eselect kernel list | tail -n $(($(eselect kernel list | wc -l)-1)) | awk '{print $2}' | sort -r | head -n 1)"
+	# current source version (usr/src) >> pkgROOT/source
+	#sv="$(eselect kernel list | tail -n $(($(eselect kernel list | wc -l)-1)) | awk '{print $2}' | sort -r | head -n 1)"
+	sv="$(readlink ${_kernels_current}/source/linux)"
 	sv="${sv%-gentoo*}"
 	sv="${sv#*linux-}"
+
 
 	# master version (pkg.server)
 	mv="$(\ls ${_kernels_current}/source/ | \grep -v 'linux$')"
 	mv="${mv%-gentoo*}"
 	mv="${mv#*linux-}"
 
-	# latest, built version (kernels/current)
+	# latest, built version (kernels/current) | 
 	lv="$(getKVER)"
 	lv="${lv%-gentoo*}"
 	lv="${lv#*linux-}"
@@ -186,7 +188,7 @@ function build_kernel()
 	# lv, the currently highest installed version, will not be at the bottom if there is a newer unmasked version
 	[[ ${lv} != "$(printf $_compare | sort --version-sort | tail -n 1)" ]] && {
 
-	 	[[ ${iv} != ${nv} || ${sv} != ${nv} ]] && { 
+	 	[[ ${lv} != ${nv} || ${sv} != ${nv} ]] && { 
 
 			[[ ${_flag} == "-q" ]] && { printf "build new kernel\n"; return; };
 			
@@ -269,12 +271,12 @@ function checkHosts()
 	printf "checking hosts: (%s)\n" "${_config}"
 	for i in $(printf '%s\n' ${_s})
 	do
-		_serve="$(findKeyValue ${_config} "server:pkgserver/repo/${i}")"
+		_serve="$(findKeyValue ${_config} "server:pkgROOT/repo/${i}")"
 		_port="${_serve#*::}"
 		_serve="${_serve%::*}"
 		_result="$(isHostUp ${_serve} ${_port})"
 		_retval="$(printf "${colB} %s ${colB}" '[' "${_result}" ']')"
-		printf "\t %-30s : %5s %s \n" "server:pkgserver/repo/${i}" "${_port}" "$_retval" 
+		printf "\t %-30s : %5s %s \n" "server:pkgROOT/repo/${i}" "${_port}" "$_retval" 
 		# 										filter for color
 		_result="$(printf '%s\n'\t\t"${_result}" | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
 
@@ -689,8 +691,8 @@ function mounts()
 	mount -t tmpfs tmpfs "${offset}/run"
 	echo "attempting to mount binpkgs..."  2>&1
 
-	pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/host")"
-	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgserver/root")"
+	pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
+	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
 
 	# need a fusable link mechanism, not fuse, rather a modular/extenisble system of interlinking assets.
 
@@ -747,6 +749,8 @@ function getKVER()
 {
 	local url_kernel="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/kernel" ftp)"
 	local kver="$(curl "$url_kernel" --silent | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep "\-gentoo" | sort -r | head -n 1 )" 
+	# default to uname, if no source repo detected.
+	[[ -z "${kver}" ]] && { kver="$(uname --kernel-release)"; };
 	kver="linux-${kver}"
 	printf '%s\n' "${kver}"
 }

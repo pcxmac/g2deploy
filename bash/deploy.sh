@@ -96,7 +96,7 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 	# networking -preworkup -- a prelude for a networking patch script, most likely only on install, but something like this
 	# is required to build up the deployment ... thinking.
-	pkgHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgserver/host")"
+	pkgHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/host")"
 	bldHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:buildserver/host")"
 	pkgIP="$(getent ahostsv4 ${pkgHOST} | head -n 1 | awk '{print $1}')"
 	bldIP="$(getent ahostsv4 ${bldHOST} | head -n 1 | awk '{print $1}')"

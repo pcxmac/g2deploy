@@ -197,7 +197,9 @@ modem/router (out of bounds infrastructure)
   
   * VERIFY MODULES ARE INSTALLED ON INSTALL.
 
+  - ADD FILE DIFF/STATS TO KERNEL MGET MIGRATE OVER, I WANT TO SEE HOW MUCH DATA & HOW MANY FILES CHANGED, is it worth it to diff copy over, instead of erase and duplicate ?
 
+  - boot should have a yaml config, organize boot entries through a yaml filter function, open up to multiple boot loader/schemes.
 
   - skipping modules missing program (networking)
   - adsl/pppoe
