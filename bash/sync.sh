@@ -97,8 +97,7 @@ printf "updating mlocate-db\n"
 /usr/bin/updatedb
 /usr/bin/eix-update
 
-# host.cfg uses 'root' as a localizable variable, must be defined, before finding the key values, dependent on 'root'
-#root="${pkgROOT}"
+# host.cfg uses 'pkgROOT' as a localizable variable, must be defined, before 'eval' the key values, dependent on 'pkgROOT'
 
 printf "############################### [ META ] ########################################\n"
 #mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/meta"
