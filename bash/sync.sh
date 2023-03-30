@@ -81,7 +81,7 @@ rsync -avI --info=progress2 --timeout=300 --ignore-existing --ignore-times --no-
 
 # build the latest kernel
 printf "########################## [ KERNEL | SOURCE ] ###################################\n"
-0[[ -z "$(find "${pkgROOT}/kernels/" -type f -exec echo Found file {} \;)" ]] && {
+[[ -z "$(find "${pkgROOT}/kernels/" -type f -exec echo Found file {} \;)" ]] && {
     _kver=$(getKVER);
     _kver="${_kver#*linux-}";
     mkdir -p ${pkgROOT}/kernels/current/${_kver};
@@ -91,7 +91,8 @@ printf "########################## [ KERNEL | SOURCE ] #########################
 }
 [[ -z "$(find "${pkgROOT}/source/" -type f -exec echo Found file {} \;)" ]] && { mkdir -p ${pkgROOT}/source; };
 
-build_kernel /
+# ASSUMES boot is automounted, or already mounted @ /boot
+build_kernel / 
 
 printf "updating mlocate-db\n"
 /usr/bin/updatedb

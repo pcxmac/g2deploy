@@ -35,6 +35,43 @@ source ${SCRIPT_DIR}/bash/yaml.sh
 
 #function wg_
 
+# output of 1 = do install, 0 = do nothing, -1 is an error.
+function installed_kernel()
+{
+	_bootdisk=${1:?}
+	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
+
+	pid=$$
+	_tmpMount="/boot"
+
+	mkdir -p ${_tmpMount};
+
+	mount ${_bootdisk} ${_tmpMount}
+
+	_latestKernel="$(ls ${_tmpMount}/LINUX/ | sort -r | head -n 1)"
+	_latestRef="$(printf '%s\n' ${_latestKernel})"
+
+	_latestKernel=${_latestKernel%-gentoo*}
+
+	_latestBuild="$(ls ${pkgROOT}/source | sort -r | head -n 1)"
+	_latestBuild="${_latestBuild%-gentoo*}"
+	_latestBuild="${_latestBuild#*linux-}"
+
+	_diffEQ="$(diff ${_tmpMount}/LINUX/${_latestRef}/config* ${pkgROOT}/source/linux/.config | wc -l)"
+
+	# #echo "boot = $_latestKernel ; build = $_latestBuild ; config = $_diffEQ"
+
+	umount ${_tmpMount}
+	rmdir ${_tmpMount}
+
+	[[ -z ${_latestKernel} ]] && { printf '1\n'; return; };
+	[[ -z ${_latestBuild} ]] && { printf '-1\n'; return; };
+	[[ ${_diffEQ} -gt 0 ]] && { printf '1\n'; return; };
+	[[ ${_latestKernel} != ${_latestBuild} ]] && { printf '1\n'; return; };
+	[[ ${_latestKernel} == ${_latestBuild} ]] && { printf '0\n'; return; };
+}
+
+
 function update_kernel()
 {
 	local _kver="$(getKVER)"
@@ -46,6 +83,9 @@ function update_kernel()
 	_directory="$(printf '%s\n' "${2:?}" | sed 's/\/$//g')"
 	type_part="$(blkid "${efi_part}")"
 
+	_installed="$(installed_kernel ${efi_part})"
+	[[ ${_installed} == "1" ]] && { printf "kernel up to spec...\n"; return; };
+
 	if [[ ${type_part} == *"TYPE=\"vfat\""* ]];
 	then
 		# mount boot partition
@@ -54,7 +94,8 @@ function update_kernel()
 		mount "${efi_part}" "${_directory}/boot"
 		# edit boot record, refind
 		echo "edit boot -- ${kversion}" "${dataset}" "${_directory}"
-		editboot "${kversion}" "${dataset}" "${_directory}/"
+
+		_result="$(editboot "${kversion}" "${dataset}" "${_directory}/")"
 		echo "install modules -- ${_directory}/"
 
 		# install kernel modules to runtime
@@ -66,10 +107,12 @@ function update_kernel()
 		chroot "${_directory}/" /usr/bin/genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
 		mv ${_directory}/boot/initramfs-${_kver#*linux-}.img ${_directory}/boot/LINUX/${_kver#*linux-}/initramfs
 		# unmount the boot partition
-		umount "${_directory}/boot"
 	else
 		echo "no mas"
 	fi
+
+	umount "${_directory}/boot"
+
 }
 
 

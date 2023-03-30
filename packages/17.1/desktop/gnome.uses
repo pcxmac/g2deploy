@@ -1,7 +1,7 @@
 # GNOME USES
 
 sys-libs/zlib minizip
-media-video/ffmpeg opus
+media-video/ffmpeg opus vpx
 media-libs/mesa xa
 media-libs/libsndfile minimal
 dev-libs/libbpf	static-libs

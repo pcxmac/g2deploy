@@ -7,3 +7,4 @@
 
 <media-libs/mesa-23.0.0-r1
 
+>=net-libs/webkit-gtk-2.38.5-r410
