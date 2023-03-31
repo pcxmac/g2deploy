@@ -55,7 +55,7 @@ emaint binhost --fix
 #sed -i "s|^location.*|location = ${LOCATION}|g" ${pkgCONF}
 printf "################################# [ REPOS ] #####################################\n"
 printf "SYNCING w/ ***%s***" "${URL}"
-emerge --sync | tee /var/log/esync.log
+########################################################emerge --sync | tee /var/log/esync.log
 sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
 #sed -i "s|^location.*|${syncLocation}|g" ${pkgCONF}
 
@@ -63,7 +63,7 @@ sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/snapshots" rsync)"
 printf "############################### [ SNAPSHOTS ] ###################################\n"
 printf "SYNCING w/ ***%s***" "${URL}"
-rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
+################################################rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
 # initial condition calls for non-recursive sync
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/releases" rsync only-sync)"
@@ -71,17 +71,17 @@ printf "############################### [ RELEASES ] ###########################
 printf "SYNCING w/ ***%s***" "${URL}"
 if [[ ! -d "${pkgROOT}"/releases ]]; then mkdir -p "${pkgROOT}"/releases; fi
 find "${pkgROOT}"/releases/ -type l -delete
-rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}${ARCH}" "${pkgROOT}"/releases | tee /var/log/esync.log
+##########################rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}${ARCH}" "${pkgROOT}"/releases | tee /var/log/esync.log
 
 # initial condition calls for non-recursive sync
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/distfiles" rsync)"
 printf "############################### [ DISTFILES ] ###################################\n"
 printf "SYNCING w/ ***%s***" "${URL}"
-rsync -avI --info=progress2 --timeout=300 --ignore-existing --ignore-times --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
+#############################################rsync -avI --info=progress2 --timeout=300 --ignore-existing --ignore-times --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
 # build the latest kernel
 printf "########################## [ KERNEL | SOURCE ] ###################################\n"
-[[ -z "$(find "${pkgROOT}/kernels/" -maxdepth 2 -type f -exec echo Found file {} \;)" ]] && {
+[[ -z "$(ls -ail ${pkgROOT}/kernels --ignore . --ignore .. 2>/dev/null)" ]] && {
 
     _kver=$(getKVER);
     _kver="${_kver#*linux-}";
@@ -99,7 +99,7 @@ printf "########################## [ KERNEL | SOURCE ] #########################
 
 echo "found files ?"
 
-[[ -z "$(find "${pkgROOT}/source/" -maxdepth 2 -type f -exec echo Found file {} \;)" ]] && { mkdir -p ${pkgROOT}/source; };
+[[ -z "$(ls -ail ${pkgROOT}/source/ --ignore . --ignore .. 2>/dev/null)" ]] && { mkdir -p ${pkgROOT}/source; };
 
 echo "building kernels..."
 
@@ -111,6 +111,8 @@ build_kernel /
 printf "updating mlocate-db\n"
 /usr/bin/updatedb
 /usr/bin/eix-update
+
+exit
 
 # host.cfg uses 'pkgROOT' as a localizable variable, must be defined, before 'eval' the key values, dependent on 'pkgROOT'
 

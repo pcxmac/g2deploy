@@ -25,7 +25,12 @@ echo "EXT_NETWORK = $EXT_NETWORK"
 
 sed -i "/pkg.hypokrites.me$/c$EXT_ADDR\tpkg.hypokrites.me" /etc/hosts
 sed -i "/build.hypokrites.me$/c$EXT_ADDR\tbuild.hypokrites.me" /etc/hosts
+
+# doesnt support other options, will need to --add the option function-- to this
+sed -i "/RSYNC_OPTS/c RSYNC_OPTS=\"--address=$EXT_ADDR\"" /etc/conf.d/rsyncd
 sed -i "/^server.bind/c server.bind = \"$EXT_ADDR\"" /etc/lighttpd/lighttpd.conf
+sed -i "/ListenAddress/c ListenAddress=$EXT_ADDR" /etc/vsftpd.conf
+sed -i "/ListenAddress/c ListenAddress $EXT_ADDR" /etc/ssh/sshd_config
 
 
 rc-service lighttpd restart
