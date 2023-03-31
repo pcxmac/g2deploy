@@ -38,15 +38,14 @@ source ${SCRIPT_DIR}/bash/yaml.sh
 # output of 1 = do install, 0 = do nothing, -1 is an error.
 function installed_kernel()
 {
-	_bootdisk=${1:?}
+	_bootdisk="${1}"
 	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
 
 	pid=$$
-	_tmpMount="/boot"
+	_tmpMount="/tmp/boot_${pid}"
 
-	mkdir -p ${_tmpMount};
-
-	mount ${_bootdisk} ${_tmpMount}
+	mkdir -p ${_tmpMount}
+	mount -t vfat ${_bootdisk} ${_tmpMount} 
 
 	_latestKernel="$(ls ${_tmpMount}/LINUX/ | sort -r | head -n 1)"
 	_latestRef="$(printf '%s\n' ${_latestKernel})"
@@ -58,8 +57,6 @@ function installed_kernel()
 	_latestBuild="${_latestBuild#*linux-}"
 
 	_diffEQ="$(diff ${_tmpMount}/LINUX/${_latestRef}/config* ${pkgROOT}/source/linux/.config | wc -l)"
-
-	# #echo "boot = $_latestKernel ; build = $_latestBuild ; config = $_diffEQ"
 
 	umount ${_tmpMount}
 	rmdir ${_tmpMount}
@@ -85,6 +82,7 @@ function update_kernel()
 
 	_installed="$(installed_kernel ${efi_part})"
 	[[ ${_installed} == "1" ]] && { printf "kernel up to spec...\n"; return; };
+
 
 	if [[ ${type_part} == *"TYPE=\"vfat\""* ]];
 	then

@@ -112,7 +112,9 @@ do
 		bootpart=*)
 
 			efi_part="${x#*=}"
+			echo "updating the kernel on ${efi_part}"
 			update_kernel ${efi_part} ${directory}
+			echo "end of line..."
 		;;
 	esac
 done
