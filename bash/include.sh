@@ -83,7 +83,6 @@ function update_kernel()
 	_installed="$(installed_kernel ${efi_part})"
 	[[ ${_installed} == "1" ]] && { printf "kernel up to spec...\n"; return; };
 
-
 	if [[ ${type_part} == *"TYPE=\"vfat\""* ]];
 	then
 		# mount boot partition
@@ -100,6 +99,8 @@ function update_kernel()
 		install_modules "${_directory}/"
 
 		# assert new initramfs
+
+		#mount -t bind ${pkgROOT}/source/ ${_directory}/usr/src/
 		mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source/ "${_directory}/usr/src/"
 		chroot "${_directory}/" /usr/bin/eselect kernel set ${_kver}
 		chroot "${_directory}/" /usr/bin/genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
@@ -173,7 +174,7 @@ function build_kernel()
 	_bootPart=${1:?}
 	_fsType="$(\df -Th ${_bootPart} | awk '{print $2}' | tail -n 1)"
 	_rootFS=""
-	emergeOpts="--ask=n"
+	local emergeOpts="--ask=n --buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
 	_kernels_current="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root")"
 	_kernel='/usr/src/linux/'
@@ -202,7 +203,6 @@ function build_kernel()
 	sv="${sv%-gentoo*}"
 	sv="${sv#*linux-}"
 
-
 	# master version (pkg.server)
 	mv="$(\ls ${_kernels_current}/source/ | \grep -v 'linux$')"
 	mv="${mv%-gentoo*}"
@@ -221,7 +221,7 @@ function build_kernel()
 	#echo "cv = $cv ; lv = $lv ; nv  = $nv"
 	_compare="${nv}\n${lv}"
 
-	#echo "lv = $lv ; nv = $nv ; iv = $iv ; cv = $cv ; sv = $sv ; mv = $mv ; compare = $_compare"
+	echo "lv = $lv ; nv = $nv ; iv = $iv ; cv = $cv ; sv = $sv ; mv = $mv ; compare = $_compare" 2>&1
 
 	# do nothing case, as it is already installed
 	[[ ${lv} == ${nv} ]] && { printf "up to date.\n"; return; };
@@ -248,7 +248,7 @@ function build_kernel()
 		eselect kernel show
 		sleep 1
 
-		rm /usr/src/linux/.config
+		[[ -f /usr/src/linux/.config ]] && { /usr/src/linux/.config; };
 		cat ${_kernels_current}/kernels/current/${lv}-gentoo/config* > /usr/src/linux/.config;
 		iv=${nv}
 		# if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
@@ -261,6 +261,8 @@ function build_kernel()
 		(cd ${_kernel}; make prepare)
 		echo "--- prepared ---"
 		sleep 3
+
+		echo "make -jj$(nproc)" 2>&1
 
 		(cd ${_kernel}; make -j$(nproc) )
 		(cd ${_kernel}; make modules_install)

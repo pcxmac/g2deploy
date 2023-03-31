@@ -81,18 +81,32 @@ rsync -avI --info=progress2 --timeout=300 --ignore-existing --ignore-times --no-
 
 # build the latest kernel
 printf "########################## [ KERNEL | SOURCE ] ###################################\n"
-[[ -z "$(find "${pkgROOT}/kernels/" -type f -exec echo Found file {} \;)" ]] && {
+[[ -z "$(find "${pkgROOT}/kernels/" -maxdepth 2 -type f -exec echo Found file {} \;)" ]] && {
+
     _kver=$(getKVER);
     _kver="${_kver#*linux-}";
+
+    echo "$_kver..."
+
     mkdir -p ${pkgROOT}/kernels/current/${_kver};
     mkdir -p ${pkgROOT}/kernels/deprecated;
     mkdir -p ${pkgROOT}/kernels/compat;
     zcat /proc/config.gz > ${pkgROOT}/kernels/current/${_kver}/config.default;
+
+    echo "zcats"
+
 }
-[[ -z "$(find "${pkgROOT}/source/" -type f -exec echo Found file {} \;)" ]] && { mkdir -p ${pkgROOT}/source; };
+
+echo "found files ?"
+
+[[ -z "$(find "${pkgROOT}/source/" -maxdepth 2 -type f -exec echo Found file {} \;)" ]] && { mkdir -p ${pkgROOT}/source; };
+
+echo "building kernels..."
 
 # ASSUMES boot is automounted, or already mounted @ /boot
 build_kernel / 
+
+
 
 printf "updating mlocate-db\n"
 /usr/bin/updatedb
