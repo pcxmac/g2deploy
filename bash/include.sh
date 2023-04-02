@@ -170,6 +170,8 @@ function build_kernel()
 
 	# need to validate the 'current kernel' to ensure it's config is real. 
 
+	_rebuild=true
+
 	_flag="${2}"
 	_bootPart=${1:?}
 	_fsType="$(\df -Th ${_bootPart} | awk '{print $2}' | tail -n 1)"
@@ -233,10 +235,11 @@ function build_kernel()
 
 			[[ ${_flag} == "-q" ]] && { printf "build new kernel\n"; return; };
 			
-			echo "installing new version of gentoo-sources.";
-			
-			emerge $emergeOpts =sys-kernel/gentoo-sources-${nv}; 
-		
+			[[ ! -d /usr/src/linux-${nv}-gentoo ]] && { 
+				echo "installing new version of gentoo-sources.";
+				emerge $emergeOpts =syskernel-/gentoo-sources-${nv}; 
+			}
+
 		} || {	# in the case the current kernel-package is installed, OR, the source version, is the newest package-version and the local version isn't the newest.
 			[[ ${_flag} == "-q" ]] && { printf "build old kernel.\n"; return; };
 			[[ ! ${_flag} == "-f" ]] && { printf "kernel ${mv} exists.\n"; return; };
@@ -249,7 +252,12 @@ function build_kernel()
 		sleep 1
 
 		[[ -f /usr/src/linux/.config ]] && { /usr/src/linux/.config; };
-		cat ${_kernels_current}/kernels/current/${lv}-gentoo/config* > /usr/src/linux/.config;
+		[[ -d ${_kernels_current}/kernels/current/${lv}-gentoo/ ]] && { 
+			cat ${_kernels_current}/kernels/current/${lv}-gentoo/config* > /usr/src/linux/.config;
+		} || {
+			zcat /proc/config.gz > /usr/src/linux/.config;
+		};
+
 		iv=${nv}
 		# if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
 		(cd ${_kernel}; make clean);
@@ -267,10 +275,12 @@ function build_kernel()
 		(cd ${_kernel}; make -j$(nproc) )
 		(cd ${_kernel}; make modules_install)
 
+#################################################################
+
 		_offset=/tmp/$$
 
 		mkdir -p ${_offset}/${nv}-${_suffix}
-
+d
 		(cd ${_kernel}; INSTALL_PATH=/tmp/$$/ make install)
 		# requires /etc/portage/bashrc to sign module
 		FEATURES="-getbinpkg -buildpkg" \emerge =zfs-kmod-9999
@@ -297,7 +307,14 @@ function build_kernel()
 
 		sv="$(eselect kernel list | tail -n $(($(eselect kernel list | wc -l)-1)) | awk '{print $2}' | sort -r | head -n 1)"
 		[[ -f ${_kernels_current}/source/$(getKVER) ]] && { mv ${_kernels_current}/source/$(getKVER) ${_kernels_current}/source/${sv}; };
+
+
+#########################################################
+
 		mget ${_kernel} ${_kernels_current}/source/${sv};
+
+###########################################################
+
 		sync
 	};
 }
