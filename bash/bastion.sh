@@ -23,21 +23,6 @@ echo "EXT_MASK = $EXT_MASK"
 EXT_NETWORK="$(ipcalc $EXT_ADDR/$EXT_MASK | grep 'Network' | awk '{print $2}')"
 echo "EXT_NETWORK = $EXT_NETWORK"
 
-sed -i "/pkg.hypokrites.me$/c$EXT_ADDR\tpkg.hypokrites.me" /etc/hosts
-sed -i "/build.hypokrites.me$/c$EXT_ADDR\tbuild.hypokrites.me" /etc/hosts
-
-# doesnt support other options, will need to --add the option function-- to this
-sed -i "/RSYNC_OPTS/c RSYNC_OPTS=\"--address=$EXT_ADDR\"" /etc/conf.d/rsyncd
-sed -i "/^server.bind/c server.bind = \"$EXT_ADDR\"" /etc/lighttpd/lighttpd.conf
-sed -i "/ListenAddress/c ListenAddress=$EXT_ADDR" /etc/vsftpd.conf
-sed -i "/ListenAddress/c ListenAddress $EXT_ADDR" /etc/ssh/sshd_config
-
-
-rc-service lighttpd restart
-rc-service sshd restart
-rc-service vsftpd restart
-rc-service rsyncd restart
-
 # DOMX SPACE	SOFTNET	.. DEFINED BY LXD (<<) or QEMU
 #V_INTER="virbr1"
 #INTERFACE=$V_INTER
@@ -55,6 +40,23 @@ M_NETWORK="$(ipcalc $M_ADDR/$EXT_MASK | grep 'Network' | awk '{print $2}')"
 echo "${M_INTER} / address : ${M_ADDR} :: mask : ${M_MASK} :: network : ${M_NETWORK}"
 
 echo "EXT_NETWORK = $EXT_NETWORK"
+
+#############
+
+sed -i "/pkg.hypokrites.me$/c$M_ADDR\tpkg.hypokrites.me" /etc/hosts
+sed -i "/build.hypokrites.me$/c$M_ADDR\tbuild.hypokrites.me" /etc/hosts
+# doesnt support other options, will need to --add the option function-- to this
+sed -i "/RSYNC_OPTS/c RSYNC_OPTS=\"--address=$M_ADDR\"" /etc/conf.d/rsyncd
+sed -i "/^server.bind/c server.bind = \"$M_ADDR\"" /etc/lighttpd/lighttpd.conf
+sed -i "0,/listen_address/c listen_address=$M_ADDR" /etc/vsftpd.conf
+sed -i "0,/ListenAddress/c ListenAddress $M_ADDR" /etc/ssh/sshd_config
+
+rc-service lighttpd restart
+rc-service sshd restart
+rc-service vsftpd restart
+rc-service rsyncd restart
+
+###############3
 
 IDROP="DROP"
 UDROP="DROP"

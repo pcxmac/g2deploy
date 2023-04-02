@@ -48,7 +48,6 @@ if [[ ! -d ${directory} ]];then exit; fi
 kversion=$(getKVER)
 kversion=${kversion#*linux-}
 
-
 # execute update
 for x in $@
 do
