@@ -234,6 +234,8 @@ modem/router (out of bounds infrastructure)
 
   x
 
+  ON INSTALL, the boot disk is not mounted to the zfs rootfs, thus refind is not updated...
+
   x
 
   - figure out why fstab is not loading up the pool/swap [install]
