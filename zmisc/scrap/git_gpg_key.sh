@@ -55,3 +55,11 @@ vscode should prompt for a web login to github
 
 for vscode, you will have to enable commit signing, through the file/preferences/settings, upon setting this
 the new push will prompt pinentry, and you can use gnome to save your key, through a password.
+
+
+
+
+
+
+https://wiki.archlinux.org/title/GNOME/Keyring
+
