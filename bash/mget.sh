@@ -118,17 +118,17 @@ function getHTTP() 	#SOURCE	#DESTINATION #WGET ARGS
 
 	while [[ ${waiting} == 1 ]]
 	do
-		httpCode="$(wget -NS --spider "${url%\**}" 2>&1 | \grep "HTTP/" | awk '{print $2}' | \grep '200' | uniq)"
+		httpCode="$(wget -q -NS --spider "${url%\**}" 2>&1 | \grep "HTTP/" | awk '{print $2}' | \grep '200' | uniq)"
 		if [[ "${httpCode}" == "200" ]]
 		then
 			if [[ -z ${destination} ]]
 			then
-					wget -nH --cut-dirs=$(dirCount ${url}) -O - --reject "index.*" -q --show-progress --no-parent "${url}" 2>/dev/null
+					wget -q -nH --cut-dirs=$(dirCount ${url}) -O - --reject "index.*" -q --show-progress --no-parent "${url}" 2>/dev/null
 			else
 				[[ ${destination} != "$(printf '%s\n' "${destination}" | sed 's/\/$//g')" ]] && { 
-					wget -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress --no-parent "${url}" -P "${destination%/*}" 2>&1 | pv --progress 1>/dev/null
+					wget -q -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress --no-parent "${url}" -P "${destination%/*}" 2>&1 | pv --progress 1>/dev/null
 				} || {
-					wget -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress --no-parent "${url}" -O "${destination%/*}" 2>&1 | pv --progress 1>/dev/null
+					wget -q -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress --no-parent "${url}" -O "${destination%/*}" 2>&1 | pv --progress 1>/dev/null
 				};
 			fi
 			waiting=0
@@ -160,17 +160,17 @@ function getFTP()
 
 	while [[ ${waiting} == 1 ]]
 	do
-		ftpCode="$(wget -NS --spider "${url%\**}" 2>&1 | \grep "No such file *."  | awk '{print $2}')"
+		ftpCode="$(wget -q -NS --spider "${url%\**}" 2>&1 | \grep "No such file *."  | awk '{print $2}')"
 		if [[ -z "${ftpCode}" ]]
 		then
 			if [[ -z ${destination} ]]
 			then
-				wget -nH --cut-dirs=$(dirCount ${url}) -O - --reject "index.*" -q --show-progress  --no-parent "${url}" 2>/dev/null
+				wget -q -nH --cut-dirs=$(dirCount ${url}) -O - --reject "index.*" -q --show-progress  --no-parent "${url}" 2>/dev/null
 			else
 				[[ ${destination} != "$(printf '%s\n' "${destination}" | sed 's/\/$//g')" ]] && { 
-					wget -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress  --no-parent "${url}" -P "${destination}" 2>&1 | pv --progress 1>/dev/null
+					wget -q -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress  --no-parent "${url}" -P "${destination}" 2>&1 | pv --progress 1>/dev/null
 				} || {
-					wget -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress  --no-parent "${url}" -O "${destination}" 2>&1 | pv --progress 1>/dev/null
+					wget -q -nH --cut-dirs=$(dirCount ${url}) -r --reject "index.*" -q --show-progress  --no-parent "${url}" -O "${destination}" 2>&1 | pv --progress 1>/dev/null
 				};
 			fi
 			waiting=0

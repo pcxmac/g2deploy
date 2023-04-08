@@ -79,6 +79,15 @@ printf "############################### [ DISTFILES ] ##########################
 printf "SYNCING w/ ***%s***" "${URL}"
 rsync -avI --info=progress2 --timeout=300 --ignore-existing --ignore-times --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
+
+printf "########################### [ ... sync ... ] #####################################\n"
+
+printf "updating mlocate-db\n"
+/usr/bin/updatedb
+/usr/bin/eix-update
+
+# host.cfg uses 'pkgROOT' as a localizable variable, must be defined, before 'eval' the key values, dependent on 'pkgROOT'
+
 # build the latest kernel
 printf "########################## [ KERNEL | SOURCE ] ###################################\n"
 # instantiate directories, if none exist
@@ -97,13 +106,6 @@ printf "########################## [ KERNEL | SOURCE ] #########################
 # ASSUMES boot is automounted, or already mounted @ /boot
 build_kernel / 
 
-printf "########################### [ ... sync ... ] #####################################\n"
-
-printf "updating mlocate-db\n"
-/usr/bin/updatedb
-/usr/bin/eix-update
-
-# host.cfg uses 'pkgROOT' as a localizable variable, must be defined, before 'eval' the key values, dependent on 'pkgROOT'
 
 printf "############################### [ META ] ########################################\n"
 #mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/meta"
@@ -127,7 +129,7 @@ printf "############################### [ PATCHFILES ] #########################
 #mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/patchfiles/" "${SCRIPT_DIR}/patchfiles"
 _patchfiles="$(eval echo "$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root/patchfiles")")"
 #echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_patchfiles}""
-mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_patchfiles}"
+mget "--owner --group --delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_patchfiles}"
 
 sleep 30
 

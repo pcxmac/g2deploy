@@ -32,7 +32,7 @@ echo "EXT_NETWORK = $EXT_NETWORK"
 #echo "${V_INTER} / address : ${V_ADDR} :: mask : ${V_MASK} :: network : ${V_NETWORK}"
 
 # DOM0 SPACE	METALNET .. DEFINED BY QEMU
-M_INTER="virbr0"
+M_INTER="lo"
 INTERFACE=$M_INTER
 M_ADDR="$(ifconfig ${INTERFACE} | grep 'inet ' | awk '{print $2}')"
 M_MASK="$(ifconfig ${INTERFACE} | grep 'netmask ' | awk '{print $4}')"

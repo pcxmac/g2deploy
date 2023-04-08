@@ -222,28 +222,38 @@ function build_kernel()
 
 	#echo "cv = $cv ; lv = $lv ; nv  = $nv"
 	_compare="${nv}\n${lv}"
+	_compare="$(printf $_compare | sort --version-sort | tail -n 1)"
 
-	echo "lv = $lv ; nv = $nv ; iv = $iv ; cv = $cv ; sv = $sv ; mv = $mv ; compare = $_compare" 2>&1
+	echo "lv = $lv ; nv = $nv ; iv = $iv ; cv = $cv ; sv = $sv ; mv = $mv ; compare = " 2>&1
 
 	# do nothing case, as it is already installed
 	[[ ${lv} == ${nv} ]] && { printf "up to date.\n"; return; };
 
-	# lv, the currently highest installed version, will not be at the bottom if there is a newer unmasked version
-	[[ ${lv} != "$(printf $_compare | sort --version-sort | tail -n 1)" ]] && {
 
-	 	[[ ${lv} != ${nv} || ${sv} != ${nv} ]] && { 
 
-			[[ ${_flag} == "-q" ]] && { printf "build new kernel\n"; return; };
+
+	[[ ${lv} != "$_compare" || $_flag == '-f' ]] && {
+
+		# if current installed source version does not equal latest build
+		[[ ${sv} != ${nv} ]] && { 
+		 		echo "installing new version of gentoo-sources.";
+		 		emerge =sys-kernel/gentoo-sources-${nv} ${emergeOpts};
+		}
+
+		# if latest build does not equal newest available version OR
+	 	# [[ ${lv} != ${nv} || ${sv} != ${nv} ]] && { 
+
+		# 	[[ ${_flag} == "-q" ]] && { printf "build new kernel\n"; return; };
 			
-			[[ ! -d /usr/src/linux-${nv}-gentoo ]] && { 
-				echo "installing new version of gentoo-sources.";
-				emerge $emergeOpts =syskernel-/gentoo-sources-${nv}; 
-			}
+		# 	[[ ! -d /usr/src/linux-${nv}-gentoo ]] && { 
+		# 		echo "installing new version of gentoo-sources.";
+		# 		emerge $emergeOpts =syskernel-/gentoo-sources-${nv}; 
+		# 	}
 
-		} || {	# in the case the current kernel-package is installed, OR, the source version, is the newest package-version and the local version isn't the newest.
-			[[ ${_flag} == "-q" ]] && { printf "build old kernel.\n"; return; };
-			[[ ! ${_flag} == "-f" ]] && { printf "kernel ${mv} exists.\n"; return; };
-		}	
+		# } || {	# in the case the current kernel-package is installed, OR, the source version, is the newest package-version and the local version isn't the newest.
+		# 	[[ ${_flag} == "-q" ]] && { printf "build old kernel.\n"; return; };
+		# 	[[ ! ${_flag} == "-f" ]] && { printf "kernel ${mv} exists.\n"; return; };
+		# }	
 
 		# suffix might need to be altered to fit possible versioning which meddles with -gentoo
 		_suffix="gentoo"
