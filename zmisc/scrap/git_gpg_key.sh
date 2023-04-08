@@ -57,7 +57,8 @@ for vscode, you will have to enable commit signing, through the file/preferences
 the new push will prompt pinentry, and you can use gnome to save your key, through a password.
 
 
-
+seahorse apparently loads an app called passwords and keys, or perhaps gnome has it anyways, verify
+one can zap the keyring in that, or by going to rm ~/.local/share/keyrings/*
 
 
 
