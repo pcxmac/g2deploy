@@ -80,23 +80,30 @@ function update_kernel()
 	_directory="$(printf '%s\n' "${2:?}" | sed 's/\/$//g')"
 	type_part="$(blkid "${efi_part}")"
 
+
+	# mount boot partition
+	#echo "update boot ! @ ${efi_part} @ ${dataset} :: ${_directory} >> + $(getKVER)"
+	#echo "mount ${efi_part} ${_directory}/boot"
+
+	mount "${efi_part}" "${_directory}/boot"
+	# edit boot record, refind
+	#echo "edit boot -- ${kversion}" "${dataset}" "${_directory}"
+	editboot "${kversion}" "${dataset}" "${_directory}/"
+	#echo "install modules -- ${_directory}/ @ $_result"
+	umount "${_directory}/boot"
+
+	# will use rsync to overwrite different/new files.
+	mget ${pkgROOT}/kernels/current/modules.tar.gz /tmp/modules_${_kver}/
+	tar xfvz /tmp/modules_${_kver}/modules.tar.gz
+	mget /tmp/modules_${_kver}/lib/ ${_directory}/lib/
+	rm /tmp/modules_${_kver} -R
+
 	_installed="$(installed_kernel ${efi_part})"
 	[[ ${_installed} == "1" ]] && { printf "kernel up to spec...\n"; return; };
 
 	if [[ ${type_part} == *"TYPE=\"vfat\""* ]];
 	then
-		# mount boot partition
-		echo "update boot ! @ ${efi_part} @ ${dataset} :: ${_directory} >> + $(getKVER)"
-		echo "mount ${efi_part} ${_directory}/boot"
-		mount "${efi_part}" "${_directory}/boot"
-		# edit boot record, refind
-		echo "edit boot -- ${kversion}" "${dataset}" "${_directory}"
 
-		_result="$(editboot "${kversion}" "${dataset}" "${_directory}/")"
-		echo "install modules -- ${_directory}/"
-
-		# install kernel modules to runtime
-		install_modules "${_directory}/"
 
 		# assert new initramfs
 
@@ -106,11 +113,13 @@ function update_kernel()
 		chroot "${_directory}/" /usr/bin/genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
 		mv ${_directory}/boot/initramfs-${_kver#*linux-}.img ${_directory}/boot/LINUX/${_kver#*linux-}/initramfs
 		# unmount the boot partition
+
+		umount "${_directory}/boot"
+
 	else
 		echo "no mas"
 	fi
 
-	umount "${_directory}/boot"
 
 }
 
@@ -229,16 +238,12 @@ function build_kernel()
 	# do nothing case, as it is already installed
 	[[ ${lv} == ${nv} ]] && { printf "up to date.\n"; return; };
 
-
-
-
 	[[ ${lv} != "$_compare" || $_flag == '-f' ]] && {
 
 		# if current installed source version does not equal latest build
 		[[ ${sv} != ${nv} ]] && { 
-		 		echo "installing new version of gentoo-sources.";
-		 		emerge =sys-kernel/gentoo-sources-${nv} ${emergeOpts};
-		}
+		 		emerge =sys-kernel/gentoo-sources-${nv} --ask=n --buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts;
+		};
 
 		# if latest build does not equal newest available version OR
 	 	# [[ ${lv} != ${nv} || ${sv} != ${nv} ]] && { 
@@ -255,42 +260,45 @@ function build_kernel()
 		# 	[[ ! ${_flag} == "-f" ]] && { printf "kernel ${mv} exists.\n"; return; };
 		# }	
 
+#####################################################################
+
 		# suffix might need to be altered to fit possible versioning which meddles with -gentoo
-		_suffix="gentoo"
-		eselect kernel set linux-${nv}-${_suffix}
-		eselect kernel show
-		sleep 1
 
-		[[ -f /usr/src/linux/.config ]] && { /usr/src/linux/.config; };
-		[[ -d ${_kernels_current}/kernels/current/${lv}-gentoo/ ]] && { 
-			cat ${_kernels_current}/kernels/current/${lv}-gentoo/config* > /usr/src/linux/.config;
-		} || {
-			zcat /proc/config.gz > /usr/src/linux/.config;
-		};
+		 _suffix="gentoo"
+		 eselect kernel set linux-${nv}-${_suffix}
+		 eselect kernel show
+		 sleep 10
 
-		iv=${nv}
-		# if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
-		(cd ${_kernel}; make clean);
-		echo "--- cleaned ---"
-		sleep 3
-		(cd ${_kernel}; make olddefconfig)
-		echo "--- olddefconfig ---"
-		sleep 3
-		(cd ${_kernel}; make prepare)
-		echo "--- prepared ---"
-		sleep 3
+		 [[ -f /usr/src/linux/.config ]] && { /usr/src/linux/.config; };
+		 [[ -d ${_kernels_current}/kernels/current/${lv}-gentoo/ ]] && { 
+		 	cat ${_kernels_current}/kernels/current/${lv}-gentoo/config* > /usr/src/linux/.config;
+		 } || {
+		 	zcat /proc/config.gz > /usr/src/linux/.config;
+		 };
 
-		echo "make -jj$(nproc)" 2>&1
+		 iv=${nv}
+		 # if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
+		 (cd ${_kernel}; make clean);
+		 echo "--- cleaned ---"
+		 sleep 3
+		 (cd ${_kernel}; make olddefconfig)
+		 echo "--- olddefconfig ---"
+		 sleep 3
+		 (cd ${_kernel}; make prepare)
+		 echo "--- prepared ---"
+		 sleep 3
 
-		(cd ${_kernel}; make -j$(nproc) )
-		(cd ${_kernel}; make modules_install)
+		 echo "make -jj$(nproc)" 2>&1
+
+		 (cd ${_kernel}; make -j$(nproc) )
+		 (cd ${_kernel}; make modules_install)
+
 
 #################################################################
 
 		_offset=/tmp/$$
 
 		mkdir -p ${_offset}/${nv}-${_suffix}
-d
 		(cd ${_kernel}; INSTALL_PATH=/tmp/$$/ make install)
 		# requires /etc/portage/bashrc to sign module
 		FEATURES="-getbinpkg -buildpkg" \emerge =zfs-kmod-9999
@@ -314,14 +322,12 @@ d
 		mv ${_offset}/${nv}-${_suffix}/ ${_kernels_current}/kernels/current/
 
 		# rsync/diff over to new kernel source, change directory to reflect current kernel mget
-
-		sv="$(eselect kernel list | tail -n $(($(eselect kernel list | wc -l)-1)) | awk '{print $2}' | sort -r | head -n 1)"
 		[[ -f ${_kernels_current}/source/$(getKVER) ]] && { mv ${_kernels_current}/source/$(getKVER) ${_kernels_current}/source/${sv}; };
 
 
 #########################################################
 
-		mget ${_kernel} ${_kernels_current}/source/${sv};
+		mget ${_kernel} ${_kernels_current}/source/linux-${nv}-${_suffix};
 
 ###########################################################
 

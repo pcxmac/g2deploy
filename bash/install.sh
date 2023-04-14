@@ -290,8 +290,9 @@ function setup_boot() {
 	# temporary type of assignment, list not handled currently
 	disk=${disk#*-}
 
-	mount "${boot_partition}" "${dstDir}/boot"
-	mget "${boot_src}/boot/" "${dstDir}"
+	mount ${boot_partition} ${dstDir}/boot/
+	mget ${boot_src}/boot ${dstDir}/
+
 	install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR ... MGET BREAKS IF THIS IS BEFORE THE PARENT, APPARENTLY MGET NEEDS AN EMPTY FOLDER...
 	umount "${dstDir}/boot"
 }
@@ -314,6 +315,7 @@ function modify_boot() {
 	mounts ${dstDir}
 	mount "${boot_partition}" "${dstDir}/boot"
 	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source/ "${dstDir}/usr/src/"
+
 	chroot "${dstDir}" /usr/bin/eselect kernel set ${_kver}
 	chroot "${dstDir}" /usr/bin/genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
 	mv ${dstDir}/boot/initramfs-${_kver#*linux-}.img ${dstDir}/boot/LINUX/${_kver#*linux-}/initramfs

@@ -2,6 +2,16 @@ goals :
 
 YADAYADA
 
+  - notes about swap systems observations of late (13 feb)
+    need a profile service to restore configs, despite having old and complete etc.
+    binpkgs+portage repo was out of touch/reach, vsftpd and lighttpd not installed, bastion doesn't address uninstalled services
+    sure, a dom0 would be nice, but the ability to save profiles and launch from a usb-stick + repo w/ profiles is best.
+    firefox could not emerge, possibly missed build deps. Should be a meta install anyways.
+    meta packages need to be accomplished
+    ZFS !!!! zfs does not import or mount -a -f. AF.
+    
+
+
 
   [scope]move build kernel to sync, install and update will pull in source/kernel... initramfs per kernel change or install. 
 
@@ -231,6 +241,8 @@ modem/router (out of bounds infrastructure)
   - sanitize mget - stream methods, need to check this one closely for most/close to all cases.
   x
   x
+
+  - install script is attempting to delete partitions after wiping the partition map.
 
   x
 

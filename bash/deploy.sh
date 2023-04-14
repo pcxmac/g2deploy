@@ -119,5 +119,5 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key "${dataset}"
 	clear_mounts "${directory}"
-	chown root:root "${directory}"
-	zfs snapshot "${dataset}@safe"
+	#chown root:root "${directory}"
+	#zfs snapshot "${dataset}@safe"
