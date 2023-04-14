@@ -4,5 +4,5 @@
 
 
 <=sys-devel/llvm-16.0.0
-<=media-libs/mesa-9999
+<media-libs/mesa-9999
 
