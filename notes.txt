@@ -135,6 +135,11 @@ modem/router (out of bounds infrastructure)
       containerX
 
 
+    FIREFOX build dep issues
+    
+    dev-libs/boehm-gc -- missing dep dev-libs/libatomic_ops       // most likely a build script issue
+    sys-libs/gpm -- /usr/bin/bison -- exec error format           //
+
 
 
 
