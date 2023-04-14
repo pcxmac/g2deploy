@@ -11,6 +11,10 @@ YADAYADA
     ZFS !!!! zfs does not import or mount -a -f. AF.
     
 
+  - it appears that mesa + llvm are too old to support the XTX, so this would be considered a component patch
+    meta file contains hardware spec, patch searches meta files, finds this condition, issues a patch, from a patch
+	database / log, commands get executed, in this case it would be a mask on llvm and mesa. 0
+
 
 
   [scope]move build kernel to sync, install and update will pull in source/kernel... initramfs per kernel change or install. 
