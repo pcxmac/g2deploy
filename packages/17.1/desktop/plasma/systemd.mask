@@ -1,3 +1,7 @@
-# PLASMA/SYSTEMD MASK
+# PLASMA MASK
 
 >=dev-qt/qtgui-5.15.8-r3
+
+
+<=sys-devel/llvm-16.0.0
+<media-libs/mesa-23.0.0-r1

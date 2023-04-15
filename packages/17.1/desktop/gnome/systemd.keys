@@ -1,4 +1,4 @@
-# GNOME/SYSTEMD KEYS
+# GNOME KEYS
 
 dev-haskell/c2hs                    ~amd64
 dev-haskell/cabal                   ~amd64
@@ -10,3 +10,24 @@ dev-haskell/language-c              ~amd64
 dev-haskell/syb                     ~amd64
 dev-haskell/alex                    ~amd64
 dev-haskell/happy                   ~amd64
+
+
+
+
+app-editors/vscode                              ~amd64
+
+<=media-libs/mesa-23.0.2-r1						~amd64
+
+>=sys-devel/llvm-16.0.1                         ~amd64
+>=sys-devel/llvm-common-16.0.1                  ~amd64
+>=sys-devel/llvm-toolchain-symlinks-16-r1       ~amd64
+>=sys-devel/llvmgold-16                         ~amd64
+
+
+
+
+
+
+
+
+

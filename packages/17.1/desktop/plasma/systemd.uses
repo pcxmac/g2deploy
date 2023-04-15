@@ -1,4 +1,4 @@
-# PLASMA/SYSTEMD USES
+# PLASMA USES
 
 sys-libs/zlib minizip
 media-video/ffmpeg opus vpx
@@ -21,3 +21,5 @@ media-libs/libsdl2 gles2
 gnome-base/gnome-control-center networkmanager
 media-libs/libcanberra pulseaudio
 media-plugins/alsa-plugins pulseaudio
+
+media-libs/libvpx postproc
