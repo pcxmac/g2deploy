@@ -55,7 +55,7 @@ do
 		update)
 			echo "patch_portage ${directory} ${_profile} "
 
-			sleep 10
+			#sleep 10
 
 			rootDS="$(df / | tail -n 1 | awk '{print $1}')"
 			target="$(getZFSMountPoint "${rootDS}")"
@@ -65,12 +65,15 @@ do
 
 			pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
 			patchSystem "${_profile}" 'update' > "${directory}/patches.sh"
+			echo "patching portage ..."
 			patchFiles_portage "${directory}" "${_profile}"
-
 			if [[ ${directory} == "/" ]]
 			then
 				update_runtime
 			else
+
+				echo "clear mounts"
+
 				clear_mounts "${directory}"
 				mounts "${directory}"
 

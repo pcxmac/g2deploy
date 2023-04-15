@@ -93,7 +93,7 @@ function update_kernel()
 	umount "${_directory}/boot"
 
 	# will use rsync to overwrite different/new files.
-	mget ${pkgROOT}/kernels/current/modules.tar.gz /tmp/modules_${_kver}/
+	mget ${pkgROOT}/kernels/current/${_kver}-gentoo/modules.tar.gz /tmp/modules_${_kver}/
 	tar xfvz /tmp/modules_${_kver}/modules.tar.gz
 	mget /tmp/modules_${_kver}/lib/ ${_directory}/lib/
 	rm /tmp/modules_${_kver} -R
@@ -618,8 +618,8 @@ function patchFiles_portage()
 	echo -e "$(mget ${common_URI}.mask)\n$(mget ${spec_URI}.mask)" | uniq > ${offset}/etc/portage/package.mask
 	echo -e "$(mget ${common_URI}.unmask)\n$(mget ${spec_URI}.unmask)" | uniq > ${offset}/etc/portage/package.unmask
 	echo -e "$(mget ${common_URI}.license)\n$(mget ${spec_URI}.license)" | uniq > ${offset}/etc/portage/package.license
-
 	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf
+
 
 	while read -r line; do
 		((LineNum+=1))
