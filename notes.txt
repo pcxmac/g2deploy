@@ -1,6 +1,8 @@
 goals : 
 
 YADAYADA
+  - it shall begin.
+
 
   - notes about swap systems observations of late (13 feb)
     need a profile service to restore configs, despite having old and complete etc.
