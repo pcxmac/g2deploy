@@ -1,3 +1,4 @@
+sys-apps/lshw
 www-servers/lighttpd
 net-ftp/vsftpd
 net-analyzer/openbsd-netcat
