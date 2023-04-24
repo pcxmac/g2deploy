@@ -1,9 +1,0 @@
-/dev/vdb1	0	+8G		8300	null
-/dev/vdc1	0	+8G		8300	null
-/dev/vdd1	0	+8G		8300	null
-/dev/vdb2	0	null	8300	zfs:zroot
-/dev/vdc2	0	null	8300	zfs:zroot
-/dev/vdd2	0	null	8300	zfs:zroot
-/dev/vda1	0	+32M	EF02	null
-/dev/vda2	0	+8G		EF00	vfat
-/dev/vda3	0	null	8300	zfs:zsafe
