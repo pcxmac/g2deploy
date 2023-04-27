@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# full sync, can connect to a dedicated sync-server/dom-0, to use a minimal repo, sync and delete older missing off of distant server files
+
 # backend data-server synchronization (no arguments) 
 #
 #   /server:pkgROOT
@@ -26,7 +28,7 @@
 
 #
 #       https://www.gentoo.org/glep/glep-0074.html (MANIFESTS)   
-#       
+#
 
 
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
@@ -131,7 +133,7 @@ _patchfiles="$(eval echo "$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server
 #echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_patchfiles}""
 mget "--owner --group --delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_patchfiles}"
 
-sleep 30
+sleep 3
 
 owner="$(stat -c '%U' "${pkgROOT}")"
 group="$(stat -c '%G' "${pkgROOT}")" 

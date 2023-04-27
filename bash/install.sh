@@ -144,6 +144,9 @@ destination="${2:?}"
 	# function insertKeyValue "path:zzz/to/key" "second_key:value" --> path:zzz/to/key/second_key:value
 
 	partClassifier="${disk##*/sd*}"
+
+	echo "part classifier = $partClassifier disk = $disk" > ./out.log
+
 	if [[ -n ${partClassifier} ]]
 	then
 		pmod="p"
@@ -200,11 +203,18 @@ function prepare_disks() {
 
 	echo "find key values ???" 2>&1
 
+	echo ${disk} | \grep 'p$' 2>&1
+
+	echo ${disk} 2>&1
+
+	echo "##################################" 2>&1
+
 	install_partition=${disk#*-}
 	disk="$(echo ${install_partition%[0-9]*})"	# only supports one disk at the moment, with no mappable partitioning
+	[[ -n "$(echo ${disk} | \grep 'p$')" ]] && { echo "shooottyy"; disk="${disk%p*}"; }; 
 	dpath="${dpath}/${ddataset}"
 
-	#echo "disk = ${disk} | boot -> ${boot_partition} | part -> ${install_partition} | dpath = ${dpath} | dtype = ${dtype}" 2>&1
+	echo "disk = ${disk} | boot -> ${boot_partition} | part -> ${install_partition} | dpath = ${dpath} | dtype = ${dtype}" 2>&1
 
 	clear_mounts ${disk}
 	sync
