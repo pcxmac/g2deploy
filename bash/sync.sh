@@ -39,6 +39,7 @@ source ${SCRIPT_DIR}/bash/include.sh
 pkgHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/host")"
 pkgROOT="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root")"
 pkgCONF="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/config")"
+pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 
 checkHosts
 
@@ -61,20 +62,27 @@ emerge --sync | tee /var/log/esync.log
 sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
 #sed -i "s|^location.*|${syncLocation}|g" ${pkgCONF}
 
+# NO FILTERING FOR ARCH, THESE ARE TEXT-META FILES.
 # initial condition calls for non-recursive sync
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/snapshots" rsync)"
 printf "############################### [ SNAPSHOTS ] ###################################\n"
 printf "SYNCING w/ ***%s***" "${URL}"
 rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
+# ARCH = AMD64, X86, ...., * (ALL)
 # initial condition calls for non-recursive sync
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/releases" rsync only-sync)"
 printf "############################### [ RELEASES ] ###################################\n"
 printf "SYNCING w/ ***%s***" "${URL}"
 if [[ ! -d "${pkgROOT}"/releases ]]; then mkdir -p "${pkgROOT}"/releases; fi
 find "${pkgROOT}"/releases/ -type l -delete
-rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}${ARCH}" "${pkgROOT}"/releases | tee /var/log/esync.log
+[[ ${pkgARCH} == "*" ]] && { 
+    rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}${ARCH}" "${pkgROOT}"/ | tee /var/log/esync.log;
+} || { 
+    rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --include="*/" --include="*${pkgARCH}*" --exclude="*" --no-owner --no-group "${URL}${ARCH}" "${pkgROOT}"/ | tee /var/log/esync.log;
+};
 
+# NO FILTERING FOR ARCH, THESE ARE TYPICALLY SOURCE FILES/TEXT TO BE COMPILED, OR DATAFILES WHICH ARE CROSS PLATFORM...
 # initial condition calls for non-recursive sync
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/distfiles" rsync)"
 printf "############################### [ DISTFILES ] ###################################\n"
@@ -102,12 +110,12 @@ printf "########################## [ KERNEL | SOURCE ] #########################
     mkdir -p ${pkgROOT}/kernels/deprecated;
     mkdir -p ${pkgROOT}/kernels/compat;
     zcat /proc/config.gz > ${pkgROOT}/kernels/current/${_kver}/config.default;
-}
+};
+
 [[ -z "$(ls -ail ${pkgROOT}/source/ --ignore . --ignore .. 2>/dev/null)" ]] && { mkdir -p ${pkgROOT}/source; };
 
 # ASSUMES boot is automounted, or already mounted @ /boot
 build_kernel / 
-
 
 printf "############################### [ META ] ########################################\n"
 #mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/meta"
@@ -145,6 +153,8 @@ chown "${owner}:${group}" "${pkgROOT}/profiles" -R		1>/dev/null
 chown "${owner}:${group}" "${pkgROOT}/packages" -R		1>/dev/null
 
 #repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
+
+[[ ! -d ${pkgROOT}/repository ]] && { mkdir -p ${pkgROOT}/repository; };
 
 for x in $(ls "${pkgROOT}/repository")
 do
