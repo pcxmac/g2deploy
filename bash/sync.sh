@@ -40,6 +40,13 @@ pkgHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/host")"
 pkgROOT="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root")"
 pkgCONF="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/config")"
 pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
+pkgREPO="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/repo")"
+
+makeCONF="/etc/portage/make.conf"
+reposCONF="/etc/portage/repos/gentoo.conf"
+
+repoLocation="$(cat /etc/portage/make.conf | grep '^PORTDIR')"
+repoLocation="$(echo ${repoLocation#*=} | tr -d '"')"
 
 checkHosts
 
@@ -47,52 +54,61 @@ checkHosts
 syncURI="$(cat ${pkgCONF} | grep "^sync-uri")"
 #syncLocation="$(cat ${pkgCONF} | grep "^location")"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/repos" rsync)"
+
 #LOCATION="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/repo")"
-sed -i "s|^sync-uri.*|${URL}|g" ${pkgCONF}
 
 printf "############################ [ BINARY PACKAGES ] #################################\n"
 [[ ! -d ${pkgROOT}/binpkgs ]] && { mkdir -p ${pkgROOT}/binpkgs; };
 emaint binhost --fix
 # needs more work !!! zomg.
 
-#sed -i "s|^location.*|location = ${LOCATION}|g" ${pkgCONF}
-printf "################################# [ REPOS ] #####################################\n"
-printf "SYNCING w/ ***%s***" "${URL}"
+printf "################################## [ REPOS ] #####################################\n"
+printf "SYNCING w/ ***%s***\n" "${URL} | ${makeCONF} | ${pkgREPO} | ${syncURI}"
+
+portDIR="$(cat ${makeCONF} | grep '^PORTDIR')"
+rPortDIR="$(cat ${reposCONF} | grep '^location')"
+sed -i "s|^sync-uri.*|${URL}|g" ${pkgCONF}
+sed -i "s|^PORTDIR.*|PORTDIR=\"${pkgREPO}\"|g" ${makeCONF}
+sed -i "s|^location.*|location = ${pkgREPO}|g" ${reposCONF}
 emerge --sync | tee /var/log/esync.log
 sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
-#sed -i "s|^location.*|${syncLocation}|g" ${pkgCONF}
+sed -i "s|^PORTDIR.*|${portDIR}|g" ${makeCONF}
+sed -i "s|^location.*|${rPortDIR}|g" ${reposCONF}
 
 # NO FILTERING FOR ARCH, THESE ARE TEXT-META FILES.
 # initial condition calls for non-recursive sync
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/snapshots" rsync)"
-printf "############################### [ SNAPSHOTS ] ###################################\n"
-printf "SYNCING w/ ***%s***" "${URL}"
-rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
+printf "################################ [ SNAPSHOTS ] ###################################\n"
+printf "SYNCING w/ ***%s***\n" "${URL}"
+#rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
+
 
 # ARCH = AMD64, X86, ...., * (ALL)
 # initial condition calls for non-recursive sync
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/releases" rsync only-sync)"
-printf "############################### [ RELEASES ] ###################################\n"
-printf "SYNCING w/ ***%s***" "${URL}"
+printf "################################ [ RELEASES ] ####################################\n"
+printf "SYNCING w/ ***%s***\n" "${URL}"
 if [[ ! -d "${pkgROOT}"/releases ]]; then mkdir -p "${pkgROOT}"/releases; fi
 find "${pkgROOT}"/releases/ -type l -delete
-[[ ${pkgARCH} == "*" ]] && { 
-    rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --no-owner --no-group "${URL}${ARCH}" "${pkgROOT}"/ | tee /var/log/esync.log;
-} || { 
-    rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --include="*/" --include="*${pkgARCH}*" --exclude="*" --no-owner --no-group "${URL}${ARCH}" "${pkgROOT}"/ | tee /var/log/esync.log;
+[[ ${pkgARCH} == "*" ]] && {
+    rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --include="*/" --include="*${pkgARCH}*" --exclude="*" --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log;
+} || {
+	echo "$URL :: ${pkgROOT}/"
+	sleep 10
+    rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --include="*/" --include="*${pkgARCH}*" --exclude="*" --no-owner --no-group "${URL}" "${pkgROOT}"/releases/ | tee /var/log/esync.log;
 };
 
 # NO FILTERING FOR ARCH, THESE ARE TYPICALLY SOURCE FILES/TEXT TO BE COMPILED, OR DATAFILES WHICH ARE CROSS PLATFORM...
 # initial condition calls for non-recursive sync
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/distfiles" rsync)"
 printf "############################### [ DISTFILES ] ###################################\n"
-printf "SYNCING w/ ***%s***" "${URL}"
-rsync -avI --info=progress2 --timeout=300 --ignore-existing --ignore-times --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
+printf "SYNCING w/ ***%s***\n" "${URL}"
+#rsync -avI --info=progress2 --timeout=300 --ignore-existing --ignore-times --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
 
-printf "########################### [ ... sync ... ] #####################################\n"
-
+printf "########################### [ ... sync ... ] ####################################\n"
 printf "updating mlocate-db\n"
+
 /usr/bin/updatedb
 /usr/bin/eix-update
 
@@ -116,6 +132,16 @@ printf "########################## [ KERNEL | SOURCE ] #########################
 
 # ASSUMES boot is automounted, or already mounted @ /boot
 build_kernel / 
+
+# SCRIPT_DIR represents the root of the rsync/ftp/http server, plus or if, a few directories
+
+
+
+#printf "############################### [ REPOS ] #######################################\n"
+#mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/meta"
+#_meta="$(eval echo "$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root/meta")")"
+#mget "--delete --exclude='.*'"  "${repoLocation}"        "${SCRIPT_DIR}/repos/"
+#echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/meta"        "${_meta}""
 
 printf "############################### [ META ] ########################################\n"
 #mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/meta"
