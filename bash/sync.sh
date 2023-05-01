@@ -69,7 +69,7 @@ rPortDIR="$(cat ${pkgCONF} | grep '^location')"
 printf "################################## [ REPOS ] #####################################\n"
 printf "SYNCING w/ ***%s***\n" "${URL} | ${makeCONF} | ${pkgCONF} | ${portDIR} | ${rPortDIR} | ${pkgREPO} | ${syncURI}"
 
-sed -i "s|^sync-uri.*|${URL}|g" ${pkgCONF}
+sed -i "s|^sync-uri.*|sync-uri = ${URL}|g" ${pkgCONF}
 sed -i "s|^PORTDIR.*|PORTDIR=\"${pkgREPO}\"|g" ${makeCONF}
 sed -i "s|^location.*|location = ${pkgREPO}|g" ${pkgCONF}
 sleep 30
