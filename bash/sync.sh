@@ -65,14 +65,12 @@ emaint binhost --fix
 portDIR="$(cat ${makeCONF} | grep '^PORTDIR')"
 rPortDIR="$(cat ${pkgCONF} | grep '^location')"
 
-
 printf "################################## [ REPOS ] #####################################\n"
 printf "SYNCING w/ ***%s***\n" "${URL} | ${makeCONF} | ${pkgCONF} | ${portDIR} | ${rPortDIR} | ${pkgREPO} | ${syncURI}"
 
 sed -i "s|^sync-uri.*|sync-uri = ${URL}|g" ${pkgCONF}
 sed -i "s|^PORTDIR.*|PORTDIR=\"${pkgREPO}\"|g" ${makeCONF}
 sed -i "s|^location.*|location = ${pkgREPO}|g" ${pkgCONF}
-sleep 30
 emerge --sync | tee /var/log/esync.log
 sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
 sed -i "s|^PORTDIR.*|${portDIR}|g" ${makeCONF}
@@ -84,7 +82,6 @@ URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/snapshots" rsy
 printf "################################ [ SNAPSHOTS ] ###################################\n"
 printf "SYNCING w/ ***%s***\n" "${URL}"
 rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial --append-verify --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
-
 
 # ARCH = AMD64, X86, ...., * (ALL)
 # initial condition calls for non-recursive sync
@@ -137,8 +134,6 @@ printf "########################## [ KERNEL | SOURCE ] #########################
 build_kernel / 
 
 # SCRIPT_DIR represents the root of the rsync/ftp/http server, plus or if, a few directories
-
-
 
 #printf "############################### [ REPOS ] #######################################\n"
 #mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/meta"

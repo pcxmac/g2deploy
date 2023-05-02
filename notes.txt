@@ -4,7 +4,7 @@ goals :
 
   get a good zfs install on laptop drive
   convert install to accept premade yaml configs, prompt for missing info
-  get esync to work with arch
+  get sync.sh to work with arch
   seamlessly integrate the config/host.config ... This should allow someone to use sync to build up a repo-server, and work it alongside existing gentoo installation.
 
   
