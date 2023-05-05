@@ -51,6 +51,9 @@ repoLocation="$(echo ${repoLocation#*=} | tr -d '"')"
 
 checkHosts
 
+printf "syncing portage ...\n"
+patchFiles_portage / "$(getG2Profile /)"
+
 # initial condition calls for emerge-webrsync
 syncURI="$(cat ${pkgCONF} | grep "^sync-uri")"
 #syncLocation="$(cat ${pkgCONF} | grep "^location")"

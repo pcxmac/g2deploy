@@ -612,6 +612,13 @@ function patchFiles_portage()
 	if [[ -d ${offset}/etc/portage/package.unmask ]];then rm  "${offset}/etc/portage/package.unmask" -R;fi
 	if [[ -d ${offset}/etc/portage/package.accept_keywords ]];then rm "${offset}/etc/portage/package.accept_keywords" -R;fi
 
+	# if file exist for new sources, zap them
+	if [[ -f ${offset}/etc/portage/package.license ]];then rm "${offset}/etc/portage/package.license"; fi
+	if [[ -f ${offset}/etc/portage/package.use ]];then rm "${offset}/etc/portage/package.use"; fi
+	if [[ -f ${offset}/etc/portage/package.mask ]];then rm  "${offset}/etc/portage/package.mask";fi
+	if [[ -f ${offset}/etc/portage/package.unmask ]];then rm  "${offset}/etc/portage/package.unmask";fi
+	if [[ -f ${offset}/etc/portage/package.accept_keywords ]];then rm "${offset}/etc/portage/package.accept_keywords";fi
+
 	# compile common and spec rules in to /etc/portage/*.use|accept*|(un)mask|license
 	echo -e "$(mget ${common_URI}.uses)\n$(mget ${spec_URI}.uses)" | uniq > ${offset}/etc/portage/package.use
 	echo -e "$(mget ${common_URI}.keys)\n$(mget ${spec_URI}.keys)" | uniq > ${offset}/etc/portage/package.accept_keywords
