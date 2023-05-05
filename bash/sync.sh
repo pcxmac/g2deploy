@@ -7,23 +7,24 @@
 #   /server:pkgROOT
 
 #       ---- FETCH FROM INTERNET <<< INSTANTIABLE
-#       /snapshots (snapshots from gentoo, [rsync] )
-#       /releases (releases from gentoo [rsync] )
-#       /distfiles (distfiles for gentoo [rsync] )
+#  >        /snapshots (snapshots from gentoo, [rsync] )
+#  >        /releases (releases from gentoo [rsync] )
+#  >        /distfiles (distfiles for gentoo [rsync] )
+#  >        /repos
 
 #       --- BUILT INTERNALLY, BY INTERNAL META RULES <<< INSTANTIABLE
-#       /kernels    ( 'official' kernel builds, for distribution )
-#       /source
-#       /binpkgs
+#  >        /kernels    ( 'official' kernel builds, for distribution )
+#  >        /source
+#  >        /binpkgs
 
 #       --- USER DISCRETIONARY, FETCH FROM INTERNET (have to clone first, future yaml config ?)
-#       /repository (git repos for gentoo, plus associated)
+#  >        /repository (git repos for gentoo, plus associated)
 
 #       --- INITIALLY SOURCED FROM THIS REPO, SYNC'S to HOST.CFG PKG.SERVER  (deploy to)
-#       /meta       ( meta package configuration files (for mpm.sh) )
-#       /profiles   ( system profiles, for roaming/continuity/backup purposes )
-#       /packages   ( binary packages, built by portage/emerge )
-#       /patchfiles ( custom binaries and text files, for patching over regular portage files, ie, bugs that are only resolved locally )
+#  >        /meta       ( meta package configuration files (for mpm.sh) )
+#  >        /profiles   ( system profiles, for roaming/continuity/backup purposes )
+#  >        /packages   ( binary packages, built by portage/emerge )
+#  >        /patchfiles ( custom binaries and text files, for patching over regular portage files, ie, bugs that are only resolved locally )
 
 
 #
@@ -66,12 +67,16 @@ portDIR="$(cat ${makeCONF} | grep '^PORTDIR')"
 rPortDIR="$(cat ${pkgCONF} | grep '^location')"
 
 printf "################################## [ REPOS ] #####################################\n"
-printf "SYNCING w/ ***%s***\n" "${URL} | ${makeCONF} | ${pkgCONF} | ${portDIR} | ${rPortDIR} | ${pkgREPO} | ${syncURI}"
+#printf "SYNCING w/ ***%s***\n" "${URL} | ${makeCONF} | ${pkgCONF} | ${portDIR} | ${rPortDIR} | ${pkgREPO} | ${syncURI}"
+
+[[ ! -d ${pkgREPO} ]] && { mkdir -p ${pkgREPO}; };
 
 sed -i "s|^sync-uri.*|sync-uri = ${URL}|g" ${pkgCONF}
 sed -i "s|^PORTDIR.*|PORTDIR=\"${pkgREPO}\"|g" ${makeCONF}
 sed -i "s|^location.*|location = ${pkgREPO}|g" ${pkgCONF}
+
 emerge --sync | tee /var/log/esync.log
+
 sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
 sed -i "s|^PORTDIR.*|${portDIR}|g" ${makeCONF}
 sed -i "s|^location.*|${rPortDIR}|g" ${pkgCONF}
@@ -81,6 +86,7 @@ sed -i "s|^location.*|${rPortDIR}|g" ${pkgCONF}
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/snapshots" rsync)"
 printf "################################ [ SNAPSHOTS ] ###################################\n"
 printf "SYNCING w/ ***%s***\n" "${URL}"
+[[ ! -d ${pkgROOT/snapshots} ]] && { mkdir -p ${pkgROOT/snapshots}; };
 rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial --append-verify --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
 # ARCH = AMD64, X86, ...., * (ALL)
@@ -88,7 +94,7 @@ rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ig
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/releases" rsync only-sync)"
 printf "################################ [ RELEASES ] ####################################\n"
 printf "SYNCING w/ ***%s***\n" "${URL}"
-if [[ ! -d "${pkgROOT}"/releases ]]; then mkdir -p "${pkgROOT}"/releases; fi
+[[ ! -d ${pkgROOT/releases} ]] && { mkdir -p ${pkgROOT/releases}; };
 find "${pkgROOT}"/releases/ -type l -delete
 [[ ${pkgARCH} == "*" ]] && {
     rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial --append-verify --include="*/" --include="*${pkgARCH}*" --exclude="*" --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log;
@@ -103,8 +109,8 @@ find "${pkgROOT}"/releases/ -type l -delete
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/distfiles" rsync)"
 printf "############################### [ DISTFILES ] ###################################\n"
 printf "SYNCING w/ ***%s***\n" "${URL}"
+[[ ! -d ${pkgROOT/distfiles} ]] && { mkdir -p ${pkgROOT/distfiles}; };
 rsync -avI --info=progress2 --timeout=300 --ignore-existing --partial --append-verify --ignore-times --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
-
 
 printf "########################### [ ... sync ... ] ####################################\n"
 printf "updating mlocate-db\n"
@@ -113,10 +119,12 @@ printf "updating mlocate-db\n"
 /usr/bin/eix-update
 
 # host.cfg uses 'pkgROOT' as a localizable variable, must be defined, before 'eval' the key values, dependent on 'pkgROOT'
-
 # build the latest kernel
 printf "########################## [ KERNEL | SOURCE ] ###################################\n"
 # instantiate directories, if none exist
+[[ ! -d ${pkgROOT/source} ]] && { mkdir -p ${pkgROOT}/source/depricated; mkdir -p ${pkgROOT}/source/current; };
+[[ ! -d ${pkgROOT/kernels} ]] && { mkdir -p ${pkgROOT}/kernels; };
+
 [[ -z "$(ls -ail ${pkgROOT}/kernels --ignore . --ignore .. 2>/dev/null)" ]] && {
 
     _kver=$(getKVER);
@@ -134,7 +142,6 @@ printf "########################## [ KERNEL | SOURCE ] #########################
 build_kernel / 
 
 # SCRIPT_DIR represents the root of the rsync/ftp/http server, plus or if, a few directories
-
 #printf "############################### [ REPOS ] #######################################\n"
 #mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/meta"
 #_meta="$(eval echo "$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root/meta")")"

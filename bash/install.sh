@@ -12,16 +12,16 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 function generateYAML() {
 
-source="${1:?}"
-destination="${2:?}"
+	source="${1:?}"
+	destination="${2}"
 
 
-#	conops : 
-#	
-#	(in)		source			:	
-#	(in)		destination		:	
-#	(implied)	kernel			:	to be selectable
-#	(n/a)		disks			:	yaml config in, config=*)
+	#	conops : 
+	#	
+	#	(in)		source			:	
+	#	(in)		destination		:	
+	#	(implied)	kernel			:	to be selectable
+	#	(n/a)		disks			:	yaml config in, config=*)
 
 	kver="$(getKVER)"
 	kver="${kver#*linux-}"
@@ -30,6 +30,18 @@ destination="${2:?}"
 
 	stype=${source_url%://*}	# example : zfs://root@localhost.com:/pool/dataset ; btrfs:///Label/subvolume ; ssh://root@localhost:/path/to/set
 	shost=${source_url#*://}	
+
+
+	case "${stype,,}" in
+		yaml)
+			yaml_path=${shost#*://}
+			[[ ! -f ${yaml_path} ]] && { printf 'invalid yaml path, exiting ...\n'; exit; };
+			# yaml needs a (is correct) || (not correct) function, to determine validity of yaml file, perhaps even check for particular key values w/ a given f/s, that would have to be a different function, -> _check_config
+			std_o=$(cat ${yaml_path} | yamlStd)
+			echo -e "${std_o}" 2>&1
+			return
+		;;
+	esac
 
 	case "${stype,,}" in
 		zfs)
@@ -108,6 +120,8 @@ destination="${2:?}"
 	dtype=${destination_url%://*}	# example :	zfs:///dev/sda:/pool/dataset ; ntfs:///dev/sdX:/mnt/sdX ; config:///path/to/config
 	dhost=${destination_url#*://}	
 
+
+
 	case "${dtype,,}" in
 		config)
 			echo "config ..."
@@ -145,7 +159,7 @@ destination="${2:?}"
 
 	partClassifier="${disk##*/sd*}"
 
-	echo "part classifier = $partClassifier disk = $disk" > ./out.log
+	#echo "part classifier = $partClassifier disk = $disk" > ./out.log
 
 	if [[ -n ${partClassifier} ]]
 	then
@@ -406,63 +420,37 @@ function install_system() {
 		case "${x,,}" in
 			work=*)
 				_source=${x#*=}
-				#checkHosts
+				#echo "source = ${_source}"
 			;;
-			init)
-				selection="init"
-				checkHosts
-			;;
-			add)
-				selection="add"
-				checkHosts
-			;;
-		esac
-	done
-
-	for x in "$@"
-	do
-		case "${x,,}" in
 			boot=*)
 				_destination=${x#*=}
-				vYAML="$(generateYAML ${_source} ${_destination})"
-
-				# determine if adding to an existing pool... or not.
-				if [[ "${selection,,}" == "init" ]]
-				then
-					prepare_disks "$vYAML"
-					install_system "${vYAML}"
-					setup_boot "${vYAML}"
-					modify_boot "${vYAML}"
-					# PATCH SYSTEM - POST INSTALL
-
-				fi 
-				if [[ "${selection,,}" == "add" ]]
-				then
-					install_system "${vYAML}"
-					echo "modifying boot record ..."
-					modify_boot "${vYAML}"
-					# PATCH SYSTEM - POST INSTALL
-					# 
-
-					# solve - mv: cannot move '/srv/zfs/test/plasma/boot/LINUX//pkg.hypokrites.me/kernels/current/6.1.1-gentoo/' to '/srv/zfs/test/plasma/boot/LINUX/6.1.1-gentoo': Directory not empty
-	#echo "synchronizing disks"
-	#sync
-	#echo "exiting installer script..."
-				fi	
+			;;
+			install=*)
+				_destination=${x#*=}
 			;;
 		esac
 	done
+
+	vYAML="$(generateYAML ${_source} ${_destination})"
+
+
 
 	for x in "$@"
 	do
 		case "${x,,}" in
 			config)
-				vYAML="$(generateYAML ${_source} ${_destination})"
-				echo -e "${vYAML}"
-				#echo "$(findKeyValue "${vYAML}" install/disks/path)"
+				printf '%s' "${vYAML}"
+			;;
+			boot=*)
+					prepare_disks "$vYAML"
+					install_system "${vYAML}"
+					setup_boot "${vYAML}"
+					modify_boot "${vYAML}"
+			;;
+			install=*)
+					install_system "${vYAML}"
+					echo "modifying boot record ..."
+					modify_boot "${vYAML}"
 			;;
 		esac
 	done
-
-
-

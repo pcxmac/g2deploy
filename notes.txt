@@ -1,10 +1,12 @@
 goals : 
 
-  for the trip
-
   get a good zfs install on laptop drive
-  convert install to accept premade yaml configs, prompt for missing info
-  get sync.sh to work with arch
+
+  convert install to accept premade yaml configs, prompt for missing info ... working
+  
+
+
+
   seamlessly integrate the config/host.config ... This should allow someone to use sync to build up a repo-server, and work it alongside existing gentoo installation.
 
   
@@ -13,7 +15,6 @@ goals :
 
 YADAYADA
   - it shall begin.
-
 
   - notes about swap systems observations of late (13 feb)
     need a profile service to restore configs, despite having old and complete etc.
@@ -153,7 +154,7 @@ modem/router (out of bounds infrastructure)
     dev-libs/boehm-gc -- missing dep dev-libs/libatomic_ops       // most likely a build script issue
     sys-libs/gpm -- /usr/bin/bison -- exec error format           //
 
-
+  BUILD KERNEL ACCORDING TO ARCH IN HOST.CFG
 
 
   hierarchy ( dns records are retrieved through a secure keyhole )
