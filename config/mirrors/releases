@@ -1,4 +1,4 @@
-file:///var/lib/portage/releases
+file:///srv/portage/releases
 ftp://pkg.hypokrites.me/releases
 http://pkg.hypokrites.me/gentoo/releases
 #http://mirror.bytemark.co.uk/gentoo/releases

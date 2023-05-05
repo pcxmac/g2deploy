@@ -4,6 +4,7 @@ SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
+pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 
 	profile="${3}"				# parameter 3 can be null, and is handled subsequently.
 	type="${2:?}"
@@ -13,17 +14,17 @@ source ${SCRIPT_DIR}/bash/include.sh
 	serversList="invalid"
 
 	case ${profile,,} in
-		musl*)			release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}-hardened/"
+		musl*)			release_base_string="/${pkgARCH}/autobuilds/current-stage3-amd64-${profile}-hardened/"
 		;;
-		selinux)		release_base_string="releases/amd64/autobuilds/current-stage3-amd64-hardened-${profile}-openrc/"
+		selinux)		release_base_string="/${pkgARCH}/autobuilds/current-stage3-amd64-hardened-${profile}-openrc/"
 		;;
-		hardened|clang)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}-openrc/"
+		hardened|clang)	release_base_string="/${pkgARCH}/autobuilds/current-stage3-amd64-${profile}-openrc/"
 		;;
-		gnome|plasma)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-openrc/"
+		gnome|plasma)	release_base_string="/${pkgARCH}/autobuilds/current-stage3-amd64-desktop-openrc/"
 		;;
-		openrc|systemd)	release_base_string="releases/amd64/autobuilds/current-stage3-amd64-${profile}/"
+		openrc|systemd)	release_base_string="/${pkgARCH}/autobuilds/current-stage3-amd64-${profile}/"
 		;;
-		*/systemd)		release_base_string="releases/amd64/autobuilds/current-stage3-amd64-desktop-${profile#*/}/"
+		*/systemd)		release_base_string="/${pkgARCH}/autobuilds/current-stage3-amd64-desktop-${profile#*/}/"
 		;;
 		*)				release_base_string=""
 		;;
@@ -109,7 +110,6 @@ source ${SCRIPT_DIR}/bash/include.sh
 		then
 			case "${mirror##*/}" in
 				release*)
-
 					locationStr="${release_base_string}"
 					urlBase="${server}${locationStr}"
 					selectStr="${locationStr#*current-*}"
