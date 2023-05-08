@@ -29,17 +29,22 @@
 # 	dependencies : [wget]	[scp]	[sleep]	[]	[]	[]	[]
 
 #	support for stdin & stdout
-#	
+#
 #	ex.		cat ./file | mget . ${destination}
 #	ex.		mget ${url} | ./destination
 #	ex.		mget <(cat file) ./destination
-#	
+#
 #	limitations, only supports local writes, or "getting"
 #	see mput, for standardized "sending"
 #
-#	supports timingout 							
+#	supports timingout
 #	supports extensible options (like rsync)	(*)
 #	supports testing w/ test_map.xml file		(-t)
+
+#
+###########		ADD SUPPORT FOR VERY LONG LISTS OF FILES ... !!!
+#
+
 
 function dirCount()
 {

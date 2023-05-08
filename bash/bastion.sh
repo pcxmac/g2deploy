@@ -27,7 +27,7 @@ echo "EXT_NETWORK = $EXT_NETWORK"
 #V_INTER="virbr1"
 #INTERFACE=$V_INTER
 #V_ADDR="$(ifconfig ${INTERFACE} | grep 'inet ' | awk '{print $2}')"
-#V_MASK="$(ifconfig ${INTERFACE} | grep 'netmask ' | awk '{print $4}')"
+    #V_MASK="$(ifconfig ${INTERFACE} | grep 'netmask ' | awk '{print $4}')"
 #V_NETWORK="$(ipcalc $V_ADDR/$EXT_MASK | grep 'Network' | awk '{print $2}')"
 #echo "${V_INTER} / address : ${V_ADDR} :: mask : ${V_MASK} :: network : ${V_NETWORK}"
 

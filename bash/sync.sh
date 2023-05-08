@@ -26,11 +26,9 @@
 #  >        /packages   ( binary packages, built by portage/emerge )
 #  >        /patchfiles ( custom binaries and text files, for patching over regular portage files, ie, bugs that are only resolved locally )
 
-
 #
 #       https://www.gentoo.org/glep/glep-0074.html (MANIFESTS)   
 #
-
 
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
@@ -52,7 +50,7 @@ repoLocation="$(echo ${repoLocation#*=} | tr -d '"')"
 checkHosts
 
 printf "syncing portage ...\n"
-patchFiles_portage / "$(getG2Profile /)"
+patchFiles_portage / 
 
 # initial condition calls for emerge-webrsync
 syncURI="$(cat ${pkgCONF} | grep "^sync-uri")"
@@ -142,6 +140,10 @@ printf "########################## [ KERNEL | SOURCE ] #########################
 [[ -z "$(ls -ail ${pkgROOT}/source/ --ignore . --ignore .. 2>/dev/null)" ]] && { mkdir -p ${pkgROOT}/source; };
 
 # ASSUMES boot is automounted, or already mounted @ /boot
+
+emerge --sync --verbose --backtrack=99 --ask=n
+eix-update
+
 build_kernel / 
 
 # SCRIPT_DIR represents the root of the rsync/ftp/http server, plus or if, a few directories

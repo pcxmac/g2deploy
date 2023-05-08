@@ -32,9 +32,6 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 				_location="${x#*work=}"
 
-				
-
-
                 #? zfs= btrfs= generic= tmpfs=
 				directory=$(getZFSMountPoint "${x#*=}")
 				if [[ -n ${directory} ]]
@@ -75,11 +72,11 @@ source ${SCRIPT_DIR}/bash/include.sh
 	mounts "${directory}"
 
 	echo "patchfiles : user"
-	patchFiles_user "${directory}" "${_profile}"
+	patchFiles_user "${directory}" 
 	echo "patchfiles : system"
-	patchFiles_sys "${directory}" "${_profile}"
+	patchFiles_sys "${directory}" 
 	echo "patchfiles : portage"
-	patchFiles_portage "${directory}" "${_profile}"
+	patchFiles_portage "${directory}"
 	echo "zfs keys ..."
 	zfs_keys "${dataset}"
 	echo "package processor ..."

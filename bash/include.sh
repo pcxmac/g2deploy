@@ -597,7 +597,7 @@ function patchFiles_portage()
 {
 
     local offset="${1:?}"
-	local _profile="${2:?}"
+	local _profile="$(getG2Profile ${offset})"
 
 	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles rsync)"	
 	common_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/common" | sed 's/ //g' | sed "s/\"/'/g")"
@@ -619,6 +619,8 @@ function patchFiles_portage()
 	if [[ -f ${offset}/etc/portage/package.unmask ]];then rm  "${offset}/etc/portage/package.unmask";fi
 	if [[ -f ${offset}/etc/portage/package.accept_keywords ]];then rm "${offset}/etc/portage/package.accept_keywords";fi
 
+	echo "${common_URI} ** ${spec_URI} .. ${offset}"
+
 	# compile common and spec rules in to /etc/portage/*.use|accept*|(un)mask|license
 	echo -e "$(mget ${common_URI}.uses)\n$(mget ${spec_URI}.uses)" | uniq > ${offset}/etc/portage/package.use
 	echo -e "$(mget ${common_URI}.keys)\n$(mget ${spec_URI}.keys)" | uniq > ${offset}/etc/portage/package.accept_keywords
@@ -626,7 +628,6 @@ function patchFiles_portage()
 	echo -e "$(mget ${common_URI}.unmask)\n$(mget ${spec_URI}.unmask)" | uniq > ${offset}/etc/portage/package.unmask
 	echo -e "$(mget ${common_URI}.license)\n$(mget ${spec_URI}.license)" | uniq > ${offset}/etc/portage/package.license
 	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf
-
 
 	while read -r line; do
 		((LineNum+=1))
@@ -638,7 +639,6 @@ function patchFiles_portage()
 		fi
 	# drop empty lines and comments
 	done < <(curl "${common_URI}.conf" --silent | sed 's/#.*$//' | sed '/^[[:space:]]*$/d')
-
 
 	while read -r line; do
 		((LineNum+=1))
@@ -655,7 +655,7 @@ function patchFiles_portage()
 function patchFiles_user() 
 {
     local offset="${1:?}"
-	local _profile="${2:?}"
+	local _profile="$(getG2Profile ${offset})"
 	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles rsync)"	
 	mget "${psrc}/root/" "${offset}/root/" 
 	mget "${psrc}/home/" "${offset}/home/" 
@@ -664,7 +664,7 @@ function patchFiles_user()
 function patchFiles_sys() 
 {
     local offset="${1:?}"
-	local _profile="${2:?}"
+	local _profile="$(getG2Profile ${offset})"
 
 	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles rsync)"	
 
