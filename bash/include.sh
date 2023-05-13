@@ -177,7 +177,7 @@ function update_runtime()
 function build_kernel()
 {
 
-	# need to validate the 'current kernel' to ensure it's config is real. 
+	# need to validate the 'current kernel' to ensure it's config is real.  ???
 
 	_rebuild=true
 
@@ -210,126 +210,106 @@ function build_kernel()
 
 	# current source version (usr/src) >> pkgROOT/source
 	#sv="$(eselect kernel list | tail -n $(($(eselect kernel list | wc -l)-1)) | awk '{print $2}' | sort -r | head -n 1)"
-	sv="$(readlink ${_kernels_current}/source/linux)"
-	sv="${sv%-gentoo*}"
-	sv="${sv#*linux-}"
+	sv="$(readlink /usr/src/linux)"
+	_sv="${sv#*linux-}"
+	_sv="${_sv%-gentoo*}"
+	sv="${_sv}${sv#*-gentoo}"
 
-	# master version (pkg.server)
-	mv="$(\ls ${_kernels_current}/source/ | \grep -v 'linux$')"
-	mv="${mv%-gentoo*}"
-	mv="${mv#*linux-}"
+	# master version (pkg.server) ..... IF SOURCE EXISTS ????
+	mv="$(cd ${_kernels_current}/source/; make kernelversion)"
+	_mv="${mv#*linux-}"
+	_mv="${_mv%-gentoo*}"
+	mv="${_mv}${mv#*-gentoo}"
+
 
 	# latest, built version (kernels/current) | 
 	lv="$(getKVER)"
-	lv="${lv%-gentoo*}"
-	lv="${lv#*linux-}"
+	_lv="${lv#*linux-}"
+	_lv="${_lv%-gentoo*}"
+	lv="${_lv}${lv#*-gentoo}"
 
 	# newest version available through portage
-	nv="$(equery -CN list -po gentoo-sources | grep -v '\[M' | awk '{print $4}' | tail -n 1)"
+	nv="$(equery -CN list -po gentoo-sources | \grep -v '\[M' | \grep -v '\[?' | awk '{print $4}' | tail -n 1)"
 	nv="${nv%:*}"
-	nv="${nv##*-}"
+	nv="${nv##*gentoo-sources-}"
+	nv="${nv%:*}"
 
 	#echo "cv = $cv ; lv = $lv ; nv  = $nv"
 	_compare="${nv}\n${lv}"
 	_compare="$(printf $_compare | sort --version-sort | tail -n 1)"
 
-	echo "lv = $lv ; nv = $nv ; iv = $iv ; cv = $cv ; sv = $sv ; mv = $mv ; compare = " 2>&1
-
+	#echo "lv = *$lv* ; nv = *$nv* ; iv = *$iv* ; cv = *$cv* ; sv = *$sv* ; mv = *$mv* ; compare = *$_compare* ; flag = *$_flag*" 2>&1
+	
 	# do nothing case, as it is already installed
 	[[ ${lv} == ${nv} ]] && { printf "up to date.\n"; return; };
 
+	#echo "$_compare :: $_flag "
+
 	[[ ${lv} != "$_compare" || $_flag == '-f' ]] && {
+
 
 		# if current installed source version does not equal latest build
 		[[ ${sv} != ${nv} ]] && { 
 		 		emerge =sys-kernel/gentoo-sources-${nv} --ask=n --buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts;
 		};
 
-		# if latest build does not equal newest available version OR
-	 	# [[ ${lv} != ${nv} || ${sv} != ${nv} ]] && { 
-
-		# 	[[ ${_flag} == "-q" ]] && { printf "build new kernel\n"; return; };
-			
-		# 	[[ ! -d /usr/src/linux-${nv}-gentoo ]] && { 
-		# 		echo "installing new version of gentoo-sources.";
-		# 		emerge $emergeOpts =syskernel-/gentoo-sources-${nv}; 
-		# 	}
-
-		# } || {	# in the case the current kernel-package is installed, OR, the source version, is the newest package-version and the local version isn't the newest.
-		# 	[[ ${_flag} == "-q" ]] && { printf "build old kernel.\n"; return; };
-		# 	[[ ! ${_flag} == "-f" ]] && { printf "kernel ${mv} exists.\n"; return; };
-		# }	
-
-#####################################################################
-
-		# suffix might need to be altered to fit possible versioning which meddles with -gentoo
-
-		 _suffix="gentoo"
-		 eselect kernel set linux-${nv}-${_suffix}
-		 eselect kernel show
-		 sleep 10
-
-		 [[ -f /usr/src/linux/.config ]] && { /usr/src/linux/.config; };
-		 [[ -d ${_kernels_current}/kernels/current/${lv}-gentoo/ ]] && { 
-		 	cat ${_kernels_current}/kernels/current/${lv}-gentoo/config* > /usr/src/linux/.config;
-		 } || {
-		 	zcat /proc/config.gz > /usr/src/linux/.config;
-		 };
-
-		 iv=${nv}
-		 # if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
-		 (cd ${_kernel}; make clean);
-		 echo "--- cleaned ---"
-		 sleep 3
-		 (cd ${_kernel}; make olddefconfig)
-		 echo "--- olddefconfig ---"
-		 sleep 3
-		 (cd ${_kernel}; make prepare)
-		 echo "--- prepared ---"
-		 sleep 3
-
-		 echo "make -jj$(nproc)" 2>&1
-
-		 (cd ${_kernel}; make -j$(nproc) )
-		 (cd ${_kernel}; make modules_install)
-
-
-#################################################################
-
+		_suffix="gentoo"
+		# for -r shred
+		[[ -n "$(printf '%s' ${nv} | \grep '\-r' )" ]] && { _suffix="${_suffix}-r${nv#*-r}"; nv=${nv%%-r*}; };
 		_offset=/tmp/$$
-
 		mkdir -p ${_offset}/${nv}-${_suffix}
-		(cd ${_kernel}; INSTALL_PATH=/tmp/$$/ make install)
+
+		eselect kernel set linux-${nv}-${_suffix}
+		eselect kernel show
+		sleep 3
+
+		[[ -f /usr/src/linux/.config ]] && { /usr/src/linux/.config; };
+		[[ -d ${_kernels_current}/kernels/current/${lv}-gentoo/ ]] && { 
+		 	cat ${_kernels_current}/kernels/current/${lv}-gentoo/config* > /usr/src/linux/.config;
+		} || {
+		 	zcat /proc/config.gz > /usr/src/linux/.config;
+		};
+
+		iv=${nv}
+		# if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
+		(cd ${_kernel}; make clean);
+		printf "--- cleaned ---\n"
+		sleep 3
+		(cd ${_kernel}; make olddefconfig);
+		printf "--- olddefconfig ---\n"
+		sleep 3
+		(cd ${_kernel}; make prepare);
+		printf "--- prepared ---\n"
+		sleep 3
+		(cd ${_kernel}; make -j$(nproc));
+		printf "--- kernel built ---\n"
+		sleep 3
+		(cd ${_kernel}; INSTALL_PATH=${_offset}/${nv}-${_suffix} make install);
+		printf "--- kernel installed ---\n"
+		sleep 3
+		(cd ${_kernel}; make modules_install);
 		# requires /etc/portage/bashrc to sign module
 		FEATURES="-getbinpkg -buildpkg" \emerge =zfs-kmod-9999
-		#genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
+		(cd ${_offset}/${nv}-${_suffix}/; tar cfvz ./modules.tar.gz /lib/modules/${nv}-${_suffix};);
+		printf "--- modules installed ---\n"
+		sleep 3
 
-		# MOVE KERNELS TO $pkg.root/kernels/current, after depricating older kernel
+		# save kernel package to kernels/current
+		#mv ${_offset}/config-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/
+		#mv ${_offset}/vmlinuz-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/vmlinuz
+		#mv ${_offset}/System.map-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/
+		[[ "$(\ls ${_kernels_current}/kernels/current/ | wc -l)" > 0 ]] && { mv ${_kernels_current}/kernels/current/* ${_kernels_current}/kernels/deprecated/; };
+		# current kernel
+		printf "saving current kernel...\n"
+		mget ${_offset}/ ${_kernels_current}/kernels/current/ --delete -Dogtplr
 
-		(cd ${_offset}/${nv}-${_suffix}/; tar cfvz ./modules.tar.gz /lib/modules/${nv}-${_suffix}; )
+		# current source for kernel ... this directory can be linked to, as the source for getKVER
+		printf "saving current kernel source ...\n"
+		mget /usr/src/linux-${nv}-${_suffix}/ ${_kernels_current}/source/ --checksum --delete -Dogtplr
 
-		mv ${_offset}/config-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/
-		mv ${_offset}/vmlinuz-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/vmlinuz
-		mv ${_offset}/System.map-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/
+		#echo "lv = *$lv* ; nv = *$nv* ; iv = *$iv* ; cv = *$cv* ; sv = *$sv* ; mv = *$mv* ; compare = *$_compare* ; flag = *$_flag*" 2>&1
 
-		# initramfs is per install
-		#mv ${_offset}/initramfs-${nv}-${_suffix}.img ${_offset}/${nv}-${_suffix}/initramfs
-
-		[[ "$(ls -ail ${_kernels_current}/kernels/current/ | wc -l)" != '2' ]] && {
-			[[ -d ${_kernels_current}/kernels/deprecated/$(getKVER) ]] && { rm ${_kernels_current}/kernels/deprecated/$(getKVER) -R; };
-			mv ${_kernels_current}/kernels/current/* ${_kernels_current}/kernels/deprecated/
-		};
-		mv ${_offset}/${nv}-${_suffix}/ ${_kernels_current}/kernels/current/
-
-		# rsync/diff over to new kernel source, change directory to reflect current kernel mget
-		[[ -f ${_kernels_current}/source/$(getKVER) ]] && { mv ${_kernels_current}/source/$(getKVER) ${_kernels_current}/source/${sv}; };
-
-
-#########################################################
-
-		mget ${_kernel} ${_kernels_current}/source/linux-${nv}-${_suffix};
-
-###########################################################
+		#rm ${_offset} -R
 
 		sync
 	};
@@ -597,7 +577,8 @@ function patchFiles_portage()
 {
 
     local offset="${1:?}"
-	local _profile="$(getG2Profile ${offset})"
+	# because the repo hasn't been installed yet, cannot use getg2profile
+	local _profile="${2}"
 
 	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles rsync)"	
 	common_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/common" | sed 's/ //g' | sed "s/\"/'/g")"
@@ -618,8 +599,6 @@ function patchFiles_portage()
 	if [[ -f ${offset}/etc/portage/package.mask ]];then rm  "${offset}/etc/portage/package.mask";fi
 	if [[ -f ${offset}/etc/portage/package.unmask ]];then rm  "${offset}/etc/portage/package.unmask";fi
 	if [[ -f ${offset}/etc/portage/package.accept_keywords ]];then rm "${offset}/etc/portage/package.accept_keywords";fi
-
-	echo "${common_URI} ** ${spec_URI} .. ${offset}"
 
 	# compile common and spec rules in to /etc/portage/*.use|accept*|(un)mask|license
 	echo -e "$(mget ${common_URI}.uses)\n$(mget ${spec_URI}.uses)" | uniq > ${offset}/etc/portage/package.use
@@ -655,7 +634,8 @@ function patchFiles_portage()
 function patchFiles_user() 
 {
     local offset="${1:?}"
-	local _profile="$(getG2Profile ${offset})"
+	# because the repo hasn't been installed yet, cannot use getg2profile
+	local _profile="${2}"
 	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles rsync)"	
 	mget "${psrc}/root/" "${offset}/root/" 
 	mget "${psrc}/home/" "${offset}/home/" 
@@ -664,7 +644,8 @@ function patchFiles_user()
 function patchFiles_sys() 
 {
     local offset="${1:?}"
-	local _profile="$(getG2Profile ${offset})"
+	# because the repo hasn't been installed yet, cannot use getg2profile
+	local _profile="${2}"
 
 	local psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles rsync)"	
 
@@ -857,8 +838,10 @@ function getG2Profile()
 {
 
 	local _mountpoint="${1:?}"
+	local _arg="${2}"
 	local _profile=""
 	local result=""
+	local _tmp=""
 
 	if [[ -n "$(stat "${_mountpoint}" 2>/dev/null)" && -d "${_mountpoint}" ]]
 	then
@@ -903,7 +886,23 @@ function getG2Profile()
 		;;
     esac
 
-	echo "${_profile}" 
+	_tmp="$(/usr/bin/eselect profile show | tail -n1)"
+	_tmp="$(echo "${_tmp}" | sed -e 's/^[ \t]*//' | sed -e 's/\ *$//g')"
+
+	case ${_arg} in
+		'--arch')
+			echo "$(yamlPath ${_tmp} 3 | awk '{print $1}')"
+		;;
+		'--version')
+			echo "$(yamlPath ${_tmp} 4 | awk '{print $1}')"
+		;;
+		'--full')
+			echo "$(yamlPath ${_tmp} 3 | awk '{print $3}')/${_profile}" 
+		;;
+		*)
+			echo "${_profile}" 
+		;;
+	esac
 }
 
 function getHostZPool () 

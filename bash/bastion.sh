@@ -6,6 +6,8 @@
 
 # sets up IP space, wg connections, and services... for now. 
 
+#source ${SCRIPT_DIR}/bash/include.sh
+
 IPT="/sbin/iptables"
 SYSCTL="/usr/sbin/sysctl"
 
@@ -15,6 +17,7 @@ LOOPBACK="lo"
 LOOP_ADDR="$(ifconfig $LOOPBACK | grep 'inet ' | awk '{print $2}')"
 
 EXT_INTER="$(route -n | grep '^0.0.0.0' | head -n 1 | awk '{print $8}')"
+[[ -z ${EXT_INTER} ]] && { EXT_INTER=${LOOPBACK}; };
 echo "EXT_INTER = $EXT_INTER"
 EXT_ADDR="$(ifconfig $EXT_INTER | grep 'inet ' | awk '{print $2}')"
 echo "EXT_ADDR = $EXT_ADDR"
@@ -43,12 +46,16 @@ echo "EXT_NETWORK = $EXT_NETWORK"
 
 #############
 
+#HOST_ROOT="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root")"
+
+
 sed -i "/pkg.hypokrites.me$/c$M_ADDR\tpkg.hypokrites.me" /etc/hosts
 sed -i "/build.hypokrites.me$/c$M_ADDR\tbuild.hypokrites.me" /etc/hosts
 # doesnt support other options, will need to --add the option function-- to this
 sed -i "/RSYNC_OPTS/c RSYNC_OPTS=\"--address=$M_ADDR\"" /etc/conf.d/rsyncd
 sed -i "/^server.bind/c server.bind = \"$M_ADDR\"" /etc/lighttpd/lighttpd.conf
-sed -i "0,/listen_address/c listen_address=$M_ADDR" /etc/vsftpd.conf
+#sed -i "0,/listen_address/c listen_address=$M_ADDR" /etc/vsftpd.conf
+#sed -i "0,/anon_root/c anon_root=$HOST_ROOT" /etc/vsftpd.conf
 sed -i "0,/ListenAddress/c ListenAddress $M_ADDR" /etc/ssh/sshd_config
 
 rc-service lighttpd restart
@@ -86,7 +93,10 @@ $IPT -A INPUT -i $EXT_INTER -p tcp --tcp-flags SYN,FIN,RST SYN,FIN,RST -j $TDROP
 $IPT -A INPUT -i $EXT_INTER -p tcp --tcp-flags SYN,FIN,RST,PSH SYN,FIN,RST,PSH -j $TDROP
 $IPT -A INPUT -p tcp --tcp-flags FIN FIN -j LOG --log-prefix "IPT: BAD F FLAG !!!! :: "
 
-$IPT -A INPUT -i $EXT_INTER -p tcp --tcp-flags FIN FIN -s www.gentoo.org -j ACCEPT
+if [[ $EXT_INTER != $LOOPBACK ]]
+then
+	$IPT -A INPUT -i $EXT_INTER -p tcp --tcp-flags FIN FIN -s www.gentoo.org -j ACCEPT
+fi
 
 $IPT -A INPUT -i $EXT_INTER -p tcp --tcp-flags FIN FIN -j $TDROP
 #$IPT -A INPUT -p tcp --tcp-flags ALL NONE -j LOG --log-prefix "IPT: BAD NULL FLAG "

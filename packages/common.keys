@@ -4,10 +4,16 @@
 >=sys-fs/zfs-9999 **
 
 sys-kernel/gentoo-sources           ~amd64
-dev-haskell/alsa-core               ~amd64
-dev-haskell/alsa-mixer              ~amd64
 app-admin/haskell-updater           ~amd64
-dev-haskell/extensible-exceptions   ~amd64
+
+sys-devel/llvm*						~amd64
+sys-devel/gcc						~amd64
+sys-libs/glibc						~amd64
 dev-lang/ghc                        ~amd64
+dev-haskell/*						~amd64
+
+sys-apps/locale-gen					~amd64
 
 media-libs/mesa						~amd64
+
+dev-haskell/*		                ~amd64

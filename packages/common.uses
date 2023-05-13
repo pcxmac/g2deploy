@@ -1,3 +1,4 @@
 # Common use flags (17.x)
 
 media-libs/mesa xa vulkan vdpau vaapi opencl gles1 video_cards_* zink omesa
+dev-libs/libclc spirv

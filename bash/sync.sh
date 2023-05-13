@@ -30,6 +30,8 @@
 #       https://www.gentoo.org/glep/glep-0074.html (MANIFESTS)   
 #
 
+_flags="${1}"
+
 SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
 SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
@@ -50,7 +52,7 @@ repoLocation="$(echo ${repoLocation#*=} | tr -d '"')"
 checkHosts
 
 printf "syncing portage ...\n"
-patchFiles_portage / 
+patchFiles_portage / $(getG2Profile /)
 
 # initial condition calls for emerge-webrsync
 syncURI="$(cat ${pkgCONF} | grep "^sync-uri")"
@@ -67,57 +69,61 @@ emaint binhost --fix
 portDIR="$(cat ${makeCONF} | grep '^PORTDIR')"
 rPortDIR="$(cat ${pkgCONF} | grep '^location')"
 
-printf "################################## [ REPOS ] #####################################\n"
-#printf "SYNCING w/ ***%s***\n" "${URL} | ${makeCONF} | ${pkgCONF} | ${portDIR} | ${rPortDIR} | ${pkgREPO} | ${syncURI}"
+if [[ $_flags != '--skip' ]]
+then
+    printf "################################## [ REPOS ] #####################################\n"
+    #printf "SYNCING w/ ***%s***\n" "${URL} | ${makeCONF} | ${pkgCONF} | ${portDIR} | ${rPortDIR} | ${pkgREPO} | ${syncURI}"
 
-[[ ! -d ${pkgREPO} ]] && { mkdir -p ${pkgREPO}; };
+    [[ ! -d ${pkgREPO} ]] && { mkdir -p ${pkgREPO}; };
 
-sed -i "s|^sync-uri.*|sync-uri = ${URL}|g" ${pkgCONF}
-sed -i "s|^PORTDIR.*|PORTDIR=\"${pkgREPO}\"|g" ${makeCONF}
-sed -i "s|^location.*|location = ${pkgREPO}|g" ${pkgCONF}
+    sed -i "s|^sync-uri.*|sync-uri = ${URL}|g" ${pkgCONF}
+    sed -i "s|^PORTDIR.*|PORTDIR=\"${pkgREPO}\"|g" ${makeCONF}
+    sed -i "s|^location.*|location = ${pkgREPO}|g" ${pkgCONF}
 
-emerge --sync | tee /var/log/esync.log
+    emerge --sync | tee /var/log/esync.log
 
-sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
-sed -i "s|^PORTDIR.*|${portDIR}|g" ${makeCONF}
-sed -i "s|^location.*|${rPortDIR}|g" ${pkgCONF}
+    sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
+    sed -i "s|^PORTDIR.*|${portDIR}|g" ${makeCONF}
+    sed -i "s|^location.*|${rPortDIR}|g" ${pkgCONF}
 
-# NO FILTERING FOR ARCH, THESE ARE TEXT-META FILES.
-# initial condition calls for non-recursive sync
-URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/snapshots" rsync)"
-printf "################################ [ SNAPSHOTS ] ###################################\n"
-printf "SYNCING w/ ***%s***\n" "${URL}"
-[[ ! -d ${pkgROOT/snapshots} ]] && { mkdir -p ${pkgROOT/snapshots}; };
-rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial --append-verify --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
+    # NO FILTERING FOR ARCH, THESE ARE TEXT-META FILES.
+    # initial condition calls for non-recursive sync
+    URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/snapshots" rsync)"
+    printf "################################ [ SNAPSHOTS ] ###################################\n"
+    printf "SYNCING w/ ***%s***\n" "${URL}"
+    [[ ! -d ${pkgROOT/snapshots} ]] && { mkdir -p ${pkgROOT/snapshots}; };
+    rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial --append-verify --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
-# ARCH = AMD64, X86, ...., * (ALL)
-# initial condition calls for non-recursive sync
-URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/releases" rsync only-sync)"
-printf "################################ [ RELEASES ] ####################################\n"
-printf "SYNCING w/ ***%s***\n" "${URL}"
-[[ ! -d ${pkgROOT/releases} ]] && { mkdir -p ${pkgROOT/releases}; };
-find "${pkgROOT}"/releases/ -type l -delete
-[[ ${pkgARCH} == "*" ]] && {
-    rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial --append-verify --include="*/" --include="*${pkgARCH}*" --exclude="*" --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log;
-} || {
-	echo "$URL :: ${pkgROOT}/"
-	sleep 10
-    rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial --append-verify --include="*/" --include="*${pkgARCH}*" --exclude="*" --no-owner --no-group "${URL}" "${pkgROOT}"/releases/ | tee /var/log/esync.log;
-};
+    # ARCH = AMD64, X86, ...., * (ALL)
+    # initial condition calls for non-recursive sync
+    URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/releases" rsync only-sync)"
+    printf "################################ [ RELEASES ] ####################################\n"
+    printf "SYNCING w/ ***%s***\n" "${URL}"
+    [[ ! -d ${pkgROOT/releases} ]] && { mkdir -p ${pkgROOT/releases}; };
+    find "${pkgROOT}"/releases/ -type l -delete
+    [[ ${pkgARCH} == "*" ]] && {
+        rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial --append-verify  --no-owner --no-group "${URL}" "${pkgROOT}"/releases/ | tee /var/log/esync.log;
+    } || {
+        echo "$URL :: ${pkgROOT}/"
+        sleep 10
+        rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial --append-verify --include="*/" --include="*${pkgARCH}*" --exclude="*" --no-owner --no-group "${URL}" "${pkgROOT}"/releases/ | tee /var/log/esync.log;
+    };
 
-# NO FILTERING FOR ARCH, THESE ARE TYPICALLY SOURCE FILES/TEXT TO BE COMPILED, OR DATAFILES WHICH ARE CROSS PLATFORM...
-# initial condition calls for non-recursive sync
-URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/distfiles" rsync)"
-printf "############################### [ DISTFILES ] ###################################\n"
-printf "SYNCING w/ ***%s***\n" "${URL}"
-[[ ! -d ${pkgROOT/distfiles} ]] && { mkdir -p ${pkgROOT/distfiles}; };
-rsync -avI --info=progress2 --timeout=300 --ignore-existing --partial --append-verify --ignore-times --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
+    # NO FILTERING FOR ARCH, THESE ARE TYPICALLY SOURCE FILES/TEXT TO BE COMPILED, OR DATAFILES WHICH ARE CROSS PLATFORM...
+    # initial condition calls for non-recursive sync
+    URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/distfiles" rsync)"
+    printf "############################### [ DISTFILES ] ###################################\n"
+    printf "SYNCING w/ ***%s***\n" "${URL}"
+    [[ ! -d ${pkgROOT/distfiles} ]] && { mkdir -p ${pkgROOT/distfiles}; };
+    rsync -avI --info=progress2 --timeout=300 --ignore-existing --partial --append-verify --ignore-times --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
-printf "########################### [ ... sync ... ] ####################################\n"
-printf "updating mlocate-db\n"
+    printf "########################### [ ... sync ... ] ####################################\n"
+    printf "updating mlocate-db\n"
 
-/usr/bin/updatedb
-/usr/bin/eix-update
+    /usr/bin/updatedb
+    /usr/bin/eix-update
+
+fi
 
 # host.cfg uses 'pkgROOT' as a localizable variable, must be defined, before 'eval' the key values, dependent on 'pkgROOT'
 # build the latest kernel
@@ -144,7 +150,12 @@ printf "########################## [ KERNEL | SOURCE ] #########################
 emerge --sync --verbose --backtrack=99 --ask=n
 eix-update
 
-build_kernel / 
+if [[ $_flags != '--skip' ]]
+then
+
+    build_kernel / 
+
+fi
 
 # SCRIPT_DIR represents the root of the rsync/ftp/http server, plus or if, a few directories
 #printf "############################### [ REPOS ] #######################################\n"
@@ -190,14 +201,19 @@ chown "${owner}:${group}" "${pkgROOT}/packages" -R		1>/dev/null
 
 #repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
 
-[[ ! -d ${pkgROOT}/repository ]] && { mkdir -p ${pkgROOT}/repository; };
+if [[ $_flags != '--skip' ]]
+then
 
-for x in $(ls "${pkgROOT}/repository")
-do
-    printf "%s\n" "${x}"
-    git -C "${pkgROOT}/repository/${x}" fetch --all
-    git -C "${pkgROOT}/repository/${x}" pull
-done
+    [[ ! -d ${pkgROOT}/repository ]] && { mkdir -p ${pkgROOT}/repository; };
+
+    for x in $(ls "${pkgROOT}/repository")
+    do
+        printf "%s\n" "${x}"
+        git -C "${pkgROOT}/repository/${x}" fetch --all
+        git -C "${pkgROOT}/repository/${x}" pull
+    done
+
+fi
 
 #qmanifest -g
 #gencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc

@@ -3,13 +3,15 @@ goals :
   get a good zfs install on laptop drive
 
   convert install to accept premade yaml configs, prompt for missing info ... working
+  pulling in a package like zfs from a git repo, doesn't seem to be working over the bindmount for distfiles,
+    SO, lets redirect to a /tmp tmpfiles directory, and make sure there are no binpkgs or distfiles being stored on to new deployments
+
+  need to fix unmount , its breaking current runtime.
   
-
-
-
+  mget doesn't seem to process multiple arguments well, double check
   seamlessly integrate the config/host.config ... This should allow someone to use sync to build up a repo-server, and work it alongside existing gentoo installation.
 
-  
+  need to fix PYTHON AND LLVM VERSIONING FOR CURRENT DEPLOYMENTS, ALSO VERIFY GCC & GLIBC
 
 
 

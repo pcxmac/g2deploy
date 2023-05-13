@@ -1,14 +1,30 @@
-                                           .
-     .vir.                                d$b
-  .d$$$$$$b.    .cd$$b.     .d$$b.   d$$$$$$$$$$$b  .d$$b.      .d$$b.
-  $$$$( )$$$b d$$$()$$$.   d$$$$$$$b Q$$$$$$$P$$$P.$$$$$$$b.  .$$$$$$$b.
-  Q$$$$$$$$$$B$$$$$$$$P"  d$$$PQ$$$$b.   $$$$.   .$$$P' `$$$ .$$$P' `$$$
-    "$$$$$$$P Q$$$$$$$b  d$$$P   Q$$$$b  $$$$b   $$$$b..d$$$ $$$$b..d$$$
-   d$$$$$$P"   "$$$$$$$$ Q$$$     Q$$$$  $$$$$   `Q$$$$$$$P  `Q$$$$$$$P
-  $$$$$$$P       `"""""   ""        ""   Q$$$P     "Q$$$P"     "Q$$$P"
-  `Q$$P"                                  """
+---------------------------------------------------------------------------
 
+      .vir.                                d$b
+   .d$$$$$$b.    .cd$$b.     .d$$b.   d$$$$$$$$$$$b  .d$$b.      .d$$b.
+   $$$$( )$$$b d$$$()$$$.   d$$$$$$$b Q$$$$$$$P$$$P.$$$$$$$b.  .$$$$$$$b.
+   Q$$$$$$$$$$B$$$$$$$$P"  d$$$PQ$$$$b.   $$$$.   .$$$P' `$$$ .$$$P' `$$$
+     "$$$$$$$P Q$$$$$$$b  d$$$P   Q$$$$b  $$$$b   $$$$b..d$$$ $$$$b..d$$$
+    d$$$$$$P"   "$$$$$$$$ Q$$$     Q$$$$  $$$$$   `Q$$$$$$$P  `Q$$$$$$$P
+   $$$$$$$P       `"""""   ""        ""   Q$$$P     "Q$$$P"     "Q$$$P"
+   `Q$$P"                                  """
 
-	HOST: ~
-	DATE: ~
+                       F T P . H Y P O K R I T E S . N E T
+						        Research Facility
+					     Information Technology Division
+---------------------------------------------------------------------------
+	PORTAGE		: rsync://rsync.hypokrites.net/gentoo-portage/
+	DISTFILES	: rsync://rsync.hypokrites.net/gentoo/distfiles/
+	SNAPSHOTS	: rsync://rsync.hypokrites.net/gentoo/snapshots/
+	RELEASES	: rsync://rsync.hypokrites.net/gentoo/releases/
+	FTP ACCESS	: ftp://ftp.hypokrites.net/gentoo/
+    HTTP ACCESS	: http://http.hypokrites.net/gentoo/
 
+    HOST:		ftp.swin.edu.au (136.186.1.76, 2001:388:6080:64::dc41:1cf)
+    Hardware:	Custom PC.
+				1 x AMD Ryzen 5950x (16c), 128GB RAM
+    Storage:	32TB 
+    Location:	Portland OR. USA
+    Contact:	UNIX Systems Group <systems@swin.edu.au>
+
+	DATE:		12 May 2023, 02:16AM PST

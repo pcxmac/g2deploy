@@ -6,6 +6,13 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 source ${SCRIPT_DIR}/bash/include.sh
 pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 
+echo "$pkgARCH"
+
+
+[[ ${pkgARCH}=="*" || -z ${pkgARCH} ]] && { pkgARCH="$(getG2Profile / --arch)"; };
+
+echo "$pkgARCH"
+
 	profile="${3}"				# parameter 3 can be null, and is handled subsequently.
 	type="${2:?}"
 	mirror="${1:?}"
@@ -14,17 +21,17 @@ pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 	serversList="invalid"
 
 	case ${profile,,} in
-		musl*)			release_base_string="/${pkgARCH}/autobuilds/current-stage3-amd64-${profile}-hardened/"
+		musl*)			release_base_string="/${pkgARCH}/autobuilds/current-stage3-${pkgARCH}-${profile}-hardened/"
 		;;
-		selinux)		release_base_string="/${pkgARCH}/autobuilds/current-stage3-amd64-hardened-${profile}-openrc/"
+		selinux)		release_base_string="/${pkgARCH}/autobuilds/current-stage3-${pkgARCH}-hardened-${profile}-openrc/"
 		;;
-		hardened|clang)	release_base_string="/${pkgARCH}/autobuilds/current-stage3-amd64-${profile}-openrc/"
+		hardened|clang)	release_base_string="/${pkgARCH}/autobuilds/current-stage3-${pkgARCH}-${profile}-openrc/"
 		;;
-		gnome|plasma)	release_base_string="/${pkgARCH}/autobuilds/current-stage3-amd64-desktop-openrc/"
+		gnome|plasma)	release_base_string="/${pkgARCH}/autobuilds/current-stage3-${pkgARCH}-desktop-openrc/"
 		;;
-		openrc|systemd)	release_base_string="/${pkgARCH}/autobuilds/current-stage3-amd64-${profile}/"
+		openrc|systemd)	release_base_string="/${pkgARCH}/autobuilds/current-stage3-${pkgARCH}-${profile}/"
 		;;
-		*/systemd)		release_base_string="/${pkgARCH}/autobuilds/current-stage3-amd64-desktop-${profile#*/}/"
+		*/systemd)		release_base_string="/${pkgARCH}/autobuilds/current-stage3-${pkgARCH}-desktop-${profile#*/}/"
 		;;
 		*)				release_base_string=""
 		;;
@@ -116,11 +123,20 @@ pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 					selectStr="${selectStr%*/}"
 					# check for host
 					hostname="$(getHostName ${urlBase})"
+
+					echo "$selectStr $urlBase"
+
 					[[ -z "$(isHostUp ${hostname} '80')" && -z "$(isHostUp ${hostname} '443')" ]] && { exit; };
 					if [[ ${type} == "http" ]];then urlCurrent="$(curl -s ${urlBase} --silent | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"; fi
 					if [[ ${type} == "ftp" ]];then urlCurrent="$(curl -s ${urlBase} --silent --list-only | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"; fi
+
+					echo "$urlCurrent"
+
+
 					urlCurrent="$(echo ${urlCurrent} | awk '{print $1}' | head -n 1 )"
 					urlCurrent="${urlCurrent%.t*}"
+
+
 					if [[ "${release_base_string}" != "invalid" ]]; then
 						if [[ -n ${urlCurrent} ]];	then	
 							printf "${urlBase}${urlCurrent}.tar.xz\n"

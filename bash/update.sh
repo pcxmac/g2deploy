@@ -65,8 +65,10 @@ do
 
 			pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
 			patchSystem "${_profile}" 'update' > "${directory}/patches.sh"
+
 			echo "patching portage ..."
 			patchFiles_portage "${directory}" "${_profile}"
+
 			if [[ ${directory} == "/" ]]
 			then
 				update_runtime

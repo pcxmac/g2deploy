@@ -172,7 +172,6 @@ dev-python/docutils
 dev-python/flit_core
 dev-python/gpep517
 dev-python/idna
-dev-python/importlib_metadata
 dev-python/installer
 dev-python/jaraco-context
 dev-python/jaraco-functools

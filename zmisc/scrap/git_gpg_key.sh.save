@@ -13,6 +13,45 @@ app-crypt/gnupg
 
 eselect pinentry list/set (gnome)
 
+GPG agent can be used via SSH (see dom0/authCA_GPG+)
+https://wiki.gentoo.org/wiki/GnuPG#Using_a_GPG_agent
+
+gpg --full-generate-key
+
+copy gitconfig to users directory
+
+vscode should prompt for a web login to github
+
+--- this will allow you to pass through ssh, but not gpg, for gpg, you have to register properly
+
+for vscode, you will have to enable commit signing, through the file/preferences/settings, upon setting this
+the new push will prompt pinentry, and you can use gnome to save your key, through a password.
+
+gpg --export -a [KEY_NAME] > public,key				-- BEGIN PGP PUBLIC KEY BLOCK
+gpg --export-secret-key -a [KEY_NAME] > private.key	<passphrase protect? -- BEGIN PGP PRIVATE KEY BLOCK
+
+gpg --import public.key [KEY_FILE]
+gpg --import private,key <passphrase protect> [KEY_FILE]
+
+
+
+
+
+
+=========================================================================================
+
+kwallet => ~/.local/share/kwalletd
+
+
+
+
+packages : pinentry + gnupg
+
+------------------------------------------------------------------------------------
+
+eselect pinentry set gnome3 (gnome)
+eselect pinentry set qt5    (plasma)
+
 ~/.gnupg/gpg-agent.conf
 
 	pinentry-program /usr/bin/pinentry
@@ -27,22 +66,3 @@ gpg-connect-agent reloadagent /bye
 
 (ok)
 
-GPG agent can be used via SSH (see dom0/authCA_GPG+)
-https://wiki.gentoo.org/wiki/GnuPG#Using_a_GPG_agent
-
-plasma requires extra work for autobooting gpg-agent apparently...
-
-gpg --full-generate-key
-
-#this will prompt gnome to intercept and take passphrase), I believe gnome uses its wallet to store the passphrase, need to investigate settingup wallet on other systems !!!
-
-copy ssh and gnupg subfolders in to same user's directory
-
-copy gitconfig to users directory
-
-vscode should prompt for a web login to github
-
---- this will allow you to pass through ssh, but not gpg, for gpg, you have to register properly
-
-for vscode, you will have to enable commit signing, through the file/preferences/settings, upon setting this
-the new push will prompt pinentry, and you can use gnome to save your key, through a password.

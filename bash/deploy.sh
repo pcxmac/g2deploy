@@ -71,12 +71,12 @@ source ${SCRIPT_DIR}/bash/include.sh
 	deployBuildup "${_profile}" "${directory}" "${dataset}" "${_selection}"
 	mounts "${directory}"
 
-	echo "patchfiles : user"
-	patchFiles_user "${directory}" 
+	echo "patchfiles : user @ ${directory}"
+	patchFiles_user "${directory}" ${_profile}
 	echo "patchfiles : system"
-	patchFiles_sys "${directory}" 
+	patchFiles_sys "${directory}" ${_profile}
 	echo "patchfiles : portage"
-	patchFiles_portage "${directory}"
+	patchFiles_portage "${directory}" ${_profile}
 	echo "zfs keys ..."
 	zfs_keys "${dataset}"
 	echo "package processor ..."

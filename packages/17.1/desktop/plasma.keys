@@ -12,6 +12,7 @@ dev-haskell/syb                     ~amd64
 dev-haskell/alex                    ~amd64
 dev-haskell/happy                   ~amd64
 
+x11-terms/kitty*                    ~amd64
 app-editors/vscode                              ~amd64
 
 <=media-libs/mesa-23.0.2-r1						~amd64
