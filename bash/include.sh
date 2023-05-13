@@ -165,6 +165,7 @@ function update_runtime()
 
 	sudo emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n ${exclude_atoms}
 	eselect news read new
+	eclean distfiles
 
 }
 
