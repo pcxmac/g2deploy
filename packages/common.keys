@@ -12,6 +12,7 @@ sys-libs/glibc						~amd64
 dev-lang/ghc                        ~amd64
 dev-haskell/*						~amd64
 
+dev-util/bindgen					~amd64
 sys-apps/locale-gen					~amd64
 
 media-libs/mesa						~amd64

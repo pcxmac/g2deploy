@@ -198,6 +198,21 @@ printf "setting ownership to {meta} ; {profiles} ; {packages}\n"
 chown "${owner}:${group}" "${pkgROOT}/meta" -R			1>/dev/null
 chown "${owner}:${group}" "${pkgROOT}/profiles" -R		1>/dev/null
 chown "${owner}:${group}" "${pkgROOT}/packages" -R		1>/dev/null
+chown "${owner}:${group}" "${pkgROOT}/home" -R		    1>/dev/null
+
+chmod o+rx "${pkgROOT}/meta" -R         1>/dev/null
+chmod o+rx "${pkgROOT}/profiles" -R     1>/dev/null
+chmod o+rx "${pkgROOT}/packages" -R     1>/dev/null
+chmod o+rx "${pkgROOT}/source" -R       1>/dev/null
+chmod o+rx "${pkgROOT}/distfiles" -R    1>/dev/null
+chmod o+rx "${pkgROOT}/kernels" -R      1>/dev/null
+chmod o+rx "${pkgROOT}/snapshots" -R    1>/dev/null
+chmod o+rx "${pkgROOT}/patchfiles" -R   1>/dev/null
+chmod o+rx "${pkgROOT}/repository" -R   1>/dev/null
+chmod o+rx "${pkgROOT}/releases" -R     1>/dev/null
+chmod o+rx "${pkgROOT}/binpkgs" -R      1>/dev/null
+
+chmod og-rx "${pkgROOT}/home" -R        1>/dev/null
 
 #repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
 

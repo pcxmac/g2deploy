@@ -6,12 +6,12 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 source ${SCRIPT_DIR}/bash/include.sh
 pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 
-echo "$pkgARCH"
+#echo "$pkgARCH"
 
 
 [[ ${pkgARCH}=="*" || -z ${pkgARCH} ]] && { pkgARCH="$(getG2Profile / --arch)"; };
 
-echo "$pkgARCH"
+#echo "$pkgARCH"
 
 	profile="${3}"				# parameter 3 can be null, and is handled subsequently.
 	type="${2:?}"
@@ -124,13 +124,13 @@ echo "$pkgARCH"
 					# check for host
 					hostname="$(getHostName ${urlBase})"
 
-					echo "$selectStr $urlBase"
+					#echo "$selectStr $urlBase"
 
 					[[ -z "$(isHostUp ${hostname} '80')" && -z "$(isHostUp ${hostname} '443')" ]] && { exit; };
 					if [[ ${type} == "http" ]];then urlCurrent="$(curl -s ${urlBase} --silent | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"; fi
 					if [[ ${type} == "ftp" ]];then urlCurrent="$(curl -s ${urlBase} --silent --list-only | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"; fi
 
-					echo "$urlCurrent"
+					#echo "$urlCurrent"
 
 
 					urlCurrent="$(echo ${urlCurrent} | awk '{print $1}' | head -n 1 )"

@@ -66,3 +66,14 @@ gpg-connect-agent reloadagent /bye
 
 (ok)
 
+##################################################
+
+query to see if key exists, if not import from a migration, or generate if none is available
+export the public key
+verify pinentry
+verify .gnupg directory
+reconnect to the gpg-agent
+git config --global user.signingkey [key-email]
+vscode requires setting gpg-signing setting [file/settings]
+
+
