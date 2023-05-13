@@ -26,8 +26,8 @@ mount -t tmpfs -o size=$mSize tmpfs $offset/tmp
 mount -t tmpfs tmpfs $offset/var/tmp
 mount -t tmpfs tmpfs $offset/run
 
-mount --bind /srv/portage/binpkgs $offset/var/lib/portage/binpkgs
-mount --bind /srv/portage/distfiles $offset/var/lib/portage/distfiles
+#mount --bind /srv/portage/binpkgs $offset/var/lib/portage/binpkgs
+#mount --bind /srv/portage/distfiles $offset/var/lib/portage/distfiles
 
 export PYTHONPATH=""
 

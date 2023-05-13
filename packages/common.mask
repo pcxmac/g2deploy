@@ -5,8 +5,9 @@
 
 <sys-libs/glibc-2.36
 <sys-devel/gcc-12.3.0
-<sys-devel/llvm-16.0.0
+<sys-devel/llvm-15.0.0
 # python 3.11
 <media-libs/mesa-23.0.0-r1
+<sys-devel/clang-15.0.0
 
 >=sys-kernel/gentoo-sources-6.4.0

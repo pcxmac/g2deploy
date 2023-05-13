@@ -510,7 +510,7 @@ function deploySystem()
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
 	eselect news read new
-
+	eclean distfiles
 	eix-update
 	updatedb
 }
@@ -760,8 +760,8 @@ function mounts()
 
 	# need a fusable link mechanism, not fuse, rather a modular/extenisble system of interlinking assets.
 
-	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"
-	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/distfiles "${offset}/var/lib/portage/distfiles"
+	#mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"
+	#mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/distfiles "${offset}/var/lib/portage/distfiles"
 
 }
 

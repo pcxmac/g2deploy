@@ -190,15 +190,24 @@ mget "--owner --group --delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_
 
 sleep 3
 
+echo "setting ownership of $pkgROOT"
+
+owner="portage"
+group="portage"
+
+chown "${owner}:${group}" "${pkgROOT}/distfiles"    -R	    1>/dev/null
+chown "${owner}:${group}" "${pkgROOT}/binpkgs"      -R	    1>/dev/null
+chmod go+rwx              "${pkgROOT}/distfiles"    -R      1>/dev/null
+
 owner="$(stat -c '%U' "${pkgROOT}")"
 group="$(stat -c '%G' "${pkgROOT}")" 
-
-printf "setting ownership to {meta} ; {profiles} ; {packages}\n"
 
 chown "${owner}:${group}" "${pkgROOT}/meta" -R			1>/dev/null
 chown "${owner}:${group}" "${pkgROOT}/profiles" -R		1>/dev/null
 chown "${owner}:${group}" "${pkgROOT}/packages" -R		1>/dev/null
 chown "${owner}:${group}" "${pkgROOT}/home" -R		    1>/dev/null
+
+echo "setting permissions for $pkgROOT"
 
 chmod o+rx "${pkgROOT}/meta" -R         1>/dev/null
 chmod o+rx "${pkgROOT}/profiles" -R     1>/dev/null
@@ -212,7 +221,7 @@ chmod o+rx "${pkgROOT}/repository" -R   1>/dev/null
 chmod o+rx "${pkgROOT}/releases" -R     1>/dev/null
 chmod o+rx "${pkgROOT}/binpkgs" -R      1>/dev/null
 
-chmod og-rx "${pkgROOT}/home" -R        1>/dev/null
+chmod og-rx"${pkgROOT}/home" -R        1>/dev/null
 
 #repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
 
@@ -238,9 +247,12 @@ hostip="$(/bin/ip --brief address show dev ${hostip} | /usr/bin/awk '{print $3}'
 
 sed -i "s|HOST:.*|HOST: ${hostip}|g" /etc/rsync/rsyncd.motd
 sed -i "s|DATE:.*|DATE: $(date)|g" /etc/rsync/rsyncd.motd
-sed -i "s|HTTP:.*|HTTP: http://${pkgHOST}|g" /etc/rsync/rsyncd.motd
-sed -i "s|RSYNC:.*|RSYNC: rsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
-sed -i "s|FTP:.*|FTP: ftp://${pkgHOST}|g" /etc/rsync/rsyncd.motd
+#sed -i "s|HTTP ACCESS:.*|HTTP ACCESS:\thttp://${pkgHOST}|g" /etc/rsync/rsyncd.motd
+#sed -i "s|FTP ACCESS:.*|FTP ACCESS:\tftp://${pkgHOST}|g" /etc/rsync/rsyncd.motd
+#sed -i "s|PORTAGE:.*|PORTAGE:\trsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
+#sed -i "s|RELEASES:.*|RELEASES:\trsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
+#sed -i "s|SNAPSHOTS:.*|SNAPSHOTS:\trsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
+#sed -i "s|DISTFILES:.*|DISTFILES:\trsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
 
 eix-update
 updatedb

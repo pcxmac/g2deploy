@@ -1,3 +1,5 @@
+dev-python/ply
+dev-util/ply
 sys-apps/lshw
 www-servers/lighttpd
 net-ftp/vsftpd
