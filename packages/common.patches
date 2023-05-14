@@ -7,3 +7,5 @@
 #emerge ${emergeOpts} x11-drivers/xf86-video-qxl
 
 #emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n
+
+emerge ${emergeOpts} dev-python/ply
