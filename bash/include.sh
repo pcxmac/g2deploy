@@ -302,6 +302,8 @@ function build_kernel()
 		[[ "$(\ls ${_kernels_current}/kernels/current/ | wc -l)" > 0 ]] && { mv ${_kernels_current}/kernels/current/* ${_kernels_current}/kernels/deprecated/; };
 		# current kernel
 		printf "saving current kernel...\n"
+		# relabel kernel to 'vmlinuz'
+		mv ${_offset}/${nv}-${_suffix}/vmlinuz-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/vmlinuz
 		mget ${_offset}/ ${_kernels_current}/kernels/current/ --delete -Dogtplr
 
 		# current source for kernel ... this directory can be linked to, as the source for getKVER
