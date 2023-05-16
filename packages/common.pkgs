@@ -171,7 +171,6 @@ dev-python/appdirs
 dev-python/certifi
 dev-python/charset_normalizer
 dev-python/docutils
-dev-python/flit_core
 dev-python/gpep517
 dev-python/idna
 dev-python/installer

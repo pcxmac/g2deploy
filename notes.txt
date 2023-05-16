@@ -1,4 +1,18 @@
+PRIORITY list
+
+  : DEPLOY    (GOOD)
+  : INSTALL   (GET YAML CONFIGS GOOD FOR ZFS)
+  : UPDATE    (CONTINUE TO CHECK)
+  : SYNC      (GOOD)
+  : MIRRORS   (HAVE --option to convert hosts listing in to valid sync repo listing(s), and switch to a mask_host paradigm (hosts.mask))
+  : BULKBUILD (CONFIRM)
+  
+  ZFS TESTING FOR 2 WEEKS, following above, and CODE REVIEW + BELOW CHECKS, as appropriate.
+
+
 goals : 
+
+
 
   x
   add a clear mounts 
