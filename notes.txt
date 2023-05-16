@@ -1,22 +1,50 @@
 goals : 
 
-  get a good zfs install on laptop drive
+  x
+  add a clear mounts 
 
   convert install to accept premade yaml configs, prompt for missing info ... working
-  pulling in a package like zfs from a git repo, doesn't seem to be working over the bindmount for distfiles,
-    SO, lets redirect to a /tmp tmpfiles directory, and make sure there are no binpkgs or distfiles being stored on to new deployments
+  
+  x
 
   need to fix unmount , its breaking current runtime.
   
   mget doesn't seem to process multiple arguments well, double check
+  
   seamlessly integrate the config/host.config ... This should allow someone to use sync to build up a repo-server, and work it alongside existing gentoo installation.
 
-  need to fix PYTHON AND LLVM VERSIONING FOR CURRENT DEPLOYMENTS, ALSO VERIFY GCC & GLIBC
+  x
 
+\ INTEGRATION PLAN -proposal-
+\ MIRROR
+\ MGET
+\ YAML
+\ OTHER_COMPONENTS...
 
+\ home\resource\package\meta.yml
+\ home\resource\profile\meta.yml
+\ home\code_type\submodule\executable
+\ home\code_type\submodule\executable
+\ home\about.txt
 
-YADAYADA
-  - it shall begin.
+example.
+\ home\g2Assets\bash\mirror\get_binpkgs.sh # wrapper script
+\ home\g2Assets\bash\mirror\mirror.sh      # master
+\ home\g2Assets\mirrors\hosts              # master_host_file
+\ home\g2Assets\mirrors\binpkg             # derivative
+\ home\g2Assets\mirrors\releases           # derivative
+\ home\g2Assets\test\func.xml              # xml version of Input+Output+Func_Call
+\ home\g2Assets\test\func.yml              # yaml version of IOF
+\ home\g2Assets\test\func.out              # last results log
+\ home\yamlBasic\
+\ home\multiGet\
+\ home\g2MetaPackageManager\
+\ home\g2Sync\
+\ home\g2Deploy\
+\ home\g2Common\                            # common codebase
+\ home\g2Install\
+\ home\g2Update\
+
 
   - notes about swap systems observations of late (13 feb)
     need a profile service to restore configs, despite having old and complete etc.

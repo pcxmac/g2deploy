@@ -317,8 +317,17 @@ function setup_boot() {
 	mount ${boot_partition} ${dstDir}/boot/
 	mget ${boot_src}/boot ${dstDir}/
 
+	ls ${boot_src}/boot
+
+	sleep 10
+
 	install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR ... MGET BREAKS IF THIS IS BEFORE THE PARENT, APPARENTLY MGET NEEDS AN EMPTY FOLDER...
+
+	ls $dstDir
+
 	umount "${dstDir}/boot"
+
+	sleep 10
 }
 
 function modify_boot() {
@@ -336,9 +345,12 @@ function modify_boot() {
 	local dstDir="${dpath}/${ddataset}"
 	local _kver="$(getKVER)"
 
+	
+
 	mounts ${dstDir}
 	mount "${boot_partition}" "${dstDir}/boot"
-	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source/ "${dstDir}/usr/src/"
+	mkdir ${dstDir}/usr/src/${_kver} 
+	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source/ "${dstDir}/usr/src/${_kver}"
 
 	chroot "${dstDir}" /usr/bin/eselect kernel set ${_kver}
 	chroot "${dstDir}" /usr/bin/genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
@@ -432,8 +444,6 @@ function install_system() {
 	done
 
 	vYAML="$(generateYAML ${_source} ${_destination})"
-
-
 
 	for x in "$@"
 	do
