@@ -52,7 +52,7 @@ repoLocation="$(echo ${repoLocation#*=} | tr -d '"')"
 checkHosts
 
 printf "syncing portage ...\n"
-patchFiles_portage / $(getG2Profile /)
+#patchFiles_portage / $(getG2Profile /)
 
 # initial condition calls for emerge-webrsync
 syncURI="$(cat ${pkgCONF} | grep "^sync-uri")"
@@ -183,7 +183,7 @@ mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/packages"    "${_packages}"
 #echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/packages"    "${_packages}""
 
 printf "############################### [ PATCHFILES ] ##################################\n"
-#mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/patchfiles/" "${SCRIPT_DIR}/patchfiles"
+#mget "-Dogtplr --delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/patchfiles/" "${SCRIPT_DIR}/patchfiles"
 _patchfiles="$(eval echo "$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root/patchfiles")")"
 #echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_patchfiles}""
 mget "--owner --group --delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_patchfiles}"
@@ -212,31 +212,27 @@ echo "setting permissions for $pkgROOT"
 chmod o+rx "${pkgROOT}/meta" -R         1>/dev/null
 chmod o+rx "${pkgROOT}/profiles" -R     1>/dev/null
 chmod o+rx "${pkgROOT}/packages" -R     1>/dev/null
-chmod o+rx "${pkgROOT}/source" -R       1>/dev/null
 chmod o+rx "${pkgROOT}/distfiles" -R    1>/dev/null
 chmod o+rx "${pkgROOT}/kernels" -R      1>/dev/null
 chmod o+rx "${pkgROOT}/snapshots" -R    1>/dev/null
-chmod o+rx "${pkgROOT}/patchfiles" -R   1>/dev/null
 chmod o+rx "${pkgROOT}/repository" -R   1>/dev/null
 chmod o+rx "${pkgROOT}/releases" -R     1>/dev/null
 chmod o+rx "${pkgROOT}/binpkgs" -R      1>/dev/null
-
-chmod og-rx"${pkgROOT}/home" -R        1>/dev/null
+#chmod o+rx "${pkgROOT}/source" -R       1>/dev/null		NOT NECCESSARY
+#chmod og-rx"${pkgROOT}/home" -R        1>/dev/null			DON"T TOUCH
+#chmod o+rx "${pkgROOT}/patchfiles" -R   1>/dev/null		NEVER
 
 #repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
 
 if [[ $_flags != '--skip' ]]
 then
-
     [[ ! -d ${pkgROOT}/repository ]] && { mkdir -p ${pkgROOT}/repository; };
-
     for x in $(ls "${pkgROOT}/repository")
     do
         printf "%s\n" "${x}"
         git -C "${pkgROOT}/repository/${x}" fetch --all
         git -C "${pkgROOT}/repository/${x}" pull
     done
-
 fi
 
 #qmanifest -g

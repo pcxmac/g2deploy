@@ -583,11 +583,11 @@ function patchFiles_portage()
 	# because the repo hasn't been installed yet, cannot use getg2profile
 	local _profile="${2}"
 
-	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles rsync)"	
+	psrc="$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/patchfiles rsync)"
 	common_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/common" | sed 's/ //g' | sed "s/\"/'/g")"
 	spec_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/${_profile}" | sed 's/ //g' | sed "s/\"/'/g")"
 
-	mget "${psrc}/portage" "${offset}/etc/" 
+	mget "${psrc}/portage" "${offset}/etc/"
 
 	# if directories exist for new sources, zap them
 	if [[ -d ${offset}/etc/portage/package.license ]];then rm "${offset}/etc/portage/package.license" -R; fi
@@ -599,15 +599,16 @@ function patchFiles_portage()
 	# if file exist for new sources, zap them
 	if [[ -f ${offset}/etc/portage/package.license ]];then rm "${offset}/etc/portage/package.license"; fi
 	if [[ -f ${offset}/etc/portage/package.use ]];then rm "${offset}/etc/portage/package.use"; fi
+
 	if [[ -f ${offset}/etc/portage/package.mask ]];then rm  "${offset}/etc/portage/package.mask";fi
 	if [[ -f ${offset}/etc/portage/package.unmask ]];then rm  "${offset}/etc/portage/package.unmask";fi
 	if [[ -f ${offset}/etc/portage/package.accept_keywords ]];then rm "${offset}/etc/portage/package.accept_keywords";fi
-
 	# compile common and spec rules in to /etc/portage/*.use|accept*|(un)mask|license
 	echo -e "$(mget ${common_URI}.uses)\n$(mget ${spec_URI}.uses)" | uniq > ${offset}/etc/portage/package.use
 	echo -e "$(mget ${common_URI}.keys)\n$(mget ${spec_URI}.keys)" | uniq > ${offset}/etc/portage/package.accept_keywords
 	echo -e "$(mget ${common_URI}.mask)\n$(mget ${spec_URI}.mask)" | uniq > ${offset}/etc/portage/package.mask
 	echo -e "$(mget ${common_URI}.unmask)\n$(mget ${spec_URI}.unmask)" | uniq > ${offset}/etc/portage/package.unmask
+	echo "sh"
 	echo -e "$(mget ${common_URI}.license)\n$(mget ${spec_URI}.license)" | uniq > ${offset}/etc/portage/package.license
 	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf
 
@@ -634,7 +635,7 @@ function patchFiles_portage()
 	done < <(curl "${spec_URI}.conf" --silent | sed 's/#.*$//' | sed '/^[[:space:]]*$/d' )
 }
 
-function patchFiles_user() 
+function patchFiles_user()
 {
     local offset="${1:?}"
 	# because the repo hasn't been installed yet, cannot use getg2profile
