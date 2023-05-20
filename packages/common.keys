@@ -15,6 +15,6 @@ dev-haskell/*						~amd64
 dev-util/bindgen					~amd64
 sys-apps/locale-gen					~amd64
 
-media-libs/mesa						~amd64
+media-libs/mesa	**
 
 dev-haskell/*		                ~amd64

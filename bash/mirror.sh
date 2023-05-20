@@ -124,18 +124,17 @@ pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 					# check for host
 					hostname="$(getHostName ${urlBase})"
 
-					#echo "$selectStr $urlBase"
+					echo "$selectStr $urlBase"
 
 					[[ -z "$(isHostUp ${hostname} '80')" && -z "$(isHostUp ${hostname} '443')" ]] && { exit; };
 					if [[ ${type} == "http" ]];then urlCurrent="$(curl -s ${urlBase} --silent | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"; fi
 					if [[ ${type} == "ftp" ]];then urlCurrent="$(curl -s ${urlBase} --silent --list-only | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"; fi
 
-					#echo "$urlCurrent"
-
 
 					urlCurrent="$(echo ${urlCurrent} | awk '{print $1}' | head -n 1 )"
 					urlCurrent="${urlCurrent%.t*}"
 
+					echo "$urlCurrent"
 
 					if [[ "${release_base_string}" != "invalid" ]]; then
 						if [[ -n ${urlCurrent} ]];	then	
