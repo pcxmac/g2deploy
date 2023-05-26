@@ -68,6 +68,8 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 	clear_mounts "${directory}"
 
+	printf 'buildup for @ %s', $_selection
+
 	deployBuildup "${_profile}" "${directory}" "${dataset}" "${_selection}"
 	mounts "${directory}"
 

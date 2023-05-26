@@ -195,18 +195,18 @@ echo "setting ownership of $pkgROOT"
 owner="portage"
 group="portage"
 
-chown "${owner}:${group}" "${pkgROOT}/distfiles"    -R	    1>/dev/null
-chown "${owner}:${group}" "${pkgROOT}/binpkgs"      -R	    1>/dev/null
-chmod go+rwx              "${pkgROOT}/distfiles"    -R      1>/dev/null
-chmod go+rwx              "${pkgROOT}/binpkgs"      -R      1>/dev/null
+#chown "${owner}:${group}" "${pkgROOT}/distfiles"    -R	    1>/dev/null
+#chown "${owner}:${group}" "${pkgROOT}/binpkgs"      -R	    1>/dev/null
+#chmod go+rwx              "${pkgROOT}/distfiles"    -R      1>/dev/null
+#chmod go+rwx              "${pkgROOT}/binpkgs"      -R      1>/dev/null
 
 owner="$(stat -c '%U' "${pkgROOT}")"
 group="$(stat -c '%G' "${pkgROOT}")" 
 
-chown "${owner}:${group}" "${pkgROOT}/meta" -R			1>/dev/null
-chown "${owner}:${group}" "${pkgROOT}/profiles" -R		1>/dev/null
-chown "${owner}:${group}" "${pkgROOT}/packages" -R		1>/dev/null
-chown "${owner}:${group}" "${pkgROOT}/home" -R		    1>/dev/null
+#chown "${owner}:${group}" "${pkgROOT}/meta" -R			1>/dev/null
+#chown "${owner}:${group}" "${pkgROOT}/profiles" -R		1>/dev/null
+#chown "${owner}:${group}" "${pkgROOT}/packages" -R		1>/dev/null
+#chown "${owner}:${group}" "${pkgROOT}/home" -R		    1>/dev/null     --- zonks out patchfiles and f'sO deployments
 
 echo "setting permissions for $pkgROOT"
 

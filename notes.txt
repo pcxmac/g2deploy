@@ -12,7 +12,7 @@ PRIORITY list
 
 goals : 
 
-
+  eselect profile is being affected by a soft links being changed in /etc/portage ... figure it out 
 
   x
   add a clear mounts 
@@ -472,6 +472,8 @@ portage/
   packages        # package and conf files, per profile, such as hardened, selinux, gnome, gnome/systemd\
   profiles        # configs for real/virtual machines, host/domain name dependent\
   kernels         # repo for current and depricated kernels
+
+
 
 
 working on:
