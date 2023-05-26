@@ -449,6 +449,8 @@ function deployBuildup()
 	fileasc="$(echo "${files}" | grep '.asc$')"
 	serverType="${filexz%//*}"
 
+	
+
 	case ${serverType%//*} in
 		"file:/")
 			mget "${filexz#*//}" "${offset}/"

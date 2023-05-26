@@ -198,6 +198,7 @@ group="portage"
 chown "${owner}:${group}" "${pkgROOT}/distfiles"    -R	    1>/dev/null
 chown "${owner}:${group}" "${pkgROOT}/binpkgs"      -R	    1>/dev/null
 chmod go+rwx              "${pkgROOT}/distfiles"    -R      1>/dev/null
+chmod go+rwx              "${pkgROOT}/binpkgs"      -R      1>/dev/null
 
 owner="$(stat -c '%U' "${pkgROOT}")"
 group="$(stat -c '%G' "${pkgROOT}")" 
