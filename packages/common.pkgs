@@ -28,7 +28,6 @@ sys-apps/hdparm
 app-admin/logrotate
 sys-process/btop
 net-misc/scponly
-app-crypt/gentoo-keys
 net-fs/sshfs
 app-misc/screen
 sys-apps/usermode-utilities
@@ -269,7 +268,6 @@ net-wireless/crda
 net-wireless/iw
 net-wireless/wireless-regdb
 net-wireless/wpa_supplicant
-sec-keys/openpgp-keys-gentoo-release
 sys-apps/acl
 sys-apps/attr
 sys-apps/baselayout

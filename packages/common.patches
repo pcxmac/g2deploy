@@ -1,11 +1,13 @@
 # COMMON PATCHES 17.X
 
-#echo "no common patches";
-
-#emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
-
-#emerge ${emergeOpts} x11-drivers/xf86-video-qxl
-
-#emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n
-
 emerge ${emergeOpts} dev-python/ply
+
+# needs to be pushed in to a module (pgp)
+
+emerge sec-keys/openpgp-keys-gentoo-auth sec-keys/openpgp-keys-gentoo-developers sec-keys/openpgp-keys-gentoo-release
+
+gpg --import /usr/share/openpgp-keys/gentoo-auth.asc
+gpg --import /usr/share/openpgp-keys/gentoo-developers.asc
+gpg --import /usr/share/openpgp-keys/gentoo-release.asc
+
+echo "end of common patches..."
