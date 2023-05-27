@@ -165,7 +165,7 @@ function update_runtime()
 
 	sudo emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n ${exclude_atoms}
 	eselect news read new
-	eclean distfiles
+	#eclean distfiles
 
 }
 
@@ -515,7 +515,7 @@ function deploySystem()
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
 	eselect news read new
-	eclean distfiles
+	#eclean distfiles
 	eix-update
 	updatedb
 }
@@ -764,11 +764,11 @@ function mounts()
 	pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
 	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
 
-	# need a fusable link mechanism, not fuse, rather a modular/extenisble system of interlinking assets.
+	# this will need to be replaced. without these links, deployments will need better name resolution/transport to binpkg/distfiles server
 
-	#mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"
-	#mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/distfiles "${offset}/var/lib/portage/distfiles"
-
+	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"
+	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/distfiles "${offset}/var/lib/portage/distfiles"
+#
 }
 
 function pkgProcessor()

@@ -12,6 +12,8 @@ source ${SCRIPT_DIR}/bash/include.sh
 	export -f deployServices
 	export -f deploySystem
 	export -f deployServices
+	export -f isHostUp
+
 
 #	export -f patchProcessor
 	export -f getG2Profile
@@ -103,7 +105,10 @@ source ${SCRIPT_DIR}/bash/include.sh
 	sed -i "/${bldHOST}$/c${bldIP}\t${bldHOST}" ${directory}/etc/hosts
 	################ work around ############################################################################################# 
 
+	cat ${directory}/etc/hosts
+
 	chroot "${directory}" /bin/bash -c "deployLocales ${_profile}"
+
  	chroot "${directory}" /bin/bash -c "deploySystem"
 
 	chroot "${directory}" /bin/bash -c "deployUsers ${_profile}"
