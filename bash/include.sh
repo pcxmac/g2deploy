@@ -778,8 +778,7 @@ function mounts()
 	# this will need to be replaced. without these links, deployments will need better name resolution/transport to binpkg/distfiles server
 
 	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"
-	#mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/distfiles "${offset}/var/lib/portage/distfiles"
-#
+
 }
 
 function pkgProcessor()

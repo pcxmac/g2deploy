@@ -73,7 +73,6 @@ source ${SCRIPT_DIR}/bash/include.sh
 	printf 'buildup for @ %s', $_selection
 
 	deployBuildup "${_profile}" "${directory}" "${dataset}" "${_selection}"
-	mounts "${directory}"
 
 	echo "patchfiles : user @ ${directory}"
 	patchFiles_user "${directory}" ${_profile}
@@ -89,6 +88,9 @@ source ${SCRIPT_DIR}/bash/include.sh
 	patchSystem "${_profile}" 'deploy' > "${directory}/patches.sh"
 	echo "add services"
 	patchSystem "${_profile}" 'services' > "${directory}/services.sh"
+
+	mounts "${directory}"
+
 
 	#	theory of operation , system bootsup, firewall takes over, builds network stack, and triggers a sync on the dom-0
 	#	sync on dom-0, will update the host.cfg, all derivative activities should be accurate, firewall will trigger a sync
