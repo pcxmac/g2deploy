@@ -471,10 +471,19 @@ function deployBuildup()
 	decompress "${offset}/${filexz}" "${offset}"
 	rm ${offset}/${filexz}
 
-	mkdir -p "${offset}/var/lib/portage/binpkgs"
-	mkdir -p "${offset}/var/lib/portage/distfiles"
-	mkdir -p "${offset}/srv/crypto/"
-	mkdir -p "${offset}/var/lib/portage/repos/gentoo"
+	# just use patchfiles ...
+
+	#mkdir -p "${offset}/var/lib/portage/binpkgs"
+	#chown portage:portage "${offset}/var/lib/portage/binpkgs"
+	#chmod 755 "${offset}/var/lib/portage/binpkgs"
+	#mkdir -p "${offset}/var/lib/portage/distfiles"
+	#chown portage:portage "${offset}/var/lib/portage/distfiles"
+	#chmod 755 "${offset}/var/lib/portage/distfiles"
+	#mkdir -p "${offset}/var/lib/portage/repos/gentoo"
+	#chown portage:portage "${offset}/var/lib/portage/repos/gentoo"
+	#chmod 755 "${offset}/var/lib/portage/repos/gentoo"
+
+	#mkdir -p "${offset}/srv/crypto/"
 }
 
 function deploySystem()
@@ -515,7 +524,7 @@ function deploySystem()
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
 	eselect news read new
-	#eclean distfiles
+	eclean distfiles
 	eix-update
 	updatedb
 }
@@ -659,6 +668,8 @@ function patchFiles_sys()
 	mget "${psrc}/var/" "${offset}/var/" 
 	mget "${psrc}/usr/" "${offset}/usr/"
 	mget "${psrc}/*.[!.]*" "${offset}/"
+	mget "${psrc}/srv/" "${offset}/"
+
 }
 
 function editboot() 
