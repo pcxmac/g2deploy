@@ -1,10 +1,13 @@
 # COMMON PATCHES 17.X
 
-emerge ${emergeOpts} dev-python/ply
+_emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+
+
+emerge ${_emergeOpts} dev-python/ply
 
 # needs to be pushed in to a module (pgp)
 
-emerge sec-keys/openpgp-keys-gentoo-auth sec-keys/openpgp-keys-gentoo-developers sec-keys/openpgp-keys-gentoo-release
+emerge ${_emergeOpts} sec-keys/openpgp-keys-gentoo-auth sec-keys/openpgp-keys-gentoo-developers sec-keys/openpgp-keys-gentoo-release
 
 gpg --import /usr/share/openpgp-keys/gentoo-auth.asc
 gpg --import /usr/share/openpgp-keys/gentoo-developers.asc
