@@ -775,7 +775,7 @@ function mounts()
 	pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
 	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
 
-	# this will need to be replaced. without these links, deployments will need better name resolution/transport to binpkg/distfiles server
+	# used to build packages which will be held outside the scope of a deployment
 
 	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"
 

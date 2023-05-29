@@ -9,6 +9,7 @@ PRIORITY list
   
   ZFS TESTING FOR 2 WEEKS, following above, and CODE REVIEW + BELOW CHECKS, as appropriate.
 
+  network is getting killed at the end of the build .... (deployment)
 
 goals : 
 
