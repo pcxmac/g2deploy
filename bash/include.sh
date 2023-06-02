@@ -205,7 +205,7 @@ function build_kernel()
 	cv="$(uname --kernel-release)"
 	cv="${cv%-gentoo*}"
 
-	# installed version, latests
+	# installed version, latest
 	iv="$(qlist -Iv | \grep 'sys-kernel/gentoo-sources' | head -n 1)"
 	iv="${iv#*sources-}"
 
@@ -776,6 +776,11 @@ function mounts()
 	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
 
 	# used to build packages which will be held outside the scope of a deployment
+
+
+
+	echo "mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs""
+	sleep 10
 
 	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"
 
