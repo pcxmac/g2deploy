@@ -107,14 +107,24 @@ source ${SCRIPT_DIR}/bash/include.sh
 	sed -i "/${bldHOST}$/c${bldIP}\t${bldHOST}" ${directory}/etc/hosts
 	################ work around ############################################################################################# 
 
-	cat ${directory}/etc/hosts
-
 	chroot "${directory}" /bin/bash -c "deployLocales ${_profile}"
+
+	echo "yet ? locales"
+	sleep 10
+
 
  	chroot "${directory}" /bin/bash -c "deploySystem"
 
+	echo "yet ? system"
+	sleep 10
+
+
 	chroot "${directory}" /bin/bash -c "deployUsers ${_profile}"
 	chroot "${directory}" /bin/bash -c "deployServices"
+
+	echo "yet ? users services"
+	sleep 10
+
 
 	#services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/package" http)/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"
 	#echo "services URL = ${services_URL}"
@@ -123,7 +133,15 @@ source ${SCRIPT_DIR}/bash/include.sh
 	# some usr space patches are required before package build, but are then overwritten, this will reaffirm the patches
 	patchFiles_sys "${directory}" "${_profile}"
 
+	echo "yet ? profile @ $dataset "
+	sleep 10
+
 	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key "${dataset}"
 	clear_mounts "${directory}"
+
+	echo "yet ? profile clear mounts" 
+	sleep 10
+
+
 	#chown root:root "${directory}"
 	#zfs snapshot "${dataset}@safe"
