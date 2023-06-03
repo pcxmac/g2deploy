@@ -219,9 +219,9 @@ chmod o+rX "${pkgROOT}/snapshots" -R    1>/dev/null
 chmod o+rX "${pkgROOT}/repository" -R   1>/dev/null
 chmod o+rX "${pkgROOT}/releases" -R     1>/dev/null
 chmod o+rX "${pkgROOT}/binpkgs" -R      1>/dev/null
-#chmod o+rx "${pkgROOT}/source" -R       1>/dev/null		NOT NECCESSARY
-#chmod og-rx"${pkgROOT}/home" -R        1>/dev/null			DON"T TOUCH
-#chmod o+rx "${pkgROOT}/patchfiles" -R   1>/dev/null		NEVER
+#chmod o+rx     "${pkgROOT}/source" -R          1>/dev/null		NOT NECCESSARY
+#chmod og-rX    "${pkgROOT}/home" -R            1>/dev/null		DON"T TOUCH
+#chmod o+rx     "${pkgROOT}/patchfiles" -R      1>/dev/null		NEVER
 
 #repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
 

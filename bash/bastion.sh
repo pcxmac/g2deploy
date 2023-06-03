@@ -5,8 +5,9 @@
 # REQUIRES NETWORK DHCP COMPLETE ...
 
 # sets up IP space, wg connections, and services... for now. 
-
-#source ${SCRIPT_DIR}/bash/include.sh
+SCRIPT_DIR="$(realpath ${BASH_SOURCE:-$0})"
+SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
+source ${SCRIPT_DIR}/bash/include.sh
 
 IPT="/sbin/iptables"
 SYSCTL="/usr/sbin/sysctl"
@@ -33,6 +34,12 @@ echo "EXT_NETWORK = $EXT_NETWORK"
     #V_MASK="$(ifconfig ${INTERFACE} | grep 'netmask ' | awk '{print $4}')"
 #V_NETWORK="$(ipcalc $V_ADDR/$EXT_MASK | grep 'Network' | awk '{print $2}')"
 #echo "${V_INTER} / address : ${V_ADDR} :: mask : ${V_MASK} :: network : ${V_NETWORK}"
+
+
+
+pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
+pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
+
 
 # DOM0 SPACE	METALNET .. DEFINED BY QEMU
 M_INTER="lo"
@@ -62,6 +69,13 @@ rc-service lighttpd restart
 rc-service sshd restart
 rc-service vsftpd restart
 rc-service rsyncd restart
+
+_path="$(cat /etc/portage/make.conf | grep 'PKGDIR' | sed -e 's/\"//g')"
+_path="${_path#*=}"
+
+mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs/amd64/17.1/ "$_path"
+# sshfs mount doesn't seem to hold without delay.
+sleep 3
 
 ###############3
 

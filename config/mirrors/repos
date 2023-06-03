@@ -1,7 +1,7 @@
 #file:///var/lib/portage/repos/
 #rsync://pkg.hypokrites.me/gentoo-portage
 rsync://rsync.us.gentoo.org/gentoo-portage/
-rsync://rsync31.us.gentoo.org/gentoo-portage/
+#rsync://rsync31.us.gentoo.org/gentoo-portage/
 rsync://rsync11.us.gentoo.org/gentoo-portage/
 rsync://rsync4.ca.gentoo.org/gentoo-portage/
 rsync://rsync3.ca.gentoo.org/gentoo-portage/

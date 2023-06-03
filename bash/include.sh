@@ -290,7 +290,7 @@ function build_kernel()
 		sleep 3
 		(cd ${_kernel}; make modules_install);
 		# requires /etc/portage/bashrc to sign module
-		FEATURES="-getbinpkg -buildpkg" \emerge =zfs-kmod-9999
+		FEATURES="-getbinpkg -buildpkg" \emerge =zfs-kmod-9999 --oneshot
 		(cd ${_offset}/${nv}-${_suffix}/; tar cfvz ./modules.tar.gz /lib/modules/${nv}-${_suffix};);
 		printf "--- modules installed ---\n"
 		sleep 3
