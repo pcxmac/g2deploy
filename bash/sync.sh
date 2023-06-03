@@ -195,10 +195,10 @@ echo "setting ownership of $pkgROOT"
 owner="portage"
 group="portage"
 
-#chown "${owner}:${group}" "${pkgROOT}/distfiles"    -R	    1>/dev/null
-#chown "${owner}:${group}" "${pkgROOT}/binpkgs"      -R	    1>/dev/null
-#chmod go+rwx              "${pkgROOT}/distfiles"    -R      1>/dev/null
-#chmod go+rwx              "${pkgROOT}/binpkgs"      -R      1>/dev/null
+chown "${owner}:${group}"   "${pkgROOT}/distfiles"    -R	  1>/dev/null
+chown "${owner}:${group}"   "${pkgROOT}/binpkgs"      -R	  1>/dev/null
+chmod go+rX                 "${pkgROOT}/distfiles"    -R      1>/dev/null
+chmod go+rX                 "${pkgROOT}/binpkgs"      -R      1>/dev/null
 
 owner="$(stat -c '%U' "${pkgROOT}")"
 group="$(stat -c '%G' "${pkgROOT}")" 
@@ -210,15 +210,15 @@ group="$(stat -c '%G' "${pkgROOT}")"
 
 echo "setting permissions for $pkgROOT"
 
-chmod o+rx "${pkgROOT}/meta" -R         1>/dev/null
-chmod o+rx "${pkgROOT}/profiles" -R     1>/dev/null
-chmod o+rx "${pkgROOT}/packages" -R     1>/dev/null
-chmod o+rx "${pkgROOT}/distfiles" -R    1>/dev/null
-chmod o+rx "${pkgROOT}/kernels" -R      1>/dev/null
-chmod o+rx "${pkgROOT}/snapshots" -R    1>/dev/null
-chmod o+rx "${pkgROOT}/repository" -R   1>/dev/null
-chmod o+rx "${pkgROOT}/releases" -R     1>/dev/null
-chmod o+rx "${pkgROOT}/binpkgs" -R      1>/dev/null
+chmod o+rX "${pkgROOT}/meta" -R         1>/dev/null
+chmod o+rX "${pkgROOT}/profiles" -R     1>/dev/null
+chmod o+rX "${pkgROOT}/packages" -R     1>/dev/null
+chmod o+rX "${pkgROOT}/distfiles" -R    1>/dev/null
+chmod o+rX "${pkgROOT}/kernels" -R      1>/dev/null
+chmod o+rX "${pkgROOT}/snapshots" -R    1>/dev/null
+chmod o+rX "${pkgROOT}/repository" -R   1>/dev/null
+chmod o+rX "${pkgROOT}/releases" -R     1>/dev/null
+chmod o+rX "${pkgROOT}/binpkgs" -R      1>/dev/null
 #chmod o+rx "${pkgROOT}/source" -R       1>/dev/null		NOT NECCESSARY
 #chmod og-rx"${pkgROOT}/home" -R        1>/dev/null			DON"T TOUCH
 #chmod o+rx "${pkgROOT}/patchfiles" -R   1>/dev/null		NEVER

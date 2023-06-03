@@ -411,7 +411,7 @@ function isHostUp()
 	local port=${2}
 
 	# netcat
-	local result="$(nc -z -v ${host} ${port} 2>&1 | \grep -E 'open|succeeded')"
+	local result="$(nc -w 3 -z -v ${host} ${port} 2>&1 | \grep -E 'open|succeeded')"
 	[[ -n ${result} ]] && { printf "${colG}\n" "OK"; } || { printf "${colR}\n" "INVALID"; }
 }
 
@@ -494,11 +494,16 @@ function deploySystem()
 	av="$(pquery sys-apps/portage --max 2>/dev/null)"
 	echo "DEPLOY::CHECKING PORTAGE ${av##*-}/${pv##*-}"
 
+	# portage
 	if [[ "${av##*-}" != "${pv##*-}" ]]
 	then
 		emerge --info ${emergeOpts} > /deploy.emerge.info
 		emerge ${emergeOpts} portage --oneshot --ask=n
 	fi
+
+	# SYNC
+	emerge --sync --ask=n
+
 
 	echo "DEPLOY::ISSUING UPDATES"
 	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n
@@ -545,7 +550,6 @@ function deployLocales()
 
 	printf "${colR}\n" "verify /etc/hosts file, which is patched, matches the correct server, otherwise nothing will be found on deployment..."
 	emerge-webrsync
-	emerge --sync --ask=n
 
 	eselect profile set default/linux/amd64/${key%/openrc}
 	eselect profile show
