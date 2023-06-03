@@ -25,5 +25,4 @@
 
         done
 
-
 	done < <(cat "../config/mirrors/hosts"  | sed 's/#.*$//' | sed '/^[[:space:]]*$/d')
