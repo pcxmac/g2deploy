@@ -79,6 +79,8 @@ pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 		done < <(cat ${serversList} | shuf)
 	fi
 
+quandery  
+
     while read -r server
     do
 		if [[ ${type} == "rsync" ]] && [[ ${server%://*} == "rsync" ]]
@@ -124,6 +126,7 @@ pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 					# check for host
 					hostname="$(getHostName ${urlBase})"
 
+					# eselect profile is getting punked, wtf bro ! --- attempted to delete extraneous folders in portage-patchfiles, profile and saved config
 					#echo "$hostname $selectStr $urlBase $locationStr $urlCurrent"
 
 					[[ -z "$(isHostUp ${hostname} '80')" && -z "$(isHostUp ${hostname} '443')" ]] && { exit; };
