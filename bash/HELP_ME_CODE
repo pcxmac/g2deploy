@@ -1,8 +1,6 @@
 move users to ./config ???
 or just run a auth service ...
 
-change key at the end of the deployment doesn't work as it appears the mounts are un'd.
+change key at the end of the install doesn't work as it appears the mounts are un'd.
 
-perhaps try to patch portage, before synchronizing ...
-
-update mounting binpkgs ?
+... THERE SHOULD BE NO KEYS APPLIED TO DEPLOYMENTS, ONLY AND ONLY FUCKING INSTALLS.
