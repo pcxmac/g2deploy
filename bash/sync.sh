@@ -64,6 +64,10 @@ URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/repos" rsync)"
 printf "############################ [ BINARY PACKAGES ] #################################\n"
 [[ ! -d ${pkgROOT}/binpkgs ]] && { mkdir -p ${pkgROOT}/binpkgs; };
 emaint binhost --fix
+
+chown "${owner}:${group}"   "${pkgROOT}/binpkgs"    -R	1>/dev/null
+chmod a-X       "${pkgROOT}/binpkgs"                -R  1>/dev/null
+chmod ugo+rX    "${pkgROOT}/binpkgs"                -R  1>/dev/null
 # needs more work !!! zomg.
 
 portDIR="$(cat ${makeCONF} | grep '^PORTDIR')"
@@ -86,6 +90,11 @@ then
     sed -i "s|^PORTDIR.*|${portDIR}|g" ${makeCONF}
     sed -i "s|^location.*|${rPortDIR}|g" ${pkgCONF}
 
+    chown "${owner}:${group}"   "${pkgROOT}/repos"      -R	1>/dev/null
+    chmod a-X       "${pkgROOT}/repos"                  -R  1>/dev/null
+    chmod ugo+rX    "${pkgROOT}/repos"                  -R  1>/dev/null
+
+
     # NO FILTERING FOR ARCH, THESE ARE TEXT-META FILES.
     # initial condition calls for non-recursive sync
     URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/snapshots" rsync)"
@@ -93,6 +102,10 @@ then
     printf "SYNCING w/ ***%s***\n" "${URL}"
     [[ ! -d ${pkgROOT/snapshots} ]] && { mkdir -p ${pkgROOT/snapshots}; };
     rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial --append-verify --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
+
+    chown "${owner}:${group}"   "${pkgROOT}/snapshots"  -R	1>/dev/null
+    chmod a-X       "${pkgROOT}/snapshots"              -R  1>/dev/null
+    chmod ugo+rX    "${pkgROOT}/snapshots"              -R  1>/dev/null
 
     # ARCH = AMD64, X86, ...., * (ALL)
     # initial condition calls for non-recursive sync
@@ -109,13 +122,23 @@ then
         rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial --append-verify --include="*/" --include="*${pkgARCH}*" --exclude="*" --no-owner --no-group "${URL}" "${pkgROOT}"/releases/ | tee /var/log/esync.log;
     };
 
+    chown "${owner}:${group}"   "${pkgROOT}/releases"   -R	1>/dev/null
+    chmod a-X       "${pkgROOT}/releases"               -R  1>/dev/null
+    chmod ugo+rX    "${pkgROOT}/releases"               -R  1>/dev/null
+
     # NO FILTERING FOR ARCH, THESE ARE TYPICALLY SOURCE FILES/TEXT TO BE COMPILED, OR DATAFILES WHICH ARE CROSS PLATFORM...
     # initial condition calls for non-recursive sync
+
     URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/distfiles" rsync)"
     printf "############################### [ DISTFILES ] ###################################\n"
     printf "SYNCING w/ ***%s***\n" "${URL}"
     [[ ! -d ${pkgROOT/distfiles} ]] && { mkdir -p ${pkgROOT/distfiles}; };
     rsync -avI --info=progress2 --timeout=300 --ignore-existing --partial --append-verify --ignore-times --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
+
+    chown "${owner}:${group}"   "${pkgROOT}/distfiles"  -R	1>/dev/null
+    chmod a-X       "${pkgROOT}/distfiles"              -R  1>/dev/null
+    chmod ugo+rX    "${pkgROOT}/distfiles"              -R  1>/dev/null
+
 
     printf "########################### [ ... sync ... ] ####################################\n"
     printf "updating mlocate-db\n"
@@ -153,81 +176,59 @@ if [[ $_flags != '--skip' ]]
 then
     emerge --sync --verbose --backtrack=99 --ask=n
     build_kernel / 
+
+    chown "${owner}:${group}"   "${pkgROOT}/kernels"    -R	1>/dev/null
+    chmod a-X       "${pkgROOT}/kernels"                -R  1>/dev/null
+    chmod ugo+rX    "${pkgROOT}/kernels"                -R  1>/dev/null
+
+    # keep original permissions from kernel build
+    chown "${owner}:${group}"   "${pkgROOT}/source" -R	1>/dev/null
+    #chmod a-X       "${pkgROOT}/source"             -R  1>/dev/null
+    #chmod ugo+rX    "${pkgROOT}/source"             -R  1>/dev/null
+
 fi
 
 
 owner="portage"
 group="portage"
 
-# SCRIPT_DIR represents the root of the rsync/ftp/http server, plus or if, a few directories
-#printf "############################### [ REPOS ] #######################################\n"
-#mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/meta"
-#_meta="$(eval echo "$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root/meta")")"
-#mget "--delete --exclude='.*'"  "${repoLocation}"        "${SCRIPT_DIR}/repos/"
-#echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/meta"        "${_meta}""
-
 printf "############################### [ META ] ########################################\n"
-#mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/meta"
+
 _meta="$pkgROOT/meta"
+
 mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/meta/"        "${_meta}"
-#echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/meta"        "${_meta}""
 chown "${owner}:${group}"   "${pkgROOT}/meta"       -R	1>/dev/null
 chmod a-X       "${pkgROOT}/profiles"               -R  1>/dev/null
 chmod ugo+rX    "${pkgROOT}/profiles"               -R  1>/dev/null
 
 printf "############################### [ PROFILES ] ####################################\n"
-#mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/profiles/"   "${SCRIPT_DIR}/profiles" 
-_profiles="$pkgROOT/profiles/"
-mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/profiles/"    "${_profiles}"
-#echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/profiles"    "${_profiles}""
 
+_profiles="$pkgROOT/profiles/"
+
+mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/profiles/"    "${_profiles}"
 chown "${owner}:${group}"   "${pkgROOT}/profiles"   -R	1>/dev/null
 chmod a-X       "${pkgROOT}/profiles"               -R  1>/dev/null
 chmod ugo+rX    "${pkgROOT}/profiles"               -R  1>/dev/null
 
 
 printf "############################### [ PACKAGES ] ####################################\n"
-#mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/packages/"   "${SCRIPT_DIR}/packages" 
+
 _packages="$pkgROOT/packages/"
+
 mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/packages/"    "${_packages}"
-#echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/packages"    "${_packages}""
 chown "${owner}:${group}"   "${pkgROOT}/packages"   -R	1>/dev/null
 chmod a-X       "${pkgROOT}/profiles"               -R  1>/dev/null
 chmod ugo+rX    "${pkgROOT}/profiles"               -R  1>/dev/null
 
 printf "############################### [ PATCHFILES ] ##################################\n"
-#mget "-Dogtplr --delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/patchfiles/" "${SCRIPT_DIR}/patchfiles"
+
 _patchfiles="$pkgROOT/patchfiles/"
-#echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_patchfiles}""
+
 mget " --owner --group --delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles/"  "${_patchfiles}"
 
 chown "${owner}:${group}"   "${pkgROOT}/patchfiles" -R	1>/dev/null
 chmod a-X       "${pkgROOT}/patchfiles"             -R  1>/dev/null
 chmod ugo+rX    "${pkgROOT}/patchfiles"             -R  1>/dev/null
-
-chown "${owner}:${group}"   "${pkgROOT}/distfiles"  -R	1>/dev/null
-chmod a-X       "${pkgROOT}/distfiles"              -R  1>/dev/null
-chmod ugo+rX    "${pkgROOT}/distfiles"              -R  1>/dev/null
-
-chown "${owner}:${group}"   "${pkgROOT}/binpkgs"    -R	1>/dev/null
-chmod a-X       "${pkgROOT}/binpkgs"                -R  1>/dev/null
-chmod ugo+rX    "${pkgROOT}/binpkgs"                -R  1>/dev/null
-
-chown "${owner}:${group}"   "${pkgROOT}/repos"      -R	1>/dev/null
-chmod a-X       "${pkgROOT}/repos"                  -R  1>/dev/null
-chmod ugo+rX    "${pkgROOT}/repos"                  -R  1>/dev/null
-
-chown "${owner}:${group}"   "${pkgROOT}/releases"   -R	1>/dev/null
-chmod a-X       "${pkgROOT}/releases"               -R  1>/dev/null
-chmod ugo+rX    "${pkgROOT}/releases"               -R  1>/dev/null
-
-chown "${owner}:${group}"   "${pkgROOT}/snapshots"  -R	1>/dev/null
-chmod a-X       "${pkgROOT}/snapshots"              -R  1>/dev/null
-chmod ugo+rX    "${pkgROOT}/snapshots"              -R  1>/dev/null
-
-chown "${owner}:${group}"   "${pkgROOT}/kernels"    -R	1>/dev/null
-chmod a-X       "${pkgROOT}/kernels"                -R  1>/dev/null
-chmod ugo+rX    "${pkgROOT}/kernels"                -R  1>/dev/null
 
 
 printf "############################### [ REPOSITORY ] ##################################\n"
@@ -243,19 +244,12 @@ then
         git -C "${pkgROOT}/repository/${x}" fetch --all
         git -C "${pkgROOT}/repository/${x}" pull
     done
+
+    chown "${owner}:${group}"   "${pkgROOT}/repository" -R	1>/dev/null
+    #chmod a-X       "${pkgROOT}/repository"             -R  1>/dev/null
+    #chmod ugo+rX    "${pkgROOT}/repository"             -R  1>/dev/null
+
 fi
-
-# let git set permissions
-chown "${owner}:${group}"   "${pkgROOT}/repository" -R	1>/dev/null
-#chmod a-X       "${pkgROOT}/repository"             -R  1>/dev/null
-#chmod ugo+rX    "${pkgROOT}/repository"             -R  1>/dev/null
-
-# keep original permissions from kernel build
-chown "${owner}:${group}"   "${pkgROOT}/source" -R	1>/dev/null
-#chmod a-X       "${pkgROOT}/source"             -R  1>/dev/null
-#chmod ugo+rX    "${pkgROOT}/source"             -R  1>/dev/null
-
-
 
 #qmanifest -g
 #gencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc
