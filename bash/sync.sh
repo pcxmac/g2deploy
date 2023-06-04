@@ -37,44 +37,44 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
+checkHosts
+
+# variables
+
 pkgHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/host")"
 pkgROOT="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root")"
 pkgCONF="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/config")"
 pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 pkgREPO="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/repo")"
-
 makeCONF="/etc/portage/make.conf"
 #reposCONF="/etc/portage/repos.conf/gentoo.conf"
-
 repoLocation="$(cat /etc/portage/make.conf | grep '^PORTDIR')"
 repoLocation="$(echo ${repoLocation#*=} | tr -d '"')"
-
-checkHosts
-
 printf "syncing portage ...\n"
 #patchFiles_portage / $(getG2Profile /)
-
 # initial condition calls for emerge-webrsync
 syncURI="$(cat ${pkgCONF} | grep "^sync-uri")"
 #syncLocation="$(cat ${pkgCONF} | grep "^location")"
 URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/repos" rsync)"
-
+portDIR="$(cat ${makeCONF} | grep '^PORTDIR')"
+rPortDIR="$(cat ${pkgCONF} | grep '^location')"
 #LOCATION="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/repo")"
+
+# execution
 
 printf "############################ [ BINARY PACKAGES ] #################################\n"
 [[ ! -d ${pkgROOT}/binpkgs ]] && { mkdir -p ${pkgROOT}/binpkgs; };
+
 emaint binhost --fix
 
 chown "${owner}:${group}"   "${pkgROOT}/binpkgs"    -R	1>/dev/null
 chmod a-X       "${pkgROOT}/binpkgs"                -R  1>/dev/null
 chmod ugo+rX    "${pkgROOT}/binpkgs"                -R  1>/dev/null
-# needs more work !!! zomg.
 
-portDIR="$(cat ${makeCONF} | grep '^PORTDIR')"
-rPortDIR="$(cat ${pkgCONF} | grep '^location')"
 
 if [[ $_flags != '--skip' ]]
 then
+
     printf "################################## [ REPOS ] #####################################\n"
     #printf "SYNCING w/ ***%s***\n" "${URL} | ${makeCONF} | ${pkgCONF} | ${portDIR} | ${rPortDIR} | ${pkgREPO} | ${syncURI}"
 
@@ -138,13 +138,6 @@ then
     chown "${owner}:${group}"   "${pkgROOT}/distfiles"  -R	1>/dev/null
     chmod a-X       "${pkgROOT}/distfiles"              -R  1>/dev/null
     chmod ugo+rX    "${pkgROOT}/distfiles"              -R  1>/dev/null
-
-
-    printf "########################### [ ... sync ... ] ####################################\n"
-    printf "updating mlocate-db\n"
-
-    /usr/bin/updatedb
-    /usr/bin/eix-update
 
 fi
 
