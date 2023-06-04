@@ -80,8 +80,8 @@ source ${SCRIPT_DIR}/bash/include.sh
 	patchFiles_sys "${directory}" ${_profile}
 	echo "patchfiles : portage"
 	patchFiles_portage "${directory}" ${_profile}
-	echo "zfs keys ..."
-	zfs_keys "${dataset}"
+	#echo "zfs keys ..."
+	#zfs_keys "${dataset}"
 	echo "package processor ..."
 	pkgProcessor "${_profile}" "${directory}" > "${directory}/package.list"
 	echo "add patches"
@@ -136,7 +136,7 @@ source ${SCRIPT_DIR}/bash/include.sh
 	echo "yet ? profile @ $dataset "
 	sleep 10
 
-	zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key "${dataset}"
+	#zfs change-key -o keyformat=hex -o keylocation=file:///srv/crypto/zfs.key "${dataset}"
 	clear_mounts "${directory}"
 
 	echo "yet ? profile clear mounts" 
