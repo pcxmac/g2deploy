@@ -79,8 +79,6 @@ pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 		done < <(cat ${serversList} | shuf)
 	fi
 
-quandery  
-
     while read -r server
     do
 		if [[ ${type} == "rsync" ]] && [[ ${server%://*} == "rsync" ]]
