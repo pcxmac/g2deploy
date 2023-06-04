@@ -147,14 +147,12 @@ printf "########################## [ KERNEL | SOURCE ] #########################
 
 # ASSUMES boot is automounted, or already mounted @ /boot
 
-emerge --sync --verbose --backtrack=99 --ask=n
 eix-update
 
 if [[ $_flags != '--skip' ]]
 then
-
+    emerge --sync --verbose --backtrack=99 --ask=n
     build_kernel / 
-
 fi
 
 
@@ -171,7 +169,7 @@ group="portage"
 printf "############################### [ META ] ########################################\n"
 #mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/meta"
 _meta="$pkgROOT/meta"
-mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/meta"        "${_meta}"
+mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/meta/"        "${_meta}"
 #echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/meta"        "${_meta}""
 chown "${owner}:${group}"   "${pkgROOT}/meta"       -R	1>/dev/null
 chmod a-X       "${pkgROOT}/profiles"               -R  1>/dev/null
@@ -180,7 +178,7 @@ chmod ugo+rX    "${pkgROOT}/profiles"               -R  1>/dev/null
 printf "############################### [ PROFILES ] ####################################\n"
 #mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/profiles/"   "${SCRIPT_DIR}/profiles" 
 _profiles="$pkgROOT/profiles/"
-mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/profiles"    "${_profiles}"
+mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/profiles/"    "${_profiles}"
 #echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/profiles"    "${_profiles}""
 
 chown "${owner}:${group}"   "${pkgROOT}/profiles"   -R	1>/dev/null
@@ -191,7 +189,7 @@ chmod ugo+rX    "${pkgROOT}/profiles"               -R  1>/dev/null
 printf "############################### [ PACKAGES ] ####################################\n"
 #mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/packages/"   "${SCRIPT_DIR}/packages" 
 _packages="$pkgROOT/packages/"
-mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/packages"    "${_packages}"
+mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/packages/"    "${_packages}"
 #echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/packages"    "${_packages}""
 chown "${owner}:${group}"   "${pkgROOT}/packages"   -R	1>/dev/null
 chmod a-X       "${pkgROOT}/profiles"               -R  1>/dev/null
@@ -201,11 +199,11 @@ printf "############################### [ PATCHFILES ] #########################
 #mget "-Dogtplr --delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/patchfiles/" "${SCRIPT_DIR}/patchfiles"
 _patchfiles="$pkgROOT/patchfiles/"
 #echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_patchfiles}""
-mget "--owner --group --delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_patchfiles}"
+mget " --owner --group --delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles/"  "${_patchfiles}"
 
-chown "${owner}:${group}"   "${pkgROOT}/patchfiles"  -R	1>/dev/null
-chmod a-X       "${pkgROOT}/patchfiles"              -R 1>/dev/null
-chmod ugo+rX    "${pkgROOT}/patchfiles"              -R 1>/dev/null
+chown "${owner}:${group}"   "${pkgROOT}/patchfiles" -R	1>/dev/null
+chmod a-X       "${pkgROOT}/patchfiles"             -R  1>/dev/null
+chmod ugo+rX    "${pkgROOT}/patchfiles"             -R  1>/dev/null
 
 chown "${owner}:${group}"   "${pkgROOT}/distfiles"  -R	1>/dev/null
 chmod a-X       "${pkgROOT}/distfiles"              -R  1>/dev/null

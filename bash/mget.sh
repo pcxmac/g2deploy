@@ -94,7 +94,7 @@ function getRSYNC()
 			else
 				if [[ -n ${host} ]]
 				then
-					rsync -ar --links --no-motd --human-readable --info=progress2 --rsync-path="sudo rsync" $*
+					rsync -ar --include '*/' --links --no-motd --human-readable --info=progress2 --rsync-path="sudo rsync" $*
 				fi
 			fi
 			waiting=0
@@ -108,7 +108,7 @@ function getRSYNC()
 
 	if [[ -z ${host} ]]
 	then
-			rsync -ar --links --no-motd --info=progress2 --human-readable --rsync-path="sudo rsync" "${@#*rsync://}" 
+			rsync -ar --include '*/' --links --no-motd --info=progress2 --human-readable --rsync-path="sudo rsync" "${@#*rsync://}" 
 	fi
 }
 
