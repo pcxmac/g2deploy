@@ -76,7 +76,8 @@ if [[ $_flags != '--skip' ]]
 then
 
     printf "################################## [ REPOS ] #####################################\n"
-    #printf "SYNCING w/ ***%s***\n" "${URL} | ${makeCONF} | ${pkgCONF} | ${portDIR} | ${rPortDIR} | ${pkgREPO} | ${syncURI}"
+
+    printf "sync @ %s\n" "${URL}"
 
     [[ ! -d ${pkgREPO} ]] && { mkdir -p ${pkgREPO}; };
 
@@ -222,7 +223,6 @@ mget " --owner --group --delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles/"  "$
 chown "${owner}:${group}"   "${pkgROOT}/patchfiles" -R	1>/dev/null
 chmod a-X       "${pkgROOT}/patchfiles"             -R  1>/dev/null
 chmod ugo+rX    "${pkgROOT}/patchfiles"             -R  1>/dev/null
-
 
 printf "############################### [ REPOSITORY ] ##################################\n"
 
