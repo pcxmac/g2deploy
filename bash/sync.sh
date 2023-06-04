@@ -238,7 +238,8 @@ then
         git -C "${pkgROOT}/repository/${x}" pull
     done
 
-    chown "${owner}:${group}"   "${pkgROOT}/repository" -R	1>/dev/null
+    # ownership can cause dubious issues with git, + leave permissions alone, assignable by git repo
+    #chown "${owner}:${group}"   "${pkgROOT}/repository" -R	1>/dev/null
     #chmod a-X       "${pkgROOT}/repository"             -R  1>/dev/null
     #chmod ugo+rX    "${pkgROOT}/repository"             -R  1>/dev/null
 
