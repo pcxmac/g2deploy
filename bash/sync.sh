@@ -192,8 +192,8 @@ _meta="$pkgROOT/meta"
 
 mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/meta/"        "${_meta}"
 chown "${owner}:${group}"   "${pkgROOT}/meta"       -R	1>/dev/null
-chmod a-X       "${pkgROOT}/profiles"               -R  1>/dev/null
-chmod ugo+rX    "${pkgROOT}/profiles"               -R  1>/dev/null
+chmod a-X       "${pkgROOT}/meta"               -R  1>/dev/null
+chmod ugo+rX    "${pkgROOT}/meta"               -R  1>/dev/null
 
 printf "############################### [ PROFILES ] ####################################\n"
 
@@ -211,8 +211,8 @@ _packages="$pkgROOT/packages/"
 
 mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/packages/"    "${_packages}"
 chown "${owner}:${group}"   "${pkgROOT}/packages"   -R	1>/dev/null
-chmod a-X       "${pkgROOT}/profiles"               -R  1>/dev/null
-chmod ugo+rX    "${pkgROOT}/profiles"               -R  1>/dev/null
+chmod a-X       "${pkgROOT}/packages"               -R  1>/dev/null
+chmod ugo+rX    "${pkgROOT}/packages"               -R  1>/dev/null
 
 printf "############################### [ PATCHFILES ] ##################################\n"
 
@@ -260,5 +260,9 @@ sed -i "s|DATE:.*|DATE: $(date)|g" /etc/rsync/rsyncd.motd
 #sed -i "s|SNAPSHOTS:.*|SNAPSHOTS:\trsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
 #sed -i "s|DISTFILES:.*|DISTFILES:\trsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
 
+printf "patching portage:\n"
+patchFiles_portage / "$(getG2Profile /)"
+
+printf "updating eix/mlocate...\n"
 eix-update
 updatedb

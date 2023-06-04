@@ -627,6 +627,7 @@ function patchFiles_portage()
 	echo -e "$(mget ${common_URI}.license)\n$(mget ${spec_URI}.license)" | uniq > ${offset}/etc/portage/package.license
 	sed -i "/MAKEOPTS/c MAKEOPTS=\"-j$(nproc)\"" ${offset}/etc/portage/make.conf
 
+
 	while read -r line; do
 		((LineNum+=1))
 		PREFIX=${line%=*}
