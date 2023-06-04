@@ -157,6 +157,10 @@ then
 
 fi
 
+
+owner="portage"
+group="portage"
+
 # SCRIPT_DIR represents the root of the rsync/ftp/http server, plus or if, a few directories
 #printf "############################### [ REPOS ] #######################################\n"
 #mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/meta/"       "${SCRIPT_DIR}/meta"
@@ -169,6 +173,9 @@ printf "############################### [ META ] ###############################
 _meta="$pkgROOT/meta"
 mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/meta"        "${_meta}"
 #echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/meta"        "${_meta}""
+chown "${owner}:${group}"   "${pkgROOT}/meta"       -R	1>/dev/null
+chmod a-X       "${pkgROOT}/profiles"               -R  1>/dev/null
+chmod ugo+rX    "${pkgROOT}/profiles"               -R  1>/dev/null
 
 printf "############################### [ PROFILES ] ####################################\n"
 #mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/profiles/"   "${SCRIPT_DIR}/profiles" 
@@ -176,11 +183,19 @@ _profiles="$pkgROOT/profiles/"
 mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/profiles"    "${_profiles}"
 #echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/profiles"    "${_profiles}""
 
+chown "${owner}:${group}"   "${pkgROOT}/profiles"   -R	1>/dev/null
+chmod a-X       "${pkgROOT}/profiles"               -R  1>/dev/null
+chmod ugo+rX    "${pkgROOT}/profiles"               -R  1>/dev/null
+
+
 printf "############################### [ PACKAGES ] ####################################\n"
 #mget "--delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/packages/"   "${SCRIPT_DIR}/packages" 
 _packages="$pkgROOT/packages/"
 mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/packages"    "${_packages}"
 #echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/packages"    "${_packages}""
+chown "${owner}:${group}"   "${pkgROOT}/packages"   -R	1>/dev/null
+chmod a-X       "${pkgROOT}/profiles"               -R  1>/dev/null
+chmod ugo+rX    "${pkgROOT}/profiles"               -R  1>/dev/null
 
 printf "############################### [ PATCHFILES ] ##################################\n"
 #mget "-Dogtplr --delete --exclude='.*'" "rsync://${pkgHOST}/gentoo/patchfiles/" "${SCRIPT_DIR}/patchfiles"
@@ -188,40 +203,36 @@ _patchfiles="$pkgROOT/patchfiles/"
 #echo "mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_patchfiles}""
 mget "--owner --group --delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles"  "${_patchfiles}"
 
-sleep 3
+chown "${owner}:${group}"   "${pkgROOT}/patchfiles"  -R	1>/dev/null
+chmod a-X       "${pkgROOT}/patchfiles"              -R 1>/dev/null
+chmod ugo+rX    "${pkgROOT}/patchfiles"              -R 1>/dev/null
 
-echo "setting ownership of $pkgROOT"
+chown "${owner}:${group}"   "${pkgROOT}/distfiles"  -R	1>/dev/null
+chmod a-X       "${pkgROOT}/distfiles"              -R  1>/dev/null
+chmod ugo+rX    "${pkgROOT}/distfiles"              -R  1>/dev/null
 
-owner="portage"
-group="portage"
+chown "${owner}:${group}"   "${pkgROOT}/binpkgs"    -R	1>/dev/null
+chmod a-X       "${pkgROOT}/binpkgs"                -R  1>/dev/null
+chmod ugo+rX    "${pkgROOT}/binpkgs"                -R  1>/dev/null
 
-chown "${owner}:${group}"   "${pkgROOT}/distfiles"    -R	  1>/dev/null
-chown "${owner}:${group}"   "${pkgROOT}/binpkgs"      -R	  1>/dev/null
-chmod go+rX                 "${pkgROOT}/distfiles"    -R      1>/dev/null
-chmod go+rX                 "${pkgROOT}/binpkgs"      -R      1>/dev/null
+chown "${owner}:${group}"   "${pkgROOT}/repos"      -R	1>/dev/null
+chmod a-X       "${pkgROOT}/repos"                  -R  1>/dev/null
+chmod ugo+rX    "${pkgROOT}/repos"                  -R  1>/dev/null
 
-owner="$(stat -c '%U' "${pkgROOT}")"
-group="$(stat -c '%G' "${pkgROOT}")" 
+chown "${owner}:${group}"   "${pkgROOT}/releases"   -R	1>/dev/null
+chmod a-X       "${pkgROOT}/releases"               -R  1>/dev/null
+chmod ugo+rX    "${pkgROOT}/releases"               -R  1>/dev/null
 
-#chown "${owner}:${group}" "${pkgROOT}/meta" -R			1>/dev/null
-#chown "${owner}:${group}" "${pkgROOT}/profiles" -R		1>/dev/null
-#chown "${owner}:${group}" "${pkgROOT}/packages" -R		1>/dev/null
-#chown "${owner}:${group}" "${pkgROOT}/home" -R		    1>/dev/null     --- zonks out patchfiles and f'sO deployments
+chown "${owner}:${group}"   "${pkgROOT}/snapshots"  -R	1>/dev/null
+chmod a-X       "${pkgROOT}/snapshots"              -R  1>/dev/null
+chmod ugo+rX    "${pkgROOT}/snapshots"              -R  1>/dev/null
 
-echo "setting permissions for $pkgROOT"
+chown "${owner}:${group}"   "${pkgROOT}/kernels"    -R	1>/dev/null
+chmod a-X       "${pkgROOT}/kernels"                -R  1>/dev/null
+chmod ugo+rX    "${pkgROOT}/kernels"                -R  1>/dev/null
 
-chmod o+rX "${pkgROOT}/meta" -R         1>/dev/null
-chmod o+rX "${pkgROOT}/profiles" -R     1>/dev/null
-chmod o+rX "${pkgROOT}/packages" -R     1>/dev/null
-chmod o+rX "${pkgROOT}/distfiles" -R    1>/dev/null
-chmod o+rX "${pkgROOT}/kernels" -R      1>/dev/null
-chmod o+rX "${pkgROOT}/snapshots" -R    1>/dev/null
-chmod o+rX "${pkgROOT}/repository" -R   1>/dev/null
-chmod o+rX "${pkgROOT}/releases" -R     1>/dev/null
-chmod o+rX "${pkgROOT}/binpkgs" -R      1>/dev/null
-#chmod o+rx     "${pkgROOT}/source" -R          1>/dev/null		NOT NECCESSARY
-#chmod og-rX    "${pkgROOT}/home" -R            1>/dev/null		DON"T TOUCH
-#chmod o+rx     "${pkgROOT}/patchfiles" -R      1>/dev/null		NEVER
+
+printf "############################### [ REPOSITORY ] ##################################\n"
 
 #repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
 
@@ -235,6 +246,18 @@ then
         git -C "${pkgROOT}/repository/${x}" pull
     done
 fi
+
+# let git set permissions
+chown "${owner}:${group}"   "${pkgROOT}/repository" -R	1>/dev/null
+#chmod a-X       "${pkgROOT}/repository"             -R  1>/dev/null
+#chmod ugo+rX    "${pkgROOT}/repository"             -R  1>/dev/null
+
+# keep original permissions from kernel build
+chown "${owner}:${group}"   "${pkgROOT}/source" -R	1>/dev/null
+#chmod a-X       "${pkgROOT}/source"             -R  1>/dev/null
+#chmod ugo+rX    "${pkgROOT}/source"             -R  1>/dev/null
+
+
 
 #qmanifest -g
 #gencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc

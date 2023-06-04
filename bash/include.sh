@@ -353,7 +353,7 @@ function getHostName()
 
 function isURL()
 {
-	local _code
+	local _codeq
 	local _URL=${1:?}
 	local sType="${_URL%://*}"
 	_code="$(curl --write-out "%{http_code}\n" --silent --output /dev/null "$_URL")"
@@ -781,12 +781,14 @@ function mounts()
 
 	# used to build packages which will be held outside the scope of a deployment
 
+	mkdir -p ${offset}/usr/src/$(getKVER)
+	# eselect kernel set GETKVER ... can be reset. ... maybe ... possible conflict ??? requires sync before build ........ ? yes ... weird dependency route
+	ln -s $(getKVER) ${offset}/usr/src/linux 
 
-
-	echo "mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs""
-	sleep 10
-
+	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source "${offset}/usr/src/$(getKVER)"
 	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"
+	# ensure sshfs links are persistent ... buggy shit.
+	sleep 3
 
 }
 
