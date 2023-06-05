@@ -271,31 +271,31 @@ function build_kernel()
 		iv=${nv}
 		# if current, even try to check to see if zcat .config is same as repo'd kernel, built to spec (most current)
 		(cd ${_kernel}; make clean);
-		printf "--- cleaned ---\n"
+		printf ">>> cleaned\n"
 		sleep 3
 		(cd ${_kernel}; make olddefconfig);
-		printf "--- olddefconfig ---\n"
+		printf ">>> olddefconfig\n"
 		sleep 3
 		(cd ${_kernel}; make prepare);
-		printf "--- prepared ---\n"
+		printf ">>> prepared\n"
 		sleep 3
 		(cd ${_kernel}; make -j$(nproc));
-		printf "--- kernel built ---\n"
+		printf ">>> kernel built\n"
 		sleep 3
 		(cd ${_kernel}; INSTALL_PATH=${_offset}/${nv}-${_suffix} make install);
-		printf "--- kernel installed ---\n"
+		printf ">>> kernel installed\n"
 		sleep 3
 		(cd ${_kernel}; make modules_install);
 		# requires /etc/portage/bashrc to sign module
 		FEATURES="-getbinpkg -buildpkg" \emerge =zfs-kmod-9999 --oneshot
 		(cd ${_offset}/${nv}-${_suffix}/; tar cfvz ./modules.tar.gz /lib/modules/${nv}-${_suffix};);
-		printf "--- modules installed ---\n"
+		printf ">>> modules installed\n"
 		sleep 3
 
 		# sign 'extra' modules
 		_hashAlgo="$(cat ${_kernel}/.config | grep 'CONFIG_MODULE_SIG_HASH' | sed -e 's/\"//g' )"
 		_hashAlgo="${_hashAlgo#*=}"
-		_modules="$(ls /lib/modules/${nv}-${_suffix}/extra)"
+		_modules="$(ls -d /lib/modules/${nv}-${_suffix}/extra)"
 		for _module in ${_modules}
 		do
 			printf 'signing %s ...\n' "${_module}"
