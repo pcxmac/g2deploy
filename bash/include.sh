@@ -295,7 +295,7 @@ function build_kernel()
 		# sign 'extra' modules
 		_hashAlgo="$(cat ${_kernel}/.config | grep 'CONFIG_MODULE_SIG_HASH' | sed -e 's/\"//g' )"
 		_hashAlgo="${_hashAlgo#*=}"
-		_modules="$(ls -d /lib/modules/${nv}-${_suffix}/extra)"
+		_modules="$(ls -d /lib/modules/${nv}-${_suffix}/extra/*)"
 		for _module in ${_modules}
 		do
 			printf 'signing %s ...\n' "${_module}"

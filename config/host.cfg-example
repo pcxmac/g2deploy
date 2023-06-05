@@ -1,0 +1,33 @@
+server:pkgROOT
+  # host for pkg server / dom0
+  host:pkg.hypokrites.me
+  # arch's = amd64, x86, ... , *
+  arch:*
+  # config file for sync-uri
+  config:/etc/portage/repos.conf/gentoo.conf
+  # file system off set, useful for file:/// calls
+  root:/srv/portage/
+  # arch, useful for sync, and mirror, sync will backup according to, and releases will can be filtered, if * arch's are selected. 
+  # this gets in to the, cross compiling, and cross-binary package aspect. TBD. For now arch, only affects backend backup/repo options.
+  # /lib64/ld-linux-x86-64.so.2 --help  << gets supported march. for local system1
+  gcc:
+    march:x86-64-v3
+    mtune:
+  libc:
+
+  # distributed compiling
+  friends:
+    host:jupiter.hypokrites.net
+    host:uranus.hypokrites.net
+  profile:17.1
+  # repo location for server
+  repo:/srv/portage/repos/gentoo
+    rsync:pkg.hypokrites.me::873
+    http:pkg.hypokrites.me::80
+    ftp:pkg.hypokrites.me::21
+    ssh:pkg.hypokrites.me::22
+
+
+server:buildserver
+  host:build.hypokrites.me
+  root:/tmp
