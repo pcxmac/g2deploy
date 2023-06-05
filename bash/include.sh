@@ -9,7 +9,6 @@
 
 # 	thees functions will eventually be superseded by python  
 
-
 SCRIPT_DIR="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 SCRIPT_DIR="${SCRIPT_DIR%/*}"
 
@@ -32,8 +31,6 @@ colW="\e[1;37m%s\e[m"
 
 source ${SCRIPT_DIR}/bash/mget.sh
 source ${SCRIPT_DIR}/bash/yaml.sh
-
-#function wg_
 
 # output of 1 = do install, 0 = do nothing, -1 is an error.
 function installed_kernel()
@@ -295,6 +292,17 @@ function build_kernel()
 		printf "--- modules installed ---\n"
 		sleep 3
 
+		# sign 'extra' modules
+		_hashAlgo="$(cat ${_kernel}/.config | grep 'CONFIG_MODULE_SIG_HASH' | sed -e 's/\"//g' )"
+		_hashAlgo="${_hashAlgo#*=}"
+		_modules="$(ls /lib/modules/${nv}-${_suffix}/extra)"
+		for _module in ${_modules}
+		do
+			printf 'signing %s ...\n' "${_module}"
+			(cd ${_kernel}; ./scripts/sign-file ${_hashAlgo} ./certs/signing_key.pem ./certs/signing_key.x509 $_module);
+		done
+		sleep 3
+
 		# save kernel package to kernels/current
 		#mv ${_offset}/config-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/
 		#mv ${_offset}/vmlinuz-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/vmlinuz
@@ -305,15 +313,11 @@ function build_kernel()
 		# relabel kernel to 'vmlinuz'
 		mv ${_offset}/${nv}-${_suffix}/vmlinuz-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/vmlinuz
 		mget ${_offset}/ ${_kernels_current}/kernels/current/ --delete -Dogtplr
-
 		# current source for kernel ... this directory can be linked to, as the source for getKVER
 		printf "saving current kernel source ...\n"
 		mget /usr/src/linux-${nv}-${_suffix}/ ${_kernels_current}/source/ --checksum --delete -Dogtplr
-
 		#echo "lv = *$lv* ; nv = *$nv* ; iv = *$iv* ; cv = *$cv* ; sv = *$sv* ; mv = *$mv* ; compare = *$_compare* ; flag = *$_flag*" 2>&1
-
 		#rm ${_offset} -R
-
 		sync
 	};
 }

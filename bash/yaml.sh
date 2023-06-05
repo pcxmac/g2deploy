@@ -31,7 +31,7 @@ function yamlStd()
 	_yaml="$(printf "${_yaml}" | sed '/^[[:space:]]*$/d')";									# delete empty lines
 	_yaml="$(printf "${_yaml}" | sed 's/[^A-Za-z0-9_${}.:/*-\s ]//g')";						# filter out invalid characters
 	_yaml="$(printf "${_yaml}" | sed 's/:[[:space:]]*/:/g;')";								# get rid of space between values, and :
-																							# filter out quotes
+	_yaml="$(printf "${_yaml}" | sed -e 's/\"//g')";										# filter out quotes
 	_yaml="$(printf "${_yaml}" | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")";	# filter out coloring
 
 	# root node, is assumed to be the first entry, it will have the root offset, this should be zero.

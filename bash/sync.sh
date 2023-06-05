@@ -221,8 +221,9 @@ _patchfiles="$pkgROOT/patchfiles/"
 mget " --owner --group --delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles/"  "${_patchfiles}"
 
 chown "${owner}:${group}"   "${pkgROOT}/patchfiles" -R	1>/dev/null
-chmod a-X       "${pkgROOT}/patchfiles"             -R  1>/dev/null
-chmod ugo+rX    "${pkgROOT}/patchfiles"             -R  1>/dev/null
+# some files are executable in patchfiles, like bashrc @ ./portage
+#chmod a-X       "${pkgROOT}/patchfiles"             -R  1>/dev/null
+#chmod ugo+rX    "${pkgROOT}/patchfiles"             -R  1>/dev/null
 
 printf "############################### [ REPOSITORY ] ##################################\n"
 
