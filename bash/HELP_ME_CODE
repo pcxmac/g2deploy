@@ -13,6 +13,8 @@ how to score repos :
     frequency used = x4 (times / week) ... preferably less than 2 times. depends on network availability tho
         ... indicative of distribution density
 
+use curlftpfs for mounts, fuck sshfs. sshfs only for mounts which are only able over ssh and nothing else. FUCK.
+
 how to score network
 
     hosts ... cumulative speed downloaded
