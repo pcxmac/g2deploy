@@ -73,10 +73,6 @@ rc-service rsyncd restart
 _path="$(cat /etc/portage/make.conf | grep 'PKGDIR' | sed -e 's/\"//g')"
 _path="${_path#*=}"
 
-mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs/amd64/17.1/ "$_path"
-# sshfs mount doesn't seem to hold without delay.
-sleep 3
-
 ###############3
 
 IDROP="DROP"
@@ -391,4 +387,10 @@ $IPT -A OUTPUT -j LOG --log-prefix "IPT: OUTPUT- "
 # FORWARD TO  LOCAL NET
 
 #FORWARD ACROSS INTERFACES ? -- NO
+
+echo "mounts ..."
+
+mount -t fuse.sshfs root@${pkgHOST}:${pkgROOT}/binpkgs/amd64/17.1/ "$_path"
+# sshfs mount doesn't seem to hold without delay.
+sleep 3
 

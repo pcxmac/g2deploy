@@ -3,6 +3,8 @@ or just run a auth service ...
 
 change key at the end of the install doesn't work as it appears the mounts are un'd.
 
+ssh keygeneration on install, per user
+
 how to score repos : 
 
     rate downloaded = x1 (GB)/transfer  ... higher rates indicate more interesting and fulfilling repo transactions
