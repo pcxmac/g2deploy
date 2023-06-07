@@ -792,10 +792,13 @@ function mounts()
 	# eselect kernel set GETKVER ... can be reset. ... maybe ... possible conflict ??? requires sync before build ........ ? yes ... weird dependency route
 	ln -s $(getKVER) ${offset}/usr/src/linux 
 
-	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source "${offset}/usr/src/$(getKVER)"
-	mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"
+	mount --bind ${pkgROOT}/source/ ${offset}/usr/src/$(getKVER)
+	mount --bind ${pkgROOT}/binpkgs/ ${offset}/var/lib/portage/binpkgs
+
+	#mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source "${offset}/usr/src/$(getKVER)"
+	#mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"
 	# ensure sshfs links are persistent ... buggy shit.
-	sleep 3
+	#sleep 3
 
 }
 
