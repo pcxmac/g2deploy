@@ -68,6 +68,31 @@ function installed_kernel()
 
 function update_kernel()
 {
+	# scope of this function : used to update the kernel, kernel modules on an existing runtime/installation. Requires an EFI partition.
+
+	_target=$1
+	_efiPart=$2
+
+	# this function binds to the mount point, 
+	# decides if current kernel is newest (if so, do not execute...)
+	# old kernels ...
+	# 
+	# mounts the efi partition, after mounting system mounts
+
+
+
+
+	# go in to boot
+	# generate initramfs
+	# edit boot record
+	# update modules
+
+
+
+
+
+
+
 	local _kver="$(getKVER)"
 	pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
 	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
@@ -76,7 +101,6 @@ function update_kernel()
 	# gets rid of trailing slash in order to fit with next sequence.
 	_directory="$(printf '%s\n' "${2:?}" | sed 's/\/$//g')"
 	type_part="$(blkid "${efi_part}")"
-
 
 	# mount boot partition
 	#echo "update boot ! @ ${efi_part} @ ${dataset} :: ${_directory} >> + $(getKVER)"
@@ -100,12 +124,9 @@ function update_kernel()
 
 	if [[ ${type_part} == *"TYPE=\"vfat\""* ]];
 	then
-
-
 		# assert new initramfs
-
-		#mount -t bind ${pkgROOT}/source/ ${_directory}/usr/src/
-		mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source/ "${_directory}/usr/src/"
+		#mount --bind ${pkgROOT}/source/ ${_directory}/usr/src/
+		#mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source/ "${_directory}/usr/src/"
 		chroot "${_directory}/" /usr/bin/eselect kernel set ${_kver}
 		chroot "${_directory}/" /usr/bin/genkernel --install initramfs --compress-initramfs-type=lz4 --zfs
 		mv ${_directory}/boot/initramfs-${_kver#*linux-}.img ${_directory}/boot/LINUX/${_kver#*linux-}/initramfs
