@@ -390,7 +390,9 @@ $IPT -A OUTPUT -j LOG --log-prefix "IPT: OUTPUT- "
 
 echo "mounts ..."
 
-mount -t fuse.sshfs root@${pkgHOST}:${pkgROOT}/binpkgs/amd64/17.1/ "$_path"
+
+mount --bind /srv/portage/binpkgs/amd64/17.1/ /var/lib/portage/binpkgs/amd64/17.1/
+#mount -t fuse.sshfs root@${pkgHOST}:${pkgROOT}/binpkgs/amd64/17.1/ "$_path"
 # sshfs mount doesn't seem to hold without delay.
-sleep 3
+#sleep 3
 
