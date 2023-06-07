@@ -13,7 +13,9 @@ or just run a auth service ...
 
 change key at the end of the install doesn't work as it appears the mounts are un'd.
 
-std host config 1.0
+std host config 1.0 << DOMAIN/NETWORK SCHEMAS CAN BE LOADED IN TO DOM_0 FUNCTION >> ... UNDERSTAND RECURSIVE NATURE OF THIS INVOCATION
+
+  DOMAIN:
 
     hostname:
 
