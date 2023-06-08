@@ -27,16 +27,16 @@ domain:hypokrites.net
 	sysop
       user:root
         password:xxxxxxxx
-	shell:/bin/zsh
-	home:/root
-	uid:-
-	gid:-
+        shell:/bin/zsh
+	      home:/root
+        uid:-
+        gid:-
       user:sysop
-	password:xxxxxxxx
-	shell:/bin/zsh
-	home:/home/sysop
-	uid:1000
-	gid:1000
+        password:xxxxxxxx
+        shell:/bin/zsh
+        home:/home/sysop
+        uid:1000
+        gid:1000
 
     system:
     boot:
