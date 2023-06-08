@@ -1,30 +1,35 @@
 # openrc and systemd support info
 
 domain:hypokrites.net
-  # echo "jupiter.hypokrites.net" > /etc/hostname	-- openrc
-  # hostnamectl hostname jupiter.hypokrites.net		-- systemd
-  # /etc/hosts << (if not searchable)			-- agnostic
-  # /etc/resolv.conf << (if not searchable)		-- agnostic
+  # echo "jupiter.hypokrites.net" > /etc/hostname	              -- openrc
+  # hostnamectl hostname jupiter.hypokrites.net		              -- systemd
+  # /etc/hosts << (if not searchable)			                      -- agnostic
+  # /etc/resolv.conf << (if not searchable)		                  -- agnostic
   # any derivative requirements, like mail, will be operated on by a meta-operator
   hostname:jupiter
 
+    # LOCALIZATION
+
     locales:
-      # echo "America/Los_Angeles" >> /etc/timezone	-- openrc
-      # emerge --config sys-libs/timezone-data		-- openrc
+      # echo "America/Los_Angeles" >> /etc/timezone	            -- openrc
+      # emerge --config sys-libs/timezone-data		              -- openrc
       # 
       timezone:America/Los_Angeles
-      # locale-gen -A					-- agnostic
-      # eselect locale set en_US.UTF-8			-- openrc
-      # localectl set-locale LANG=en_US.UTF-8		-- systemd
-      langauge:en_US.UTF-8
-      # /etc/conf.d/keymaps				-- openrc
-      keyboard:us
+      # locale-gen -A					                                  -- agnostic
+      # eselect locale set en_US.UTF-8			                    -- openrc
+      # localectl set-locale LANG=en_US.UTF-8		                -- systemd
+      language:en_US.UTF-8
+      # /etc/conf.d/keymaps				                              -- openrc
+      keymap:us
     
+    # USERS
+
     #							-- empty or OLDAP SERVER, empty implies manual input
     users:					
       entries:
-        root
-	sysop
+        #                                                       -- domain/user
+        - hypokrites.net/root
+        - hypokrites.net/sysop
       user:root
         password:xxxxxxxx
         shell:/bin/zsh
@@ -38,11 +43,43 @@ domain:hypokrites.net
         uid:1000
         gid:1000
 
+    # SYSTEM CONFIGURATION { }
+
     system:
-    boot:
-    meta:
-    preferences:
-    repository:
+      # or ... arm64, x86, etc...
+      arch:amd64
+      # or 17.0 (dev)
+      version:17.1
+      # or systemd
+      init:openrc
+      # examples: openrc, hardened, desktop/plasma/systemd
+      profile:desktop/gnome
+      # or MBR
+      boot:EFI
+        # UUID
+        partition:4D8D-8985
+        # default /boot/EFI/boot/bootx64.efi
+        loader:rEFInd
+        record:/EFI/boot/refind.conf
+        initramfs:
+          - --compress-initramfs-type=lz4
+          - --zfs
+        commandline:
+          - dozfs
+          - dobtrfs
+          - scandelay=2
+          - real_root=ZFS=jupiter/g3
+          - rw
+      meta:
+
+      
+      preferences:
+      
+
+      repository:
+        repo:rsync://pkg.hypokrites.me/gentoo-portage/
+        binpkgs:http://pkg.hypokrites.me/binpkgs/
+        distfiles:http://pkg.hypokrites.me/distfiles/
 
     
     

@@ -79,19 +79,10 @@ function update_kernel()
 	# 
 	# mounts the efi partition, after mounting system mounts
 
-
-
-
 	# go in to boot
 	# generate initramfs
 	# edit boot record
 	# update modules
-
-
-
-
-
-
 
 	local _kver="$(getKVER)"
 	pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
@@ -137,8 +128,6 @@ function update_kernel()
 	else
 		echo "no mas"
 	fi
-
-
 }
 
 
@@ -186,7 +175,6 @@ function update_runtime()
 	#eclean distfiles
 
 }
-
 
 # scope of this function is to build a new kernel, and update portage/kernels
 # this function is designed to be used in a 'master' environment, ie a dom0, or root file system.

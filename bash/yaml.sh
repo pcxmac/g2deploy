@@ -137,6 +137,11 @@ function yamlOrder()
 #	1	if tab < cp, cp = tab (current match)
 #	2	if match, cp ++							... this will satisfy the 'list' cycle
 #	3	if match & no next, print result (end of search path)
+#
+#	how to use : findKeyValue [config.file] {path}
+#
+#	path = root/node/leaf ... if leaf = '-', then it is looking for yaml list items
+#
 function findKeyValue() 
 {
 	# cursor position
