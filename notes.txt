@@ -8,6 +8,31 @@ PRIORITY list
   : BULKBUILD (CONFIRM)
   
 
+thinking about DOM_0
+
+  keyserver
+
+  ldap server (users / hosts / domains)
+
+  dns ( in conjunction with ldap )
+
+  build_server (gentoo) -- pkg.X.TLD
+
+  profile manager + user-backup (block level rsync, ~/.**?)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 move users to ./config ???
 or just run a auth service ...
 
@@ -16,15 +41,11 @@ change key at the end of the install doesn't work as it appears the mounts are u
 std host config 1.0 << DOMAIN/NETWORK SCHEMAS CAN BE LOADED IN TO DOM_0 FUNCTION >> ... UNDERSTAND RECURSIVE NATURE OF THIS INVOCATION
 
   DOMAIN:
-
     hostname:
-
         locales
-
             location/timezone
             language
             keyboard            
-
         users                   (( NEEDS TO BE ABLE TO QUERY A OLDAP SERVER ))
 
             root
@@ -33,24 +54,15 @@ std host config 1.0 << DOMAIN/NETWORK SCHEMAS CAN BE LOADED IN TO DOM_0 FUNCTION
             [other...]
                 GPG KEY MNGMT
                 SSH KEY MNGMT
-
         system
-
             datasets/volumes/llvm(? ... not supported)          << higher abstraction , ie set of disks>>
                 disks                                           << individual disks>>
                     geometry|partition maps                     << partition ids, disk geometry >>
                 dataset properties                              << pool/dataset encryption, compression, etc....>>
-
-
         boot parameters                                                     << supports multiple boot environments >>
             kernel version
                 kernel parameters (to include boot partition/dataset)
-
         meta-packages
-
-            window manager                  (ie kde)
-            init system                     (ie systemd)
-
             larger packages, config sets    { vscode, firefox, ... }
 
 
@@ -61,7 +73,7 @@ std host config 1.0 << DOMAIN/NETWORK SCHEMAS CAN BE LOADED IN TO DOM_0 FUNCTION
         repository customization        ( GENTOO GPG KEYS ARE INSTALLED IN DEPLOYMENT, OTHER KEYS CAN BE INCLUDED ON INSTALL )
 
             mirror configuration
-                GPG keys for repos
+                GPG keys for repos    # implicit
 
             layman/3rd party repos
                 GPG keys for repos

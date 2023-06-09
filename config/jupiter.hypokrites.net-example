@@ -43,9 +43,9 @@ domain:hypokrites.net
         uid:1000
         gid:1000
 
-    # SYSTEM CONFIGURATION { }
+    # INSTALL CONFIGURATION { }
 
-    system:
+    install:
       # or ... arm64, x86, etc...
       arch:amd64
       # or 17.0 (dev)
@@ -70,11 +70,35 @@ domain:hypokrites.net
           - scandelay=2
           - real_root=ZFS=jupiter/g3
           - rw
-      meta:
+      peripherals:
+        devices:
+          # PCI BUS ADDRESS
+          address:
+            kernel_module:
+              # /etc/conf.d/modprobe.d...+++
+              options: 
 
-      
+
+      install:2?
+
+      meta:
+        packages:
+          - vscode
+          - firefox
+          - smplayer
+        # these are non-default configurations for a meta package, ie, there are defaults, associated with each meta_package, these are 
+        # different than those, assigned during install. USE MPM to display the use/mask/... incorporated by any individual meta package
+        package:smplayer
+          uses:
+            mesa:d3d9
+          mask:
+          license:
+          unmask
+          keywords:
+
       preferences:
-      
+
+
 
       repository:
         repo:rsync://pkg.hypokrites.me/gentoo-portage/
