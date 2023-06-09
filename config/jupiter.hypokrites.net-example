@@ -70,9 +70,21 @@ domain:hypokrites.net
           - scandelay=2
           - real_root=ZFS=jupiter/g3
           - rw
+
+      # the peripherals listing, is to help setup udev rules, and ensure that the names of devices, like eth0, or enp9s0 are preserved across installs or what ever.
+      # every class of TYPE, has a corresponding function which will address the yaml appropriately. 
+
       peripherals:
         devices:
-          # PCI BUS ADDRESS
+          # pci, usb, ...
+          type: 
+          # lsusb / lspci
+          vendor: x0000
+          # lsusb / lspci
+          product: x0000
+
+          bus:
+          # usb, pci, ...
           address:
             kernel_module:
               # /etc/conf.d/modprobe.d...+++
