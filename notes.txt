@@ -1,37 +1,36 @@
 PRIORITY list
 
   : DEPLOY    (GOOD)
-  : INSTALL   (GET YAML CONFIGS GOOD FOR ZFS)
-  : UPDATE    (CONTINUE TO CHECK)
+  : INSTALL   () - MIGRATE TO PYTHON (3.11), WRITE GOOD BASH BLOCKS FOR PYTHON INVOCATION
+    -- begin installer GUI
+
+  : UPDATE    () - REWRITE BOOT_UPDATE 
   : SYNC      (GOOD)
-  : MIRRORS   (HAVE --option to convert hosts listing in to valid sync repo listing(s), and switch to a mask_host paradigm (hosts.mask))
-  : BULKBUILD (CONFIRM)
-  
+  : MIRRORS   () - INCORPORATE 'HOSTS', & METRICS YAML
+  : BULKBUILD (GOOD)
+  : MPM       () - BEGIN WRITING IN PYTHON (3.11)
+  : PROFILES  () - BEGIN WRITING IN PYTHON (3.11)
+  : BASTION   () - BEGIN WRITING 'syntax' IN PYTHON (DAEMON) (3.11)
+                    syntax loads before the network, and actively monitors connections as they come up and go down, applying and adapting the rule set as needed, TRIGGER SERVICE RELOADS, as needed.
+                    needs to work with NetworkManager, needs to work with null netifrc. one of the reasons, is OPENRC service files are not as well written as they should be. So be able to identify shortfalls, then cover for them.
 
 thinking about DOM_0
 
   keyserver
-
   ldap server (users / hosts / domains)
-
   dns ( in conjunction with ldap )
-
   build_server (gentoo) -- pkg.X.TLD
-
   profile manager + user-backup (block level rsync, ~/.**?)
 
-
-
-
-
-
-
-
-
-
-
-
-
+update process
+install -> g1
+g1@ safe -> g2 (runtime)
+update g1
+g1@ xxxxxx  (while g2 running)
+g1@safe -> (safe)
+g1@xxxxxx -> (current)
+g2 is cloned at boot by initramfs, previously one is deleted, or snapshot. 
+w/ this design it is imperative to limit g2 to runtime, and all large delta directories are managed periodically on another dataset.
 
 move users to ./config ???
 or just run a auth service ...
