@@ -843,11 +843,12 @@ function mounts()
 		echo "mounted source ..."
 	} || { echo "source already mounted ..."; };
 
-	_PKGDIR="$(emerge --info | grep '^PKGDIR' | sed -e 's/\"//g')"
-	_PKGDIR="${_PKGDIR#*=}"
+	_PKGDIR="$(cat ${offset%/}/etc/portage/make.conf | grep '^PKGDIR' | sed -e 's/\"//g')"
+	_PKGDIR="${_PKGDIR#*=}";
+	_PKGDIR="${_PKGDIR%/binpkgs*}/binpkgs/";
 
 	[[ ! -f ${offset%/}${_PKGDIR} ]] && { mkdir -p ${offset%/}${_PKGDIR}; }; 
-	[[ -z "$(cat /etc/mtab | grep "${_PKGDIR%/}")" ]] && { 
+	[[ -z "$(cat /etc/mtab | grep "${offset%/}${_PKGDIR%/}")" ]] && { 
 		mount --bind ${pkgROOT}/binpkgs/ ${offset%/}${_PKGDIR}; echo "mounted binpkgs"; 
 	} || { echo "binpkgs already mounted ..."; };
 
