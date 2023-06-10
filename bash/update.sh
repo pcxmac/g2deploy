@@ -116,11 +116,16 @@ for x in "$@"
 do
 	case "${x}" in
 		bootpart=*)
+			mounts ${directory}
 
 			efi_part="${x#*=}"
+
 			echo "updating the kernel on ${efi_part}"
+			
 			update_kernel ${efi_part} ${directory}
-			echo "end of line..."
+			
+			#echo "end of line..."
+			clear_mounts ${directory}
 		;;
 	esac
 done

@@ -757,6 +757,9 @@ function clear_mounts()
 	local output
 
 	offset="$(echo "$1" | sed 's:/*$::')"
+
+	[[ -z "${offset}" ]] && { echo "cannot clear rootfs."; return; };
+
 	procs="$(lsof "${offset}" 2>/dev/null | sed '1d' | awk '{print $2}' | uniq)" 
     dir="$(echo "${offset}" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
 	output="$(cat /proc/mounts | \grep "$dir" | wc -l)"
