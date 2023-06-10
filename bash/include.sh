@@ -573,6 +573,7 @@ function deployLocales()
 	eselect locale set en_US.utf8
 
 	printf "${colR}\n" "verify /etc/hosts file, which is patched, matches the correct server, otherwise nothing will be found on deployment..."
+
 	emerge-webrsync
 
 	eselect profile set default/linux/amd64/${key%/openrc}

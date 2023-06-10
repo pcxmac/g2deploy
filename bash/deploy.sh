@@ -107,7 +107,14 @@ source ${SCRIPT_DIR}/bash/include.sh
 	sed -i "/${bldHOST}$/c${bldIP}\t${bldHOST}" ${directory}/etc/hosts
 	################ work around ############################################################################################# 
 
+	#echo $_profile
+	#echo $directory
+
 	chroot "${directory}" /bin/bash -c "deployLocales ${_profile}"
+
+	sleep 30
+
+
  	chroot "${directory}" /bin/bash -c "deploySystem"
 
 	chroot "${directory}" /bin/bash -c "deployUsers ${_profile}"
