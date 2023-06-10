@@ -787,59 +787,72 @@ function mounts()
 {
 	local offset="${1:?}"
 	local mSize="$(cat /proc/meminfo | column -t | \grep 'MemFree' | awk '{print $2}')"
-	mSize="${mSize}K"
+	#mSize="${mSize}K"
 
-	echo "msize = $mSize"
+	#echo "msize = $mSize" 2>&1
 
-	[[ -z "$(cat /etc/mtab | grep "^proc ${offset}/proc")" ]] && {
-		mount -t proc proc "${offset}/proc"		# proc /proc
-		echo "mounted proc"
-	} || { echo "/proc already exists ..."; };
-
-	[[ -z "$(cat /etc/mtab | grep "^sysfs ${offset}/sys")" ]] && {
-		mount --rbind /sys "${offset}/sys"		# sysfs /sys
-		mount --make-rslave "${offset}/sys"
-		echo "mounted sys"
-	} || { echo "/sys already exists ..."; };
-
-	[[ -z "$(cat /etc/mtab | grep "^udev ${offset}/dev")" ]] && {
-		mount --rbind /dev "${offset}/dev"		# udev /dev
-		mount --make-rslave "${offset}/dev"
-		echo "mounted dev"
-	} || { echo "/dev already exists ..."; };
-
-	[[ -z "$(cat /etc/mtab | grep "^tmpfs ${offset}/tmp")" ]] && {
-		mount -t tmpfs -o size=$mSize tmpfs "${offset}/tmp"	# tmpfs /tmp
-		mount -t tmpfs tmpfs "${offset}/var/tmp"
-		mount -t tmpfs tmpfs "${offset}/run"
-		echo "mounted mtab"
-	} || { echo "/tmp already exists ..."; };
-
-	echo "attempting to mount src/binpkgs..."  2>&1
+	# do not constantly query ftp server at high frequency, bad things man.
+	_kver=$(getKVER)
+	#echo "get kver = ${_kver}"
+	#_kver=$(getKVER)
 
 	# local only, no host
 	# pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
 	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
 
+	echo "pkg root = $pkgROOT"
+
+	[[ -z "$(cat /etc/mtab | grep "^proc ${offset%/}/proc")" ]] && {
+		mount -t proc proc "${offset%/}/proc"		# proc /proc
+		echo "mounted proc"
+	} || { echo "/proc already exists ..."; };
+
+	[[ -z "$(cat /etc/mtab | grep "^sysfs ${offset%/}/sys")" ]] && {
+		mount --rbind /sys "${offset%/}/sys"		# sysfs /sys
+		mount --make-rslave "${offset%/}/sys"
+		echo "mounted sys"
+	} || { echo "/sys already exists ..."; };
+
+	[[ -z "$(cat /etc/mtab | grep "^udev ${offset%/}/dev")" ]] && {
+		mount --rbind /dev "${offset%/}/dev"		# udev /dev
+		mount --make-rslave "${offset%/}/dev"
+		echo "mounted dev"
+	} || { echo "/dev already exists ..."; };
+
+	[[ -z "$(cat /etc/mtab | grep "^tmpfs ${offset%/}/tmp")" ]] && {
+		mount -t tmpfs -o size=$mSize tmpfs "${offset%/}/tmp"	# tmpfs /tmp
+		mount -t tmpfs tmpfs "${offset%/}/var/tmp"
+		mount -t tmpfs tmpfs "${offset%/}/run"
+		echo "mounted mtab"
+	} || { echo "/tmp already exists ..."; };
+
+	echo "attempting to mount src & binpkgs..."
+
 	# used to build packages which will be held outside the scope of a deployment
 
-	[[ ! -f ${offset}/usr/src/$(getKVER) ]] && { mkdir -p ${offset}/usr/src/$(getKVER); };
+	[[ ! -f ${offset%/}/usr/src/${_kver} ]] && { mkdir -p ${offset%/}/usr/src/${_kver}; echo "making ${_kver}"; };
 	# eselect kernel set GETKVER ... can be reset. ... maybe ... possible conflict ??? requires sync before build ........ ? yes ... weird dependency route
-	ln -sf $(getKVER) ${offset}/usr/src/linux 
+	ln -sf ${_kver} ${offset%/}/usr/src/linux 
+	#echo "overwriting kernel profile link..."
 
-	mount --bind ${pkgROOT}/source/ ${offset}/usr/src/$(getKVER)
-	echo "mounted source"
+	[[ -z "$(cat /etc/mtab | grep "${offset%/}/usr/src/${_kver}" )" ]] && { 
+		mount --bind ${pkgROOT}/source/ ${offset%/}/usr/src/${_kver}; 
+		echo "mounted source ..."
+	} || { echo "source already mounted ..."; };
 
 	_PKGDIR="$(emerge --info | grep '^PKGDIR' | sed -e 's/\"//g')"
 	_PKGDIR="${_PKGDIR#*=}"
 
-	[[ ! -f ${offset}${_PKGDIR} ]] && { mkdir -p ${offset}${_PKGDR}; }; 
-	[[ -z "$(cat /etc/mtab | grep "${_PKGDIR%/}")" ]] && { mount --bind ${pkgROOT}/binpkgs/ ${offset}${_PKGDIR}; echo "mounted binpkgs"; };
+	[[ ! -f ${offset%/}${_PKGDIR} ]] && { mkdir -p ${offset%/}${_PKGDIR}; }; 
+	[[ -z "$(cat /etc/mtab | grep "${_PKGDIR%/}")" ]] && { 
+		mount --bind ${pkgROOT}/binpkgs/ ${offset%/}${_PKGDIR}; echo "mounted binpkgs"; 
+	} || { echo "binpkgs already mounted ..."; };
 
 	# mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source "${offset}/usr/src/$(getKVER)"
 	# mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"
 	# ensure sshfs links are persistent ... buggy shit.
 	# sleep 3
+
 }
 
 function pkgProcessor()

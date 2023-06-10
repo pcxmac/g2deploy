@@ -8,53 +8,7 @@ domain:hypokrites.net
   # any derivative requirements, like mail, will be operated on by a meta-operator
   hostname:jupiter
 
-    # LOCALIZATION
-
-    locales:
-      # echo "America/Los_Angeles" >> /etc/timezone	            -- openrc
-      # emerge --config sys-libs/timezone-data		              -- openrc
-      # 
-      timezone:America/Los_Angeles
-      # locale-gen -A					                                  -- agnostic
-      # eselect locale set en_US.UTF-8			                    -- openrc
-      # localectl set-locale LANG=en_US.UTF-8		                -- systemd
-      language:en_US.UTF-8
-      # /etc/conf.d/keymaps				                              -- openrc
-      keymap:us
-    
-    # USERS
-
-    #							-- empty or OLDAP SERVER, empty implies manual input
-    users:					
-      entries:
-        #                                                       -- domain/user
-        - hypokrites.net/root
-        - hypokrites.net/sysop
-      user:root
-        password:xxxxxxxx
-        shell:/bin/zsh
-	      home:/root
-        uid:-
-        gid:-
-        groups:
-          - disk
-          - wheel
-          - portage
-        custom:
-
-      user:sysop
-        password:xxxxxxxx
-        shell:/bin/zsh
-        home:/home/sysop
-        uid:1000
-        gid:1000
-        groups:
-          - wheel
-        custom:
-          maps:
-
-
-    # INSTALL CONFIGURATION { }
+    # INSTALL CONFIGURATION { }----------------------------------------------------------------------------
 
     install:
       # or ... arm64, x86, etc...
@@ -81,6 +35,51 @@ domain:hypokrites.net
           - scandelay=2
           - real_root=ZFS=jupiter/g3
           - rw
+
+      # LOCALIZATION
+
+      locales:
+        # echo "America/Los_Angeles" >> /etc/timezone	            -- openrc
+        # emerge --config sys-libs/timezone-data		              -- openrc
+        # 
+        timezone:America/Los_Angeles
+        # locale-gen -A					                                  -- agnostic
+        # eselect locale set en_US.UTF-8			                    -- openrc
+        # localectl set-locale LANG=en_US.UTF-8		                -- systemd
+        language:en_US.UTF-8
+        # /etc/conf.d/keymaps				                              -- openrc
+        keymap:us
+      
+      # USERS
+
+      #							-- empty or OLDAP SERVER, empty implies manual input
+      users:					
+        entries:
+          #                                                       -- domain/user
+          - hypokrites.net/root
+          - hypokrites.net/sysop
+        user:root
+          password:xxxxxxxx
+          shell:/bin/zsh
+          home:/root
+          uid:-
+          gid:-
+          groups:
+            - disk
+            - wheel
+            - portage
+          custom:
+
+        user:sysop
+          password:xxxxxxxx
+          shell:/bin/zsh
+          home:/home/sysop
+          uid:1000
+          gid:1000
+          groups:
+            - wheel
+          custom:
+            maps:
 
       # the peripherals listing, is to help setup udev rules, and ensure that the names of devices, like eth0, or enp9s0 are preserved across installs or what ever.
       # every class of TYPE, has a corresponding function which will address the yaml appropriately. 
@@ -134,7 +133,7 @@ domain:hypokrites.net
 
 
 
-      install:2?
+      # install:2?------------------------------------------------------------------------------------
 
 
     
