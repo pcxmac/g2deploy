@@ -1,18 +1,18 @@
 PRIORITY list
 
-  : DEPLOY    (GOOD)
-  : INSTALL   () - MIGRATE TO PYTHON (3.11), WRITE GOOD BASH BLOCKS FOR PYTHON INVOCATION
-    -- begin installer GUI
-
+  : 
   : UPDATE    () - REWRITE BOOT_UPDATE 
-  : SYNC      (GOOD)
+  : INSTALL   () - MIGRATE TO PYTHON (3.11), WRITE GOOD BASH BLOCKS FOR PYTHON INVOCATION -- begin installer GUI
   : MIRRORS   () - INCORPORATE 'HOSTS', & METRICS YAML
-  : BULKBUILD (GOOD)
   : MPM       () - BEGIN WRITING IN PYTHON (3.11)
   : PROFILES  () - BEGIN WRITING IN PYTHON (3.11)
   : BASTION   () - BEGIN WRITING 'syntax' IN PYTHON (DAEMON) (3.11)
                     syntax loads before the network, and actively monitors connections as they come up and go down, applying and adapting the rule set as needed, TRIGGER SERVICE RELOADS, as needed.
                     needs to work with NetworkManager, needs to work with null netifrc. one of the reasons, is OPENRC service files are not as well written as they should be. So be able to identify shortfalls, then cover for them.
+                    to incorporate tools like selinux, bpf, track file handles, etc...
+  : DEPLOY    (GOOD)
+  : BULKBUILD (GOOD)
+  : SYNC      (GOOD)
 
 thinking about DOM_0
 
@@ -22,14 +22,18 @@ thinking about DOM_0
   build_server (gentoo) -- pkg.X.TLD
   profile manager + user-backup (block level rsync, ~/.**?)
 
+
+* the initramfs module, has to be protected, and g1, has a key which are not accessable to g3. 
+* have to find a way to sign the block differential (zfs) between updates.
 update process
 install -> g1
-g1@ safe -> g2 (runtime)
-update g1
-g1@ xxxxxx  (while g2 running)
-g1@safe -> (safe)
-g1@xxxxxx -> (current)
-g2 is cloned at boot by initramfs, previously one is deleted, or snapshot. 
+@ install : clone g1@recovery -> g2
+g2@ safe -> g3 (runtime)
+update g2
+g2@ xxxxxx  (while g3 running)
+g2@safe -> (safe)
+g2@xxxxxx -> (current)
+g3 is cloned at boot by initramfs, previously one is deleted, or snapshot. 
 w/ this design it is imperative to limit g2 to runtime, and all large delta directories are managed periodically on another dataset.
 
 move users to ./config ???

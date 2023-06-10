@@ -32,6 +32,7 @@ colW="\e[1;37m%s\e[m"
 source ${SCRIPT_DIR}/bash/mget.sh
 source ${SCRIPT_DIR}/bash/yaml.sh
 
+
 # output of 1 = do install, 0 = do nothing, -1 is an error.
 function installed_kernel()
 {
@@ -136,7 +137,15 @@ function update_runtime()
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
 	echo "UPDATE::RUNTIME_UPDATE !"
-	exclude_atoms="-X sys-fs/zfs-kmod -X sys-fs/zfs"
+
+	# do not include kernel or kernel modules...
+	exclude_atoms="-X sys-kernel/vanilla-sources"
+	exclude_atoms+="-X sys-kernel/rt-sources"
+	exclude_atoms+="-X sys-kernel/git-sources"
+	exclude_atoms+="-X sys-kernel/gentoo-sources"
+	exclude_atoms+="-X sys-fs/zfs"
+	exclude_atoms+="-X sys-fs/zfs-kmod "
+
 	eselect profile show
 
 	#nmap pkg.hypokrites.me
@@ -781,34 +790,56 @@ function mounts()
 	mSize="${mSize}K"
 
 	echo "msize = $mSize"
-	mount -t proc proc "${offset}/proc"
-	mount --rbind /sys "${offset}/sys"
-	mount --make-rslave "${offset}/sys"
-	mount --rbind /dev "${offset}/dev"
-	mount --make-rslave "${offset}/dev"
 
-	mount -t tmpfs -o size=$mSize tmpfs "${offset}/tmp"
-	mount -t tmpfs tmpfs "${offset}/var/tmp"
-	mount -t tmpfs tmpfs "${offset}/run"
-	echo "attempting to mount binpkgs..."  2>&1
+	[[ -z "$(cat /etc/mtab | grep "^proc ${offset}/proc")" ]] && {
+		mount -t proc proc "${offset}/proc"		# proc /proc
+		echo "mounted proc"
+	} || { echo "/proc already exists ..."; };
 
-	pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
+	[[ -z "$(cat /etc/mtab | grep "^sysfs ${offset}/sys")" ]] && {
+		mount --rbind /sys "${offset}/sys"		# sysfs /sys
+		mount --make-rslave "${offset}/sys"
+		echo "mounted sys"
+	} || { echo "/sys already exists ..."; };
+
+	[[ -z "$(cat /etc/mtab | grep "^udev ${offset}/dev")" ]] && {
+		mount --rbind /dev "${offset}/dev"		# udev /dev
+		mount --make-rslave "${offset}/dev"
+		echo "mounted dev"
+	} || { echo "/dev already exists ..."; };
+
+	[[ -z "$(cat /etc/mtab | grep "^tmpfs ${offset}/tmp")" ]] && {
+		mount -t tmpfs -o size=$mSize tmpfs "${offset}/tmp"	# tmpfs /tmp
+		mount -t tmpfs tmpfs "${offset}/var/tmp"
+		mount -t tmpfs tmpfs "${offset}/run"
+		echo "mounted mtab"
+	} || { echo "/tmp already exists ..."; };
+
+	echo "attempting to mount src/binpkgs..."  2>&1
+
+	# local only, no host
+	# pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
 	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
 
 	# used to build packages which will be held outside the scope of a deployment
 
-	mkdir -p ${offset}/usr/src/$(getKVER)
+	[[ ! -f ${offset}/usr/src/$(getKVER) ]] && { mkdir -p ${offset}/usr/src/$(getKVER); };
 	# eselect kernel set GETKVER ... can be reset. ... maybe ... possible conflict ??? requires sync before build ........ ? yes ... weird dependency route
-	ln -s $(getKVER) ${offset}/usr/src/linux 
+	ln -sf $(getKVER) ${offset}/usr/src/linux 
 
 	mount --bind ${pkgROOT}/source/ ${offset}/usr/src/$(getKVER)
-	mount --bind ${pkgROOT}/binpkgs/ ${offset}/var/lib/portage/binpkgs
+	echo "mounted source"
 
-	#mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source "${offset}/usr/src/$(getKVER)"
-	#mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"
+	_PKGDIR="$(emerge --info | grep '^PKGDIR' | sed -e 's/\"//g')"
+	_PKGDIR="${_PKGDIR#*=}"
+
+	[[ ! -f ${offset}${_PKGDIR} ]] && { mkdir -p ${offset}${_PKGDR}; }; 
+	[[ -z "$(cat /etc/mtab | grep "${_PKGDIR%/}")" ]] && { mount --bind ${pkgROOT}/binpkgs/ ${offset}${_PKGDIR}; echo "mounted binpkgs"; };
+
+	# mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source "${offset}/usr/src/$(getKVER)"
+	# mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"
 	# ensure sshfs links are persistent ... buggy shit.
-	#sleep 3
-
+	# sleep 3
 }
 
 function pkgProcessor()

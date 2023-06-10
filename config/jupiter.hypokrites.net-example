@@ -36,12 +36,23 @@ domain:hypokrites.net
 	      home:/root
         uid:-
         gid:-
+        groups:
+          - disk
+          - wheel
+          - portage
+        custom:
+
       user:sysop
         password:xxxxxxxx
         shell:/bin/zsh
         home:/home/sysop
         uid:1000
         gid:1000
+        groups:
+          - wheel
+        custom:
+          maps:
+
 
     # INSTALL CONFIGURATION { }
 
@@ -90,32 +101,41 @@ domain:hypokrites.net
               # /etc/conf.d/modprobe.d...+++
               options: 
 
+        # META PACKAGE INFO PER INSTALL
+
+        meta:
+          packages:
+            - vscode
+            - firefox
+            - smplayer
+          # these are non-default configurations for a meta package, ie, there are defaults, associated with each meta_package, these are 
+          # different than those, assigned during install. USE MPM to display the use/mask/... incorporated by any individual meta package
+          package:smplayer
+            uses:
+              mesa:d3d9
+            mask:
+            license:
+            unmask
+            keywords:
+
+        # RESERVED
+
+        preferences:
+          # global mappings, fuse/nfsv4/...
+          maps:
+
+
+        # REPOSITORY INFO, -> PORTAGE OVERWRITE ... WOULD HAVE BEEN SAVED IN A PROFILE, BUT YAML IS BETTER, EASIER TO REFERENCE, AND BETTER LOCATION
+
+        repository:
+          repo:rsync://pkg.hypokrites.me/gentoo-portage/
+          binpkgs:http://pkg.hypokrites.me/binpkgs/
+          distfiles:http://pkg.hypokrites.me/distfiles/
+
+
 
       install:2?
 
-      meta:
-        packages:
-          - vscode
-          - firefox
-          - smplayer
-        # these are non-default configurations for a meta package, ie, there are defaults, associated with each meta_package, these are 
-        # different than those, assigned during install. USE MPM to display the use/mask/... incorporated by any individual meta package
-        package:smplayer
-          uses:
-            mesa:d3d9
-          mask:
-          license:
-          unmask
-          keywords:
-
-      preferences:
-
-
-
-      repository:
-        repo:rsync://pkg.hypokrites.me/gentoo-portage/
-        binpkgs:http://pkg.hypokrites.me/binpkgs/
-        distfiles:http://pkg.hypokrites.me/distfiles/
 
     
     
