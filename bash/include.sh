@@ -279,9 +279,9 @@ function build_kernel()
 		eselect kernel show
 		sleep 3
 
-		[[ -f /usr/src/linux/.config ]] && { /usr/src/linux/.config; };
+		[[ -f /usr/src/linux/.config ]] && { zcat /proc/config.gz >! /usr/src/linux/.config; };
 		[[ -d ${_kernels_current}/kernels/current/${lv}-gentoo/ ]] && { 
-		 	cat ${_kernels_current}/kernels/current/${lv}-gentoo/config* > /usr/src/linux/.config;
+		 	cat ${_kernels_current}/kernels/current/${lv}-gentoo/config* >! /usr/src/linux/.config;
 		} || {
 		 	zcat /proc/config.gz > /usr/src/linux/.config;
 		};

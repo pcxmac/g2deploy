@@ -157,7 +157,7 @@ printf "########################## [ KERNEL | SOURCE ] #########################
     mkdir -p ${pkgROOT}/kernels/current/${_kver};
     mkdir -p ${pkgROOT}/kernels/deprecated;
     mkdir -p ${pkgROOT}/kernels/compat;
-    zcat /proc/config.gz > ${pkgROOT}/kernels/current/${_kver}/config.default;
+    #zcat /proc/config.gz > ${pkgROOT}/kernels/current/${_kver}/config.default;
 };
 
 [[ -z "$(ls -ail ${pkgROOT}/source/ --ignore . --ignore .. 2>/dev/null)" ]] && { mkdir -p ${pkgROOT}/source; };
