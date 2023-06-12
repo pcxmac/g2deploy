@@ -139,12 +139,12 @@ function update_runtime()
 	echo "UPDATE::RUNTIME_UPDATE !"
 
 	# do not include kernel or kernel modules...
-	exclude_atoms="-X sys-kernel/vanilla-sources"
-	exclude_atoms+="-X sys-kernel/rt-sources"
-	exclude_atoms+="-X sys-kernel/git-sources"
-	exclude_atoms+="-X sys-kernel/gentoo-sources"
-	exclude_atoms+="-X sys-fs/zfs"
-	exclude_atoms+="-X sys-fs/zfs-kmod "
+	exclude_atoms=" -X sys-kernel/vanilla-sources"
+	exclude_atoms+=" -X sys-kernel/rt-sources"
+	exclude_atoms+=" -X sys-kernel/git-sources"
+	exclude_atoms+=" -X sys-kernel/gentoo-sources"
+	exclude_atoms+=" -X sys-fs/zfs"
+	exclude_atoms+=" -X sys-fs/zfs-kmod"
 
 	eselect profile show
 
