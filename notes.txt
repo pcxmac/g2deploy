@@ -2,7 +2,7 @@ PRIORITY list
 
   : 
   : UPDATE    () - REWRITE BOOT_UPDATE 
-  : MIRRORS   () - INCORPORATE 'HOSTS', & METRICS YAML
+  : MIRRORS   () - INCORPORATE 'HOSTS', & METRICS YAML ... BUILD DAEMON PROCESS, SERVICE FILES.
   : INSTALL   () - MIGRATE TO PYTHON (3.11), WRITE GOOD BASH BLOCKS FOR PYTHON INVOCATION -- begin installer GUI
   : MPM       () - BEGIN WRITING IN PYTHON (3.11)
   : PROFILES  () - BEGIN WRITING IN PYTHON (3.11)
@@ -24,6 +24,9 @@ thinking about DOM_0
 
 
 * the initramfs module, has to be protected, and g1, has a key which are not accessable to g3. 
+
+audits can be performed w/ a custom build, and the usb key inserted. 
+
 * have to find a way to sign the block differential (zfs) between updates.
 update process
 install -> g1
@@ -35,6 +38,11 @@ g2@safe -> (safe)
 g2@xxxxxx -> (current)
 g3 is cloned at boot by initramfs, previously one is deleted, or snapshot. 
 w/ this design it is imperative to limit g2 to runtime, and all large delta directories are managed periodically on another dataset.
+
+<CUSTOM> dynamic builds = date format in hex
+<META ONLY> ordered builds = prime meta descriptor, ie for plasma, use the version of that, gnome, hardened would be libc, or llvm. 
+
+
 
 move users to ./config ???
 or just run a auth service ...
@@ -82,6 +90,7 @@ std host config 1.0 << DOMAIN/NETWORK SCHEMAS CAN BE LOADED IN TO DOM_0 FUNCTION
                 GPG keys for repos
 
 
+# ENCRYPT patches, rebase all patchfile scripts, upon key change. (local build) use git, to track patch | date-dep variations.
 
 ssh keygeneration on install, per user
 
@@ -144,24 +153,25 @@ how to score aggregate network effect
 
   ZFS TESTING FOR 2 WEEKS, following above, and CODE REVIEW + BELOW CHECKS, as appropriate.
 
-  network is getting killed at the end of the build .... (deployment)
+  network is getting killed at the end of the build .... (deployment) ... WIFI ONLY.
 
 goals : 
 
   eselect profile is being affected by a soft links being changed in /etc/portage ... figure it out 
+  last seen june 1st, 2023
 
   x
-  add a clear mounts 
+  x 
 
   convert install to accept premade yaml configs, prompt for missing info ... working
   
   x
 
-  need to fix unmount , its breaking current runtime.
+  need to fix unmount , its breaking current runtime. << can occur with bad profile ?
   
-  mget doesn't seem to process multiple arguments well, double check
+  x
   
-  seamlessly integrate the config/host.config ... This should allow someone to use sync to build up a repo-server, and work it alongside existing gentoo installation.
+  x
 
   x
 
