@@ -36,6 +36,33 @@ domain:hypokrites.net
           - real_root=ZFS=jupiter/g3
           - rw
 
+      # by-path
+      # interrogate with lspci ; ...
+      disks:
+        pci_device:0000:04:00
+          descriptor:nvme..
+        pci_device:0000:03:00
+          descriptor:nvme..
+        pci_device:0000:0e:00
+          descriptor:nvme..
+        pci_device:0000:0d:00
+          descriptor:ata,...
+        pci_device:0000:0b:00.3
+          descriptor:nvme..
+        pci_device:0000:12:00
+          descriptor:sas-hba
+          path:
+
+      files:
+        - /home
+        - /var 
+        - /tmp 
+        - swap 
+        #/usr
+        #/lib
+        #/lib64
+
+
       # LOCALIZATION
 
       locales:
@@ -83,7 +110,7 @@ domain:hypokrites.net
 
       # the peripherals listing, is to help setup udev rules, and ensure that the names of devices, like eth0, or enp9s0 are preserved across installs or what ever.
       # every class of TYPE, has a corresponding function which will address the yaml appropriately. 
-
+      # to include disk controllers, all peripherals, disks: will have enough to identify exactly, specific disks, usb, sata and pci based. 
       peripherals:
         devices:
           # pci, usb, ...

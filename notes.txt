@@ -22,6 +22,7 @@ thinking about DOM_0
   build_server (gentoo) -- pkg.X.TLD
   profile manager + user-backup (block level rsync, ~/.**?)
 
+* locales will move to install only, except for gen-all languages. 
 
 * the initramfs module, has to be protected, and g1, has a key which are not accessable to g3. 
 
@@ -42,8 +43,6 @@ w/ this design it is imperative to limit g2 to runtime, and all large delta dire
 <CUSTOM> dynamic builds = date format in hex
 <META ONLY> ordered builds = prime meta descriptor, ie for plasma, use the version of that, gnome, hardened would be libc, or llvm. 
 
-
-
 move users to ./config ???
 or just run a auth service ...
 
@@ -58,7 +57,6 @@ std host config 1.0 << DOMAIN/NETWORK SCHEMAS CAN BE LOADED IN TO DOM_0 FUNCTION
             language
             keyboard            
         users                   (( NEEDS TO BE ABLE TO QUERY A OLDAP SERVER ))
-
             root
                 GPG KEY MNGMT
                 SSH KEY MNGMT
@@ -75,11 +73,7 @@ std host config 1.0 << DOMAIN/NETWORK SCHEMAS CAN BE LOADED IN TO DOM_0 FUNCTION
                 kernel parameters (to include boot partition/dataset)
         meta-packages
             larger packages, config sets    { vscode, firefox, ... }
-
-
         preferences
-
-
 
         repository customization        ( GENTOO GPG KEYS ARE INSTALLED IN DEPLOYMENT, OTHER KEYS CAN BE INCLUDED ON INSTALL )
 
@@ -88,7 +82,6 @@ std host config 1.0 << DOMAIN/NETWORK SCHEMAS CAN BE LOADED IN TO DOM_0 FUNCTION
 
             layman/3rd party repos
                 GPG keys for repos
-
 
 # ENCRYPT patches, rebase all patchfile scripts, upon key change. (local build) use git, to track patch | date-dep variations.
 
