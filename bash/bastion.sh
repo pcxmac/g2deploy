@@ -388,7 +388,7 @@ $IPT -A OUTPUT -j LOG --log-prefix "IPT: OUTPUT- "
 
 #FORWARD ACROSS INTERFACES ? -- NO
 
-#echo "mounts ..."
+echo "mounts ..."
 
 mounts /
 
