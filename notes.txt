@@ -3,12 +3,18 @@ PRIORITY list
 * INSTALL USE CASES : -> USB_KEY ; SYSTEM ; ...
 HOW TO ALOT HDs ... (thinking)
 
+  -> just use yaml for now, create a profiler, that can for now be edited manually, soon enough graphically, or automation.
+  
+
   : 
   : UPDATE    () - REWRITE BOOT_UPDATE 
   : MIRRORS   () - INCORPORATE 'HOSTS', & METRICS YAML ... BUILD DAEMON PROCESS, SERVICE FILES.
+
   : INSTALL   () - MIGRATE TO PYTHON (3.11), WRITE GOOD BASH BLOCKS FOR PYTHON INVOCATION -- begin installer GUI
+
   : MPM       () - BEGIN WRITING IN PYTHON (3.11)
   : PROFILES  () - BEGIN WRITING IN PYTHON (3.11)
+
   : BASTION   () - BEGIN WRITING 'syntax' IN PYTHON (DAEMON) (3.11)
                     syntax loads before the network, and actively monitors connections as they come up and go down, applying and adapting the rule set as needed, TRIGGER SERVICE RELOADS, as needed.
                     needs to work with NetworkManager, needs to work with null netifrc. one of the reasons, is OPENRC service files are not as well written as they should be. So be able to identify shortfalls, then cover for them.

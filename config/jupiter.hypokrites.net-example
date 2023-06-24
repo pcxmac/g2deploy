@@ -19,22 +19,30 @@ domain:hypokrites.net
       init:openrc
       # examples: openrc, hardened, desktop/plasma/systemd
       profile:desktop/gnome
-      # or MBR
+
+      # or MBR    ... refind outputs to file. There will be no editing infile, all files will be generated, and then replace deprecated versions. 
       boot:EFI
-        # UUID
-        partition:4D8D-8985
-        # default /boot/EFI/boot/bootx64.efi
-        loader:rEFInd
-        record:/EFI/boot/refind.conf
-        initramfs:
-          - --compress-initramfs-type=lz4
-          - --zfs
-        commandline:
-          - dozfs
-          - dobtrfs
-          - scandelay=2
-          - real_root=ZFS=jupiter/g3
-          - rw
+        default: gentoo
+        modules:
+        resolution:
+        splash:
+        system: gentoo
+          # UUID
+          partition:4D8D-8985
+          # default /boot/EFI/boot/bootx64.efi
+          loader:rEFInd
+          record:/EFI/boot/refind.conf
+          initramfs:
+            - --compress-initramfs-type=lz4
+            - --zfs
+          commandline:
+            - dozfs
+            - dobtrfs
+            - scandelay=2
+            - real_root=ZFS=jupiter/g3
+            - rw
+        system: gentoo-plasma
+          ...
 
       # by-path
       # interrogate with lspci ; ...
