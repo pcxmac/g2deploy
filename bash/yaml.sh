@@ -27,9 +27,10 @@ function yamlStd()
 	[[ -f ${_yaml} ]] && _yaml="$(cat ${_yaml})"
 
 	# filtration
+	_yaml="$(printf "${_yaml}" | sed 's/\t/  /g')";											# convert tabs to spaces tabs by themselves will yield a 0 length tab
 	_yaml="$(printf "${_yaml}" | sed 's/#.*$//')";											# clear out comments
 	_yaml="$(printf "${_yaml}" | sed '/^[[:space:]]*$/d')";									# delete empty lines
-	_yaml="$(printf "${_yaml}" | sed 's/[^A-Za-z0-9_${}.:/*-\s ]//g')";						# filter out invalid characters
+	_yaml="$(printf "${_yaml}" | sed 's/[^A-Za-z0-9_${}.:/*-\s ]//g')";						# filter out invalid characters, valid characters present
 	_yaml="$(printf "${_yaml}" | sed 's/:[[:space:]]*/:/g;')";								# get rid of space between values, and :
 	_yaml="$(printf "${_yaml}" | sed -e 's/\"//g')";										# filter out quotes
 	_yaml="$(printf "${_yaml}" | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")";	# filter out coloring
@@ -44,7 +45,7 @@ function yamlStd()
 	do
 		tabLength="$(printf '%s\n' ${line} | awk -F '[^ ].*' '{print length($1)}')"
 		[[ -n ${tabLength} ]] && { break; } 
-	done < <(printf '%s\n' "${_yaml}" | \grep -iP '^\s.*[a-z]')
+	done < <(printf '%s\n' "${_yaml}" | \grep -iP '^\s.*[A-Za-z0-9]')
 	IFS="${_tmp}"
 
 	# rebuild yaml with 2x tabs
@@ -54,7 +55,7 @@ function yamlStd()
 		# GENERATE
 		padLength="$(( $(printf '%s\n' ${line} | awk -F '[^ ].*' '{print length($1)}') ))"
 		padLength=$((_tab*(padLength-offset)/tabLength))
-		fLine="$(yamlPad $((padLength)))$(printf '%s\n' ${line} | sed 's/ //g')"
+		fLine="$(yamlPad $((padLength)))$(printf '%s\n' ${line} )"	# get rid of spaces ? | sed 's/ //g'
 		printf '%s\n' "${fLine}"
 	done < <(printf '%s\n' "${_yaml}")
 	IFS="${_tmp}"

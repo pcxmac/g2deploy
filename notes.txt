@@ -23,6 +23,80 @@ HOW TO ALOT HDs ... (thinking)
   : BULKBUILD (GOOD)
   : SYNC      (GOOD)
 
+meta package manager (individual system applications) ... logs potential updates, can prompt user
+meta system manager (applications which exist extemporaneously, on the network, and see to instantiate and regulate themselves over a subset of machines)
+	:hosts
+		this
+		that
+		there
+	:application
+		app_
+	:configs
+		a_
+		b_
+
+example of a MSM application (database:world_geodetic) [ architect ]
+	- this requires several machines, some will cache locally, some will be a backup, some will be the prime server, others can load balance.
+	- dns entries
+	- services/service_routines
+	- state_models (apiX) ... away to query the machine's stats, say load, etc.. in order to schedule optimally.
+	- host listing/authentication, reliability prioritization, how to propagate a network, to find hosts not easily found (dns entries, or higher order auth queries can be used to search per host, other missing hosts on the network)
+		- once hosts are resolved, missing or found, the net can optimize itself, and define the routes
+		* the first self-optimizing net mapping routine will be used for installing a whole network at one time.
+
+install : to->USB (uuid, host_string), to->HOST (id, host_string), to->NETWORK (hosts/host_string(s))
+
+query system, caching and 
+
+templates for machines (yaml_installs)	needs a profiler for ...
+
+	cpu:
+		caps
+	cpu:
+		caps
+	ram
+	peripherals
+		network
+			sfp+ x2
+			10gb x2
+		storage
+			bus A
+				disk a
+				disk b
+			bus B
+			bus -usb
+
+(templates)
+	metal_dell_r730xd.yml
+	metal_dell_r930.yml
+	metal_dell_r630.yml
+(example)
+	jupiter.hypokrites.net.yml
+
+
+
+
+
+
+
+
+
+profile_net	-	profile connection to network of hosts, given a spec file (hosts & stats)
+		need to lookup maths for all applicable stats, used by sync, or install, or ... to update/install over multiple hosts.
+
+profile_host	-	profile hardware on host (given a template/empty file)
+		a template will verify first, and error out if configured differently (busses/missing peripherals) ... the template can be missing parameters, and this will be filled in, and not error out the process
+
+install		->to USB 	; ->to HOST	; ->to NET
+
+deploy
+
+update
+
+sync
+	mirror
+
+
 thinking about DOM_0
 
   keyserver

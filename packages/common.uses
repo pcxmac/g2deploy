@@ -4,3 +4,7 @@ media-libs/mesa xa vulkan vdpau vaapi opencl gles1 video_cards_* zink omesa
 dev-libs/libclc spirv
 virtual/rust rustfmt
 dev-lang/rust rustfmt
+
+# in place of profiles + meta config inclusion in to update/patches
+dev-libs/libpcre2 pcre32
+
