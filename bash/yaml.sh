@@ -54,8 +54,8 @@ function yamlStd()
 	do
 		# GENERATE
 		padLength="$(( $(printf '%s\n' ${line} | awk -F '[^ ].*' '{print length($1)}') ))"
-		padLength=$((_tab*(padLength-offset)/tabLength))
-		fLine="$(yamlPad $((padLength)))$(printf '%s\n' ${line} )"	# get rid of spaces ? | sed 's/ //g'
+		padLength=$(( $_tab * ($padLength/$tabLength) ));
+		fLine="$(yamlPad $((padLength)))$(printf '%s\n' ${line} | sed -e 's/^[ \t]*//')"	# get rid of preceeding whitespace, \t
 		printf '%s\n' "${fLine}"
 	done < <(printf '%s\n' "${_yaml}")
 	IFS="${_tmp}"
