@@ -1,3 +1,4 @@
+sys-apps/hw-probe
 sys-apps/hwinfo
 sys-apps/dmidecode
 dev-python/ply

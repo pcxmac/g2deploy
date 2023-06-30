@@ -1,1 +1,3 @@
 to include grafana, dashboard-templates, host-adapter script, and a yaml-preprocessor for checking off targets
+
+https://prometheus.io/docs/visualization/grafana/
