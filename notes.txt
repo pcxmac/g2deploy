@@ -23,6 +23,20 @@ HOW TO ALOT HDs ... (thinking)
   : BULKBUILD (GOOD)
   : SYNC      (GOOD)
 
+----------------------------------------------------
+
+* on installs, use hw-probe as an option to upload specs to linux-hardware.org, a link to the profile can be used alongside any other localhost-webserve stuff, like the meta package: prometheus
+
+localhost webserver ::about-computer
+
+  prometheus / sensors integration [ grafana ]
+  hw-probe, uploaded to linux-hardware.org
+  a graphical representation of the pci-bus & peripherals
+  <cpu / memory /  network / disk> utilization graphs [ grafana ]
+  logging facility
+  security / news [ gentoo ]
+
+
 meta package manager (individual system applications) ... logs potential updates, can prompt user
 meta system manager (applications which exist extemporaneously, on the network, and see to instantiate and regulate themselves over a subset of machines)
 	:hosts
@@ -720,7 +734,7 @@ CONCEPT:
 
 #
 ##  INSTALLER NOTES
-#
+#S23 Ultra
 #   requires:
 #
 #     off-premises kernel repository (~1TB+)
