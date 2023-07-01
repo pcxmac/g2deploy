@@ -1,0 +1,138 @@
+
+installation
+{
+    -> USB medium { safe / recovery / boot key }
+    -> Disk(s) { pool / volume / partition }
+    <- Network Connection {  }
+}
+update-runtime
+{
+    profile 
+        - integration (specific use cases)
+        - installed meta packages ... update | mpm --update
+}
+networking/firewall 'syntax'
+{
+    wireguard ( secure networking)
+    recursive scale-out w/ adaptive firewall rules
+        bridge----------------------> WAN
+                     ^
+        node---------|
+}
+virtualization
+{
+    network applications
+    development
+}
+concept : 'host profile'
+{
+    td host config 1.0 << DOMAIN/NETWORK SCHEMAS CAN BE LOADED IN TO DOM_0 FUNCTION >> ... UNDERSTAND RECURSIVE NATURE OF THIS INVOCATION
+    DOMAIN:
+        hostname:
+            locales
+                location/timezone
+                language
+                keyboard            
+            users                   (( NEEDS TO BE ABLE TO QUERY A OLDAP SERVER ))
+                root
+                    GPG KEY MNGMT
+                    SSH KEY MNGMT
+                [other...]
+                    GPG KEY MNGMT
+                    SSH KEY MNGMT
+            system
+                datasets/volumes/llvm(? ... not supported)          << higher abstraction , ie set of disks>>
+                    disks                                           << individual disks>>
+                        geometry|partition maps                     << partition ids, disk geometry >>
+                    dataset properties                              << pool/dataset encryption, compression, etc....>>
+            boot parameters                                                     << supports multiple boot environments >>
+                kernel version
+                    kernel parameters (to include boot partition/dataset)
+            meta-packages
+                larger packages, config sets    { vscode, firefox, ... }
+            preferences
+
+            repository customization        ( GENTOO GPG KEYS ARE INSTALLED IN DEPLOYMENT, OTHER KEYS CAN BE INCLUDED ON INSTALL )
+
+                mirror configuration
+                    GPG keys for repos    # implicit
+
+                layman/3rd party repos
+                    GPG keys for repos
+}
+concept : 'bare metal' 
+concept : 'application node'
+concept : 'meta distribution'
+concept : 'meta package'
+{
+    ex.
+    meta package : '::about'
+    localhost webserver ::about-computer
+    prometheus / sensors integration [ grafana ]
+    hw-probe, uploaded to linux-hardware.org
+    a graphical representation of the pci-bus & peripherals
+    <cpu / memory /  network / disk> utilization graphs [ grafana ]
+    logging facility
+    security / news [ gentoo ]
+}
+concept : 'host profile'
+concept : 'domain-0'
+{
+    encryption/key server
+    open-ldap service
+    domain dns provider
+    dhcp provider
+    distro-caching service (packages/ancillary data files/disk images)
+    wire-guard gateway, provisioner (encrypted_network_space)
+    host profile/backup services (recovery)
+}
+
+asset collection (volumes/zpools/...)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

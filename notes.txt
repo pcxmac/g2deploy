@@ -27,14 +27,7 @@ HOW TO ALOT HDs ... (thinking)
 
 * on installs, use hw-probe as an option to upload specs to linux-hardware.org, a link to the profile can be used alongside any other localhost-webserve stuff, like the meta package: prometheus
 
-localhost webserver ::about-computer
 
-  prometheus / sensors integration [ grafana ]
-  hw-probe, uploaded to linux-hardware.org
-  a graphical representation of the pci-bus & peripherals
-  <cpu / memory /  network / disk> utilization graphs [ grafana ]
-  logging facility
-  security / news [ gentoo ]
 
 
 meta package manager (individual system applications) ... logs potential updates, can prompt user
@@ -145,40 +138,6 @@ or just run a auth service ...
 
 change key at the end of the install doesn't work as it appears the mounts are un'd.
 
-std host config 1.0 << DOMAIN/NETWORK SCHEMAS CAN BE LOADED IN TO DOM_0 FUNCTION >> ... UNDERSTAND RECURSIVE NATURE OF THIS INVOCATION
-
-  DOMAIN:
-    hostname:
-        locales
-            location/timezone
-            language
-            keyboard            
-        users                   (( NEEDS TO BE ABLE TO QUERY A OLDAP SERVER ))
-            root
-                GPG KEY MNGMT
-                SSH KEY MNGMT
-            [other...]
-                GPG KEY MNGMT
-                SSH KEY MNGMT
-        system
-            datasets/volumes/llvm(? ... not supported)          << higher abstraction , ie set of disks>>
-                disks                                           << individual disks>>
-                    geometry|partition maps                     << partition ids, disk geometry >>
-                dataset properties                              << pool/dataset encryption, compression, etc....>>
-        boot parameters                                                     << supports multiple boot environments >>
-            kernel version
-                kernel parameters (to include boot partition/dataset)
-        meta-packages
-            larger packages, config sets    { vscode, firefox, ... }
-        preferences
-
-        repository customization        ( GENTOO GPG KEYS ARE INSTALLED IN DEPLOYMENT, OTHER KEYS CAN BE INCLUDED ON INSTALL )
-
-            mirror configuration
-                GPG keys for repos    # implicit
-
-            layman/3rd party repos
-                GPG keys for repos
 
 # ENCRYPT patches, rebase all patchfile scripts, upon key change. (local build) use git, to track patch | date-dep variations.
 
