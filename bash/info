@@ -8,20 +8,34 @@
 :	
 :	usb
 :	
+:	0000:00
+        00.0:
+            Root Complex
+        01.0:
+            Dummy Host Bridge
+        01.2:
+            GPP Bridge
+                03:00.0
+                    144d:a809
+                        144d:a801
+
+
+
+    0000:03
+        00.0:
 :	
 :	
 :	
 :	
-:	
 
 
 
 
 
-
-
-
-
-
+lspci   -k = kernel module
+        -PP = bus route
+        -b bus centric view
+        -D show domain number
+        -nn show names and numbers
 
 
