@@ -14,3 +14,7 @@
 # 	smartctl
 #	hdparm
 # scan sensors (temperature/fan/...)
+
+
+-- create a way to simplify the scan's yaml file, in order to build things like zfs zpools. or to inquire UUIDs, or to ...
+

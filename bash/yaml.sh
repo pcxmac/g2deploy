@@ -53,8 +53,8 @@ function yamlStd()
 	while read -r line
 	do
 		# GENERATE
-		padLength="$(( $(printf '%s\n' ${line} | awk -F '[^ ].*' '{print length($1)}') ))"
-		padLength=$(( $_tab * ($padLength/$tabLength) ));
+		padLength="$(printf "${line}" | awk -F '[^ ].*' '{print length($1)}')"
+		padLength=$(($_tab*$padLength/$tabLength));
 		fLine="$(yamlPad $((padLength)))$(printf '%s\n' ${line} | sed -e 's/^[ \t]*//')"	# get rid of preceeding whitespace, \t
 		printf '%s\n' "${fLine}"
 	done < <(printf '%s\n' "${_yaml}")
