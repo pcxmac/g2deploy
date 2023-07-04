@@ -24,8 +24,12 @@ function yamlStd()
 	local _yaml=""
 
 	# option to use string or file
-	[[ -p /dev/stdin ]] && { _yaml="$(cat -)"; ordo="stdin"; } || { _yaml="${1:?}"; ordo="parametric"; }
-	[[ -f ${_yaml} ]] && { _yaml="$(cat ${_yaml})" };
+	[[ -p /dev/stdin ]] && {  _yaml="$(cat -)"; ordo="stdin"; } || {  _yaml="${1:?}"; ordo="parametric"; };
+	
+
+	[[ -f ${_yaml} ]] && { _yaml="$(cat "${_yaml}")"; };
+
+#	echo "$_yaml" 2>&1
 
 	# filtration
 	_yaml="$(printf "${_yaml}" | sed 's/\t/  /g')";											# convert tabs to spaces tabs by themselves will yield a 0 length tab
@@ -40,37 +44,42 @@ function yamlStd()
 	_tmp="$(sed -n '1p' < <(printf '%s\n' $_yaml))"
 	offset="$(printf '%s\n' ${_tmp} | awk -F '[^ ].*' '{print length($1)}')"
 
+#	echo "$offset" 2>&1;
+
 	# determine the spec tab length, it will be changed to/remain two.
 	IFS=''
 	while read -r line
 	do
 		_tabLength="$(printf '%s\n' ${line} | awk -F '[^ ].*' '{print length($1)}')"
-		[[ -n ${_tabLength} ]] && { break; } 
+		[[ -n ${_tabLength} ]] && { break; }; 
 	done < <(printf '%s' "${_yaml}" | \grep -iP '^\s.*[A-Za-z0-9]')
 	IFS="${_tmp}"
 
-	#echo "$_tabLength" 2>&1
+#	echo "$_tabLength" 2>&1
+
+#	echo "$_yaml" 2>&1
+#	sleep 5
 
 	# rebuild yaml with 2x tabs
 	IFS=''
 	while read -r line
 	do
-		echo " => $(printf "${line}" | awk -F '[^ ].*' '{print length($1)}') { $line }"
+#		echo " => $(printf "${line}" | awk -F '[^ ].*' '{print length($1)}') { $line }"
 		# GENERATE
 		_padLength="$(printf "${line}" | awk -F '[^ ].*' '{print length($1)}')"
 		_padLength="$((_tab*_padLength))";
-		echo "$_tab * $_padLength" 2>&1;
+#		echo "$_tab * $_padLength" 2>&1;
 
 		_padLength="$((_padLength/_tabLength))";
 
-		echo "$_padLength / $_tabLength" 2>&1;
+#		echo "$_padLength / $_tabLength" 2>&1;
 		# get rid of preceeding whitespace, \t
 		fLine="$(yamlPad $_padLength)$(printf '%s\n' ${line} | sed -e 's/^[ \t]*//')"	
 		printf '%s\n' "${fLine}"
-		echo "next..." 2>&1;
-	done < <(printf '%s' "${_yaml}")
+#		echo "next..." 2>&1;
+	done < <(printf '%s\n' "${_yaml}")
 	IFS="${_tmp}"
-	printf '\n';
+#	printf '\n';
 }
 
 # picks out list items, or values from key-value pairs
@@ -163,23 +172,34 @@ function findKeyValue()
 	# actual number of tabs between key-value and left-most
 	local _tabLength
 
+
+
 	# option to use string or file
-	[[ -p /dev/stdin ]] && { _yaml="$(cat -)"; ordo="stdin"; } || { _yaml="${1:?}"; ordo="parametric"; }
-	[[ -f ${_yaml} ]] && { _yaml="$(cat ${_yaml})" };
+ 	[[ -p /dev/stdin ]] && { _yaml="$(cat - | yamlStd)"; ordo="stdin"; } || { _yaml="${1:?}"; ordo="parametric"; };
+ 	[[ -f ${_yaml} ]] && { echo "file = $_yaml"; _yaml="$(cat ${_yaml})"; };
 
 
-	echo $ordo
-	echo $_path
-	echo "$_yaml"
+ 	#echo $ordo
+	#echo $_path
+ 	#echo "$_yaml" | wc -l
 
-	#standardize input
-	_yaml="$(yamlStd "${_yaml}")"
+ 	#echo '-----------------------------------------------'
+ 	#standardize input
+ 	
 
-	echo "yolo" 2>&1;
+ 	#echo "$_yaml"
+ 	#sleep 3
 
-	#local _yaml="${1:?}";		# YAML FILE, 2 spaced.
-	[[ ${ordo} == "stdin" ]] && { _path="${1:?}" };
-	[[ ${ordo} == "parametric" ]] && { _path="${2:?}" };
+
+ #	echo "yolo" 2>&1;
+
+	# the path is arg 1, the source is stdin already standardized ...
+ 	[[ ${ordo} == "stdin" ]] && { _path="${1:?}";  };
+	# the path is arg 2, the source is arg 1, standardize ...
+ 	[[ ${ordo} == "parametric" ]] && { _path="${2:?}"; _yaml="$(yamlStd "${_yaml}")"; };
+
+
+
 
 	# path length, to determine target leaf/node
 	local pLength="$(yamlPathL $_path)"
@@ -188,6 +208,7 @@ function findKeyValue()
 	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
 	local _next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
 
+	echo "$_yaml"
 
 	IFS=''
 	# pWave constructor
@@ -214,17 +235,17 @@ function findKeyValue()
 
 		[[ -n ${match} ]] && 
 		{ 
-			[[ $((cp)) < $((pLength)) ]] && { ((cp++)); }
+			[[ $((cp)) < $((pLength)) ]] && { ((cp++)); };
 			# cv only changes on a match
 			cv="$(yamlOrder ${_path} ${cp})";
 		}
 
 		 # EXECUTOR
 		[[ -n "${match}" && -z ${_next} ]] && { 
-			printf '%s\n' "$(yamlValue $line)"
-		}
+			printf '%s\n' "$(yamlValue $line)";
+		};
 
-	done < <(printf '%s' "${_yaml}")
+	done < <(printf '%s\n' "${_yaml}")
 }
 
 # adds a new node, match = prefix ;; path = 'root/branch/prefix:SPECIFIC/NEWKEY:NEWVALUE' ... ergo, prefix typically should have an associated value.
@@ -286,7 +307,7 @@ function insertKeyValue()
 			_comit='false'
 		}
 
-	done < <(printf '%s' "${_yaml}")
+	done < <(printf '%s\n' "${_yaml}")
 }
 
 # remove target branch, and it's children
@@ -341,7 +362,7 @@ function removeKeyValue()
 			[[ ${_omit} == 'false' ]] && { printf '%s\n' "${line}"; }
 		}
 
-	done < <(printf '%s' "${_yaml}")
+	done < <(printf '%s\n' "${_yaml}")
 }
 
 # finds a [KEY:VALUE] pair in a yaml object, modifies it's [VALUE], and dumps the YAML OBJECT
