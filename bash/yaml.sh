@@ -16,6 +16,10 @@ function yamlPadL()
 }
 
 # yaml standardization [charcater format/spec] formula
+#	
+#	
+#	
+#	
 function yamlStd()
 {
 	local _tab=2
@@ -25,11 +29,7 @@ function yamlStd()
 
 	# option to use string or file
 	[[ -p /dev/stdin ]] && {  _yaml="$(cat -)"; ordo="stdin"; } || {  _yaml="${1:?}"; ordo="parametric"; };
-	
-
 	[[ -f ${_yaml} ]] && { _yaml="$(cat "${_yaml}")"; };
-
-#	echo "$_yaml" 2>&1
 
 	# filtration
 	_yaml="$(printf "${_yaml}" | sed 's/\t/  /g')";											# convert tabs to spaces tabs by themselves will yield a 0 length tab
@@ -44,8 +44,6 @@ function yamlStd()
 	_tmp="$(sed -n '1p' < <(printf '%s\n' $_yaml))"
 	offset="$(printf '%s\n' ${_tmp} | awk -F '[^ ].*' '{print length($1)}')"
 
-#	echo "$offset" 2>&1;
-
 	# determine the spec tab length, it will be changed to/remain two.
 	IFS=''
 	while read -r line
@@ -55,39 +53,27 @@ function yamlStd()
 	done < <(printf '%s' "${_yaml}" | \grep -iP '^\s.*[A-Za-z0-9]')
 	IFS="${_tmp}"
 
-#	echo "$_tabLength" 2>&1
-
-#	echo "$_yaml" 2>&1
-#	sleep 5
-
 	# rebuild yaml with 2x tabs
 	IFS=''
 	while read -r line
 	do
-#		echo " => $(printf "${line}" | awk -F '[^ ].*' '{print length($1)}') { $line }"
 		# GENERATE
 		_padLength="$(printf "${line}" | awk -F '[^ ].*' '{print length($1)}')"
 		_padLength="$((_tab*_padLength))";
-#		echo "$_tab * $_padLength" 2>&1;
-
 		_padLength="$((_padLength/_tabLength))";
-
-#		echo "$_padLength / $_tabLength" 2>&1;
 		# get rid of preceeding whitespace, \t
 		fLine="$(yamlPad $_padLength)$(printf '%s\n' ${line} | sed -e 's/^[ \t]*//')"	
 		printf '%s\n' "${fLine}"
-#		echo "next..." 2>&1;
 	done < <(printf '%s\n' "${_yaml}")
 	IFS="${_tmp}"
-#	printf '\n';
 }
 
 # picks out list items, or values from key-value pairs
 function yamlValue()
 {
-	local stdYAML
-	stdYAML="${1:?}"
-	printf '%s\n' "${stdYAML#*:}" | sed 's/ //g; s/^-//'; #s/[^:]*:/';
+	local _stdYAML
+	_stdYAML="${1:?}"
+	printf '%s\n' "${_stdYAML#*:}" | sed 's/ //g; s/^-//'; #s/[^:]*:/';
 }
 
 # return the number of elements in a yaml path, ie [ root/partition/directory/leaf ]
@@ -161,6 +147,8 @@ function yamlOrder()
 #	3	if match & no next, print result (end of search path)
 #
 #	how to use : findKeyValue [config.file] {path}
+#				 echo "yamlObject" | findKeyValue {path}
+#				 cat "file_path" | findKeyValue {path}
 #
 #	path = root/node/leaf ... if leaf = '-', then it is looking for yaml list items
 #
@@ -168,38 +156,17 @@ function findKeyValue()
 {
 	# cursor position
 	local cp=0
-
 	# actual number of tabs between key-value and left-most
 	local _tabLength
 
-
-
 	# option to use string or file
  	[[ -p /dev/stdin ]] && { _yaml="$(cat - | yamlStd)"; ordo="stdin"; } || { _yaml="${1:?}"; ordo="parametric"; };
- 	[[ -f ${_yaml} ]] && { echo "file = $_yaml"; _yaml="$(cat ${_yaml})"; };
-
-
- 	#echo $ordo
-	#echo $_path
- 	#echo "$_yaml" | wc -l
-
- 	#echo '-----------------------------------------------'
- 	#standardize input
- 	
-
- 	#echo "$_yaml"
- 	#sleep 3
-
-
- #	echo "yolo" 2>&1;
+ 	[[ -f ${_yaml} ]] && { _yaml="$(cat ${_yaml})"; };
 
 	# the path is arg 1, the source is stdin already standardized ...
  	[[ ${ordo} == "stdin" ]] && { _path="${1:?}";  };
 	# the path is arg 2, the source is arg 1, standardize ...
  	[[ ${ordo} == "parametric" ]] && { _path="${2:?}"; _yaml="$(yamlStd "${_yaml}")"; };
-
-
-
 
 	# path length, to determine target leaf/node
 	local pLength="$(yamlPathL $_path)"
@@ -207,8 +174,6 @@ function findKeyValue()
 	# strings, about which path is articulated
 	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
 	local _next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
-
-	echo "$_yaml"
 
 	IFS=''
 	# pWave constructor
