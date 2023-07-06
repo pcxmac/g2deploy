@@ -72,6 +72,7 @@ function yamlStd()
 function yamlValue()
 {
 	local _stdYAML
+	local _param=":"
 	_stdYAML="${1:?}"
 	printf '%s\n' "${_stdYAML#*:}" | sed 's/ //g; s/^-//'; #s/[^:]*:/';
 }
@@ -220,11 +221,30 @@ function insertKeyValue()
 {
 	local cp=0
 	local _tabLength
-	local _yaml="${1:?}";		# YAML FILE, 2 spaced.
-	local _path="${2:?}"
-	local _newKV="${3:?}"
+	local _yaml;			# yaml source
+	local _path;			# new path
+	local _newKV;			# new key value to insert
+
+	# option to use string or file
+ 	[[ -p /dev/stdin ]] && { _yaml="$(cat - | yamlStd)"; ordo="stdin"; } || { _yaml="${1:?}"; ordo="parametric"; };
+ 	[[ -f ${_yaml} ]] && { _yaml="$(cat ${_yaml})"; };
+
+	# the path is arg 1, the source is stdin already standardized ...
+ 	[[ ${ordo} == "stdin" ]] && { 
+		_path="${1:?}"; 
+		_newKV="${2:?}"; 
+	};
+	# the path is arg 2, the source is arg 1, standardize ...
+ 	[[ ${ordo} == "parametric" ]] && { 
+		_path="${2:?}";
+		_newKV="${3:?}";
+		_yaml="$(yamlStd "${_yaml}")"; 
+	};
+
 	local pLength="$(yamlPathL $_path)"
-	_yaml="$(yamlStd ${_yaml})"
+
+	#_yaml="$(yamlStd ${_yaml})"
+
 	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
 	local next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
 	local _col=${pLength}
