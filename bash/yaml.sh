@@ -378,17 +378,17 @@ function removeKeyValue()
 
 # 	modifyKeyValue {PATH|string of source yaml} {path in yaml} {modification string}
 # 	modification string = 'root/prefix/KEYNAME:OLDVALUE:NEWVALUE'
-#	ex. 
-#	ex. 
-#	ex. 
+#	ex. echo "$YAML" | yamlStd | modifyKeyValue 'server' 'calvin' => ^server:calvin
+#	ex. cat ../config/host.cfg | modifyKeyValue 'server:pkgROOT/friends/host:jupiter.hypokrites.net' 'jupiter2.hypokrites.net'
+#	ex. modifyKeyValue ../config/host.cfg 'server:buildserver/host' 'bigJohn.com'
 
 function modifyKeyValue()
 {
 	local cp=0
 	local _tabLength
 	local _yaml;		# reference to yaml source
-	local _path;		# yaml path to operate on
-	local _value;		# modification string
+	local _path;		# yaml path to operate on (if not specific enough, multiple lines can be mangled)
+	local _value;		# new value (TOBE)
 	local _key;			# used in the exectutor to switch the key-value 
 	local modLine;		# the mangled yaml string
 
@@ -448,5 +448,5 @@ function modifyKeyValue()
 			printf '%s\n' "${line}";
 		}
 
-	done < <(printf '%s' "${_yaml}")
+	done < <(printf '%s\n' "${_yaml}")
 }
