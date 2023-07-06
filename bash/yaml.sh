@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-# these algorithms are not optimized for speed, or removing redundancy in filtering/standardizing.
-
+# these algorithms are not optimized for speed, nor are they attempting to remove redundancy in filtering/standardizing.
 
 # return a pad, given the argument's value (white space) ... probably needs to be superseeded with printf %##s
 function yamlPad()
@@ -376,8 +375,7 @@ function removeKeyValue()
 	done < <(printf '%s\n' "${_yaml}")
 }
 
-# 	modifyKeyValue {PATH|string of source yaml} {path in yaml} {modification string}
-# 	modification string = 'root/prefix/KEYNAME:OLDVALUE:NEWVALUE'
+# 	modifyKeyValue {PATH|string of source yaml} {path in yaml} {new value}
 #	ex. echo "$YAML" | yamlStd | modifyKeyValue 'server' 'calvin' => ^server:calvin
 #	ex. cat ../config/host.cfg | modifyKeyValue 'server:pkgROOT/friends/host:jupiter.hypokrites.net' 'jupiter2.hypokrites.net'
 #	ex. modifyKeyValue ../config/host.cfg 'server:buildserver/host' 'bigJohn.com'
