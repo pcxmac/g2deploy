@@ -60,6 +60,15 @@ concept : 'host profile'
                 layman/3rd party repos
                     GPG keys for repos
 }
+concept : 'complimentary code'
+{
+    ex. btrfs status { }
+
+    would be written in same language as codebase for btrfs-progs, be used to check metadata/+++
+
+    like genkernel patch, could be requested to be merged in the future.
+
+}
 concept : 'bare metal' 
 concept : 'application node'
 concept : 'meta distribution'

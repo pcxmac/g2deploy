@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# these algorithms are not optimized for speed, or removing redundancy in filtering/standardizing.
+
+
 # return a pad, given the argument's value (white space) ... probably needs to be superseeded with printf %##s
 function yamlPad()
 {
@@ -15,11 +18,13 @@ function yamlPadL()
 	printf '%s\n' "${_key_value}"
 }
 
-# yaml standardization [charcater format/spec] formula
-#	
-#	
-#	
-#	
+#	yaml standardization [charcater format/spec] formula
+#	yamlStd {PATH|string of source} ,, accepts stdin
+#	ex. cat ../config/host.cfg | yamlStd	
+#	ex. echo "$_YAML" | yamlStd
+#	ex. yamlStd "$_YAML"
+#	ex. yamlStd ../config/host.cfg
+	
 function yamlStd()
 {
 	local _tab=2
@@ -143,22 +148,18 @@ function yamlOrder()
 }
 
 # finds a value in a yaml object, specific key-values filter out particular branches
-#	1	if tab < cp, cp = tab (current match)
-#	2	if match, cp ++							... this will satisfy the 'list' cycle
-#	3	if match & no next, print result (end of search path)
-#
-#	how to use : findKeyValue [config.file] {path}
-#				 echo "yamlObject" | findKeyValue {path}
-#				 cat "file_path" | findKeyValue {path}
-#
-#	path = root/node/leaf ... if leaf = '-', then it is looking for yaml list items
-#
+#	findKeyValue {PATH|string of source} {search path}
+#	ex.	findKeyValue ../config/host.cfg 'server:buildserver/root'
+#	ex. findKeyValue "$_YAML" 'server' ,, (for multiple entries @ server/ , will have multiple outputs)
+#	ex. cat ../config/host.cfg | findKeyValue 'server:buildserver/root'
+
 function findKeyValue() 
 {
 	# cursor position
 	local cp=0
 	# actual number of tabs between key-value and left-most
 	local _tabLength
+	local ordo;
 
 	# option to use string or file
  	[[ -p /dev/stdin ]] && { _yaml="$(cat - | yamlStd)"; ordo="stdin"; } || { _yaml="${1:?}"; ordo="parametric"; };
@@ -214,13 +215,16 @@ function findKeyValue()
 	done < <(printf '%s\n' "${_yaml}")
 }
 
-# adds a new node, match = prefix ;; path = 'root/branch/prefix:SPECIFIC/NEWKEY:NEWVALUE' ... ergo, prefix typically should have an associated value.
-# path should be checked prior to insertion ... IE, user needs to check for existing node, insert is not responsible for adding another like node.
-# inserts right after parent identified. (see above)
+#	insertKeyValue {PATH|String of source YAML} {search path} {new key:value}  
+#	ex. insertKeyValue ../config/host.cfg 'server:buildserver/root' 'new:value'
+#	ex. insertKeyValue "$_YAML" 'server:buildserver/root' 'new:value'
+#	ex. echo "$_YAML" | yamlStd | insertKeyValue 
+
 function insertKeyValue()
 {
 	local cp=0
-	local _tabLength
+	local ordo;
+	local _tabLength;
 	local _yaml;			# yaml source
 	local _path;			# new path
 	local _newKV;			# new key value to insert
@@ -295,18 +299,40 @@ function insertKeyValue()
 	done < <(printf '%s\n' "${_yaml}")
 }
 
-# remove target branch, and it's children
-#	1	if match, silence output
-#	2	if cursor < match column, begin output again
-#
+#	removeKeyValue {PATH|string of source yaml} {path in yaml, to recursively delete}
+#	ex. removeKeyValue ../config/host.cfg 'server:buildserver/host'
+#	ex. cat ../config/host.cfg | removeKeyValue 'server:pkgROOT/gcc'
+#	ex. echo "$_YAML" | yamlStd | removeKeyValue 'server/profile'
+
 function removeKeyValue()
 {
 	local cp=0
 	local _tabLength
-	local _yaml="${1:?}";		# YAML FILE, 2 spaced.
-	local _path="${2:?}"
+	local _yaml;		# yaml source to filter
+	local _path;		# path to remove (recursive implicitly)
+	local ordo;
+
+	# option to use string or file
+ 	[[ -p /dev/stdin ]] && { _yaml="$(cat - | yamlStd)"; ordo="stdin"; } || { _yaml="${1:?}"; ordo="parametric"; };
+ 	[[ -f ${_yaml} ]] && { _yaml="$(cat ${_yaml})"; };
+
+	#echo "$ordo"
+
+	# the path is arg 1, the source is stdin already standardized ...
+ 	[[ ${ordo} == "stdin" ]] && { 
+		_path="${1:?}"; 
+#		_newKV="${2:?}"; 
+	};
+	# the path is arg 2, the source is arg 1, standardize ...
+ 	[[ ${ordo} == "parametric" ]] && { 
+#		echo "shit"
+		_path="${2:?}";
+#		_newKV="${3:?}";
+		_yaml="$(yamlStd "${_yaml}")"; 
+	};
+
 	local pLength="$(yamlPathL $_path)"
-	_yaml="$(yamlStd ${_yaml})"
+	#_yaml="$(yamlStd ${_yaml})"
 	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
 	local next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
 	local _col=${pLength}
@@ -350,22 +376,42 @@ function removeKeyValue()
 	done < <(printf '%s\n' "${_yaml}")
 }
 
-# finds a [KEY:VALUE] pair in a yaml object, modifies it's [VALUE], and dumps the YAML OBJECT
-# modify path = 'root/prefix/KEYVALUE:OLDVALUE:NEWVALUE'
-#	1	if match, print modified value
-#	2	print if no match
+# 	modifyKeyValue {PATH|string of source yaml} {path in yaml} {modification string}
+# 	modification string = 'root/prefix/KEYNAME:OLDVALUE:NEWVALUE'
+#	ex. 
+#	ex. 
+#	ex. 
+
 function modifyKeyValue()
 {
 	local cp=0
 	local _tabLength
-	local _yaml="${1:?}";		# YAML FILE, 2 spaced.
-	local _path="${2:?}"
-	local _value="${3:?}"
+	local _yaml;		# reference to yaml source
+	local _path;		# yaml path to operate on
+	local _value;		# modification string
+	local _key;			# used in the exectutor to switch the key-value 
+	local modLine;		# the mangled yaml string
+
+	# option to use string or file
+ 	[[ -p /dev/stdin ]] && { _yaml="$(cat - | yamlStd)"; ordo="stdin"; } || { _yaml="${1:?}"; ordo="parametric"; };
+ 	[[ -f ${_yaml} ]] && { _yaml="$(cat ${_yaml})"; };
+
+	# the path is arg 1, the source is stdin already standardized ...
+ 	[[ ${ordo} == "stdin" ]] && { 
+		_path="${1:?}"; 
+		_value="${2:?}"; 
+	};
+	# the path is arg 2, the source is arg 1, standardize ...
+ 	[[ ${ordo} == "parametric" ]] && { 
+		_path="${2:?}";
+		_value="${3:?}";
+		_yaml="$(yamlStd "${_yaml}")"; 
+	};
+
 	local pLength="$(yamlPathL $_path)"
-	_yaml="$(yamlStd ${_yaml})"
+	#_yaml="$(yamlStd ${_yaml})"
 	local cv="$(printf '%s\n' $(yamlOrder "${_path}" ${cp}))";
 	local next="$(printf '%s\n' $(yamlOrder "${_path}" $((cp+1))))";
-	local _key
 
 	IFS=''
 	# pWave constructor
