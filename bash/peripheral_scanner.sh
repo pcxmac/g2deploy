@@ -13,7 +13,7 @@
 #   every routable device, has a list item called Devices: where any device which is on the branch will be indicated.
 #   every non routable device, ie a peripheral/terminal device will be in the ROOT chain. So all the hubs, bridges, etc.. will be linked, and other devices will be off the root complex
 #    
-#
+#   A device, is any physical entity on the computer, from a chip, to a switch. 
 #
 #   Device: XX:XX.X
 #        Devices:
@@ -41,11 +41,22 @@
 #           - @@@
 #           - @@@@@
 #       Module: @@@@
-#           sysfs:
-#           procfs:
+#           
 #
 #
 
+#       to probe w/ a vendor/product ID, which kernel module aliases are available :
+#           modprobe -c | grep 'vendorID.*productID'
+#           or create a decoder function alongside modinfo.
+#           
+#           ^module_alias ... <class>:<id sequence>*<signifiers>
+#           usb = usb:v06F8pE031d*dc*dsc*dp*ic*isc*ip*in*
+#           pci = pci:v00001002d000073A5sv*sd*bc*sc*i
+#           eisa = ...
+#           of =
+#           platform =
+#           hid = 
+#           spi = 
 
 # scan USB
 #
@@ -73,12 +84,19 @@
 #           iProduct: 
 #
 #
+
 # scan Hard Drives
 #   /sys/devices ... link to the targetX and allow interrogating HD Stats/driver/... use HWINFO for networking other stats
 #   /sys/block/... partitions are represented by folders, interrogate those folders if not disk utility ...
 #	/sys/block/... (readlink)
 # 	smartctl
 #	hdparm
+
+#   /sys/class
+#   /sys/modules
+#   /sys/devices
+
+
 # scan sensors (temperature/fan/...)
 
 
