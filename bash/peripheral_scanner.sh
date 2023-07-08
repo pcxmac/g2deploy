@@ -3,6 +3,18 @@
 # this will scan the PCIe BUS
 # eventually this will supplement udev and monitor the state/changes of peripheral devices (security)
 
+#   helpers : 
+#       bus routing (generates yaml of all devices, and their bus structure)
+#       module => hwID db, parsed, in yaml
+#       hwDB_IDs (pcie,usb) in yaml
+#              
+#
+#   installer requirement:
+#   
+#       hard drives (usb / pcie)=>ata
+#       all devices/modules => kernel config { usb,pcie }
+#       firmwares
+#
 
 # lspci -PPkDv	# ROUTE + attributes
 # lspci -vmn    # slot info (IDs, which will be sub attributes for the text)
@@ -47,7 +59,9 @@
 
 #       to probe w/ a vendor/product ID, which kernel module aliases are available :
 #           modprobe -c | grep 'vendorID.*productID'
-#           or create a decoder function alongside modinfo.
+#           or create a decoder function alongside modinfo || /usr/src/linux/drivers/* 
+#           :: find ./ -type f | \grep '.c$' | xargs grep -i '^MODULE_ALIAS'
+#
 #           
 #           ^module_alias ... <class>:<id sequence>*<signifiers>
 #           usb = usb:v06F8pE031d*dc*dsc*dp*ic*isc*ip*in*
