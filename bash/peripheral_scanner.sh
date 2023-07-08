@@ -13,8 +13,10 @@
 #   
 #       hard drives (usb / pcie)=>ata
 #       all devices/modules => kernel config { usb,pcie }
-#       firmwares
-#
+#       firmwares ... module dependent. { appears to look like >> FIRMWARE_<DRIVER> "...fs$" << }
+#           or MODULE_FIRMWARE... not standardized !!! impossible to tell really. too many variations.
+#           find ./ -type f | \grep -i 'c$' | xargs grep -i "firmware"
+ 
 
 # lspci -PPkDv	# ROUTE + attributes
 # lspci -vmn    # slot info (IDs, which will be sub attributes for the text)
