@@ -116,6 +116,9 @@
 # scan sensors (temperature/fan/...)
 
 
+# BOOT ENTRIES !!!
+
+
 #-- create a way to simplify the scan's yaml file, in order to build things like zfs zpools. or to inquire UUIDs, or to ...
 
 drives="$(ls /sys/block)"
