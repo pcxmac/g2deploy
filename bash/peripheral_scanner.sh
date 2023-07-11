@@ -112,11 +112,21 @@
 #   /sys/modules
 #   /sys/devices
 
-
 # scan sensors (temperature/fan/...)
-
-
 # BOOT ENTRIES !!!
+# rc.conf ? (boot.log)
+# dmesg ?
+# bastion -> to modify autofs to facilitate dynamic boot drive mounting. \sed | rc-service
+# NETWORK STRATEGIES ... CLASSICAL MODEL of Bifurcated local->wide-arean netrworking.
+# META FILE SYSTEMS ....
+# local and network strategies/daemons. Standard allocations @ enumerated types.
+# begin to roll in process management in to firewall. Signed applications ? (decoded by public key), authorized by private user.
+# sentry user.
+
+# VISION : META + Strategies.
+
+
+# ******** NEED TO UPDATE --UPDATE-- to address rc.conf and logging, specifically boot logging.
 
 
 #-- create a way to simplify the scan's yaml file, in order to build things like zfs zpools. or to inquire UUIDs, or to ...
