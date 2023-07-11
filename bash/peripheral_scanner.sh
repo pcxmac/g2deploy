@@ -125,7 +125,9 @@
 
 # VISION : META + Strategies.
 
-
+# META : SELinux package
+#   scanner needs to enable selinux opportunitistic targeting for profiling. (IE, installed applications/directories{usr space})
+#   perhaps, an ancillary process which manages signing executables, can also be used to SEmanage port/permissions/AC.
 # ******** NEED TO UPDATE --UPDATE-- to address rc.conf and logging, specifically boot logging.
 
 
