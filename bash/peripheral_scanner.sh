@@ -117,18 +117,19 @@
 # rc.conf ? (boot.log)
 # dmesg ?
 # bastion -> to modify autofs to facilitate dynamic boot drive mounting. \sed | rc-service
-# NETWORK STRATEGIES ... CLASSICAL MODEL of Bifurcated local->wide-arean netrworking.
+# NETWORK STRATEGIES ... CLASSICAL MODEL of Bifurcated local->wide-arean networking.
 # META FILE SYSTEMS ....
 # local and network strategies/daemons. Standard allocations @ enumerated types.
 # begin to roll in process management in to firewall. Signed applications ? (decoded by public key), authorized by private user.
 # sentry user.
 
-# VISION : META + Strategies.
+# VISION : META + Strategies {Framework + Processing}.
 
 # META : SELinux package
 #   scanner needs to enable selinux opportunitistic targeting for profiling. (IE, installed applications/directories{usr space})
 #   perhaps, an ancillary process which manages signing executables, can also be used to SEmanage port/permissions/AC.
 # ******** NEED TO UPDATE --UPDATE-- to address rc.conf and logging, specifically boot logging.
+# monitor selinux logs, especially in permissive mode to 'learn' appropriate mappings.
 
 
 #-- create a way to simplify the scan's yaml file, in order to build things like zfs zpools. or to inquire UUIDs, or to ...
