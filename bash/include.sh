@@ -92,7 +92,8 @@ function find_boot() {
 		[[ -z ${rType} ]] && { 
 			rType="$(cat /proc/cmdline | \grep 'boot=' | sed $'s/ /\\n/g')"; 
 			[[ -n ${rType} ]] && {
-				rType="${$(echo "${rType}" | \grep '^boot=')#*=}";
+				rType="$(echo "${rType}" | \grep '^boot=')";
+				rType="${rType#*=}";
 			};
 		};
 	};
