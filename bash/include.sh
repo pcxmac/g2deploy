@@ -78,22 +78,21 @@ function find_boot() {
 			#echo "value passed - disk"
 		};
 	} || {
-		# if no boot=... specified in the kernel cmdline (/proc/cmdline)
-		[[ -z ${rType} ]] && { 
+		# if no valid uuid or device passed
+		# check /boot in /proc/mounts
+		[[ -z ${rType} ]] && {
 			rType="$(cat /proc/mounts | \grep ' /boot ' | sed $'s/ /\\n/g')"; 
+			rType="$(echo "${rType}" | \grep '^/dev/')"; 
 			[[ -n ${rType} ]] && {
-				rType="$(echo "${rType}" | \grep '^/dev/')"; 
 				rType="$(ls -ail /dev/disk/by-uuid/ | \grep ${rType##*/} | awk '{print $10}')";
 				rType="${rType##*/}";
-				#echo "mounted - boot"
 			};
 		};
-		# if no valid uuid or device passed
+		# check kernel /proc/cmdline
 		[[ -z ${rType} ]] && { 
 			rType="$(cat /proc/cmdline | \grep 'boot=' | sed $'s/ /\\n/g')"; 
 			[[ -n ${rType} ]] && {
 				rType="${$(echo "${rType}" | \grep '^boot=')#*=}";
-				#echo "kernel cmdline"
 			};
 		};
 	};

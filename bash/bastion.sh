@@ -39,7 +39,7 @@ echo "EXT_NETWORK = $EXT_NETWORK"
 
 pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
 pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
-
+bootUUID="$(find_boot)"
 
 # DOM0 SPACE	METALNET .. DEFINED BY QEMU
 M_INTER="lo"
@@ -65,6 +65,9 @@ sed -i "/^server.bind/c server.bind = \"$M_ADDR\"" /etc/lighttpd/lighttpd.conf
 #sed -i "0,/anon_root/c anon_root=$HOST_ROOT" /etc/vsftpd.conf
 sed -i "0,/ListenAddress/c ListenAddress $M_ADDR" /etc/ssh/sshd_config
 
+sed -n "/^\/boot/c\/boot\t-fstype=vfat,rw,uid=root,gid=root\tUUID=${bootUUID}" /etc/autofs/auto.vfat
+
+rc-service autofs restart
 rc-service lighttpd restart
 rc-service sshd restart
 rc-service vsftpd restart
