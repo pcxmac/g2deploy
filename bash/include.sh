@@ -32,6 +32,82 @@ colW="\e[1;37m%s\e[m"
 source ${SCRIPT_DIR}/bash/mget.sh
 source ${SCRIPT_DIR}/bash/yaml.sh
 
+#
+#	boot updates ... ./update.sh work=pool/dataset update { boot | boot=XXXX }
+#	XXXX = UUID 		>> echo "/dev/${$(readlink /dev/disk/by-uuid/4D8D-8985)##*/}" ... then by /dev/...
+#	XXXX = /dev/xxx#	>> file -s XXXX | grep 'FAT (32-bit)' | grep 'XXXX: DOS/MBR boot sector'
+#	XXXX = ./boot.cfg
+#	boot, by itself will :
+#		look at the kernel command line : XXXX
+#		look at a partition mounted on /boot
+#		
+#	for boot.cfg, a uniform boot entry must be made in a systemwide configuration file (~yml)
+#
+#	use findboot, to assign to autofs, @ bastion
+#	use findboot, to update bootrecords, via : find_bootType
+
+#
+#	find_bootType = mbr/efi ... mbr = { grub, ... } | efi = { grub, refind } << SUPPORTED
+#	returns X,Y ex "MBR,GRUB" || "EFI,REFIND"
+#	ONLY REFIND SUPPORTED FOR NOW !!!	
+#
+#	function get_bootYAML
+#	returns yaml block from boot record, based on $(find_bootType) return message
+#
+#	function update_bootYAML
+#	updates yaml block, based on standard yaml type, which has it's configuration standardized
+#
+#	function put_bootYAML
+#	rewrites boot record (grub or refind)
+#	saves old version *.save$(DATE)
+
+function find_boot() {
+
+	# UUID or block device
+	local param=$1
+	local rType='';
+
+	[[ -n ${param} ]] && {
+		[[ "$(echo "/dev/${$(readlink /dev/disk/by-uuid/${param})##*/}")" != "/dev/" ]] && { 
+			rType=${param}; 
+			#echo "value passed - uuid";
+		};
+		[[ -n "$(file -s ${param} | grep 'FAT (32 bit)' | grep "${param}: DOS/MBR boot sector")" ]] && { 
+			param="$(ls -ail /dev/disk/by-uuid/ | \grep ${param##*/} | awk '{print $10}')";
+			rType="${param##*/}";
+			#echo "value passed - disk"
+		};
+	} || {
+		# if no boot=... specified in the kernel cmdline (/proc/cmdline)
+		[[ -z ${rType} ]] && { 
+			rType="$(cat /proc/mounts | \grep ' /boot ' | sed $'s/ /\\n/g')"; 
+			[[ -n ${rType} ]] && {
+				rType="$(echo "${rType}" | \grep '^/dev/')"; 
+				rType="$(ls -ail /dev/disk/by-uuid/ | \grep ${rType##*/} | awk '{print $10}')";
+				rType="${rType##*/}";
+				#echo "mounted - boot"
+			};
+		};
+		# if no valid uuid or device passed
+		[[ -z ${rType} ]] && { 
+			rType="$(cat /proc/cmdline | \grep 'boot=' | sed $'s/ /\\n/g')"; 
+			[[ -n ${rType} ]] && {
+				rType="${$(echo "${rType}" | \grep '^boot=')#*=}";
+				#echo "kernel cmdline"
+			};
+		};
+	};
+	echo $rType
+}
+
+function find_bootType {
+
+	local param=$1
+
+
+}
+
+
 function arg_parse()
 {
 	# take a string of text, and find the entry, it's key, and produce it's value, or presence (1)
