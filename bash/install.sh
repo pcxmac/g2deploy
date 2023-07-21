@@ -422,6 +422,22 @@ function install_system() {
 	fi
  }
 
+#	install uses update after it copies the image.
+#	install knows what disk its going to either through the boot arg, or via yaml config
+#	
+#	install explicitly calls boot=/dev/XXX# if passed by arg
+#	install explicitly calls boot=UUID if passed by yaml cfg
+#	
+#	
+#	
+#	
+#	
+#		
+#	
+#	
+#	
+#	
+
 	dataset="";				#	the working dataset of the installation
 	directory="";			# 	the working directory of the prescribed dataset
 	profile="";				#	the build profile of the install
