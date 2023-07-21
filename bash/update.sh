@@ -112,6 +112,52 @@ done
 # 	esac
 # done
 
+#
+#	boot updates ... ./update.sh work=pool/dataset update { boot | boot=XXXX }
+#	XXXX = UUID 		>> echo "/dev/${$(readlink /dev/disk/by-uuid/4D8D-8985)##*/}" ... then by /dev/...
+#	XXXX = /dev/xxx#	>> file -s XXXX | grep 'FAT (32-bit)' | grep 'XXXX: DOS/MBR boot sector'
+#	XXXX = ./boot.cfg
+#	boot, by itself will :
+#		look at the kernel command line : XXXX
+#		look at a partition mounted on /boot
+#		
+#	for boot.cfg, a uniform boot entry must be made in a systemwide configuration file (~yml)
+#
+#	use findboot, to assign to autofs, @ bastion
+#	use findboot, to update bootrecords, via : find_bootType
+
+#
+#	find_bootType = mbr/efi ... mbr = { grub, ... } | efi = { grub, refind } << SUPPORTED
+#	returns X,Y ex "MBR,GRUB" || "EFI,REFIND"
+#	ONLY REFIND SUPPORTED FOR NOW !!!	
+#
+#	function get_bootYAML
+#	returns yaml block from boot record, based on $(find_bootType) return message
+#
+#	function update_bootYAML
+#	updates yaml block, based on standard yaml type, which has it's configuration standardized
+#
+#	function put_bootYAML
+#	rewrites boot record (grub or refind)
+#	saves old version *.save$(DATE)
+
+function find_boot() {
+
+local param=$1
+
+
+
+
+}
+
+function find_bootType {
+
+local param=$1
+
+
+}
+
+
 for x in "$@"
 do
 	case "${x}" in
