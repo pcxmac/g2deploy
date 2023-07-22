@@ -81,7 +81,7 @@ function find_boot() {
 			rType=${param}; 
 			#echo "value passed - uuid";
 		};
-		[[ -n "$(file -s ${param} | grep 'FAT (32 bit)' | grep "${param}: DOS/MBR boot sector")" ]] && { 
+		[[ -n "$(file -s ${param} | \grep 'FAT (32 bit)' | grep "${param}: DOS/MBR boot sector")" ]] && { 
 			param="$(ls -ail /dev/disk/by-uuid/ | \grep ${param##*/} | awk '{print $10}')";
 			rType="${param##*/}";
 			#echo "value passed - disk"
@@ -117,7 +117,7 @@ function find_bootType {
 	# multiple boot specs are only supported through yaml configs, at higher order functions, this gives the best priority response
 	#
 	#	priority = 	MBR, then EFI
-	#				REFIND, then GRUB
+	#				REFIND, then GRUB :: EFI,GRUB => EFI,REFIND => MBR,GRUB
 	#	supported permutations = { MBR,GRUB ; EFI,GRUB ; EFI, REFIND ; '' } = LTYPE
 
 	# dev reference only [mbr]
@@ -127,18 +127,23 @@ function find_bootType {
 	# if not valid block device
 	[[ -e ${param} ]] && { exit; };
 
-	# mbr's only exist on whole disks, even if the first partition protects it/or some extended attributes.
-	# check mbr for grub
-	[[ -n $(file -s ${param} | grep 'GRand Unified Bootloader') ]] && { rType='MBR,GRUB'; };
+	# priority >checklist<
 
-	# mount boot, if not already mounted, if autofs, check /boot listing to verify existance, correct output.
 
-	rType="$(cat /proc/mounts | \grep ' /boot ' | sed $'s/ /\\n/g')"; 
-	rType="$(echo "${rType}" | \grep '^/dev/')"; 
-	[[ -n ${rType} ]] && {
-		rType="$(ls -ail /dev/disk/by-uuid/ | \grep ${rType##*/} | awk '{print $10}')";
-		rType="${rType##*/}";
+	# check for EFI + GRUB
+	# /boot/grub/grub/grub.cfg + /boot/EFI/bootx64.efi - /boot/EFI/refind* { signature }
+
+
+	# check for EFI + REFIND
+	#/boot/EFI/boot/refind_x64.efi + /boot/EFI/boot/refind.conf + /boot/EFI/bootx64.efi	{ signature }
+
+	# check for MBR + GRUB
+	# scan mbr w/ file executable...
+	[[ -n $(file -s ${param} | grep 'GRand Unified Bootloader') ]] && { 
+	
+		rType='MBR,GRUB'; 
 	};
+
 
 
 	# efi partitions exist on separate DOS/EFI partitions (32 bit)
