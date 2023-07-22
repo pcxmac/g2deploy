@@ -133,6 +133,17 @@
 
 #-- create a way to simplify the scan's yaml file, in order to build things like zfs zpools. or to inquire UUIDs, or to ...
 
+# SOFTWARE SCANNER : 
+#   
+#   create a yaml based config of the software installed currently, or via a list of software, 
+#   whose leading edges represent software requirements, and whose [ALL] dependencies are all attributed, behind the principle tier (1)
+#   
+#   the ability to compare software lists, and 'diff' software targets. ex. gnome vs plasma, show all packages which are root dependencies (tier 1), that are not in gnome
+#   
+#   
+
+
+
 drives="$(ls /sys/block)"
 
 for drive in $drives
