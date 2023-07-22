@@ -33,17 +33,17 @@ source ${SCRIPT_DIR}/bash/mget.sh
 source ${SCRIPT_DIR}/bash/yaml.sh
 
 #
-#	boot updates ... ./update.sh work=pool/dataset update { boot | boot=XXXX }
-#	XXXX = UUID 		>> echo "/dev/${$(readlink /dev/disk/by-uuid/4D8D-8985)##*/}" ... then by /dev/...
-#	XXXX = /dev/xxx#	>> file -s XXXX | grep 'FAT (32-bit)' | grep 'XXXX: DOS/MBR boot sector'
-#	XXXX = ./boot.cfg
-#	boot, by itself will :
-#		look at the kernel command line : XXXX
-#		look at a partition mounted on /boot
+#	X	boot updates ... ./update.sh work=pool/dataset update { boot | boot=XXXX }
+#	X	XXXX = UUID 		>> echo "/dev/${$(readlink /dev/disk/by-uuid/4D8D-8985)##*/}" ... then by /dev/...
+#	X	XXXX = /dev/xxx#	>> file -s XXXX | grep 'FAT (32-bit)' | grep 'XXXX: DOS/MBR boot sector'
+#	X	XXXX = ./boot.cfg
+#	X	boot, by itself will :
+#	X	look at the kernel command line : XXXX
+#	X	look at a partition mounted on /boot
 #		
 #	for boot.cfg, a uniform boot entry must be made in a systemwide configuration file (~yml)
 #
-#	use findboot, to assign to autofs, @ bastion
+#	X use findboot, to assign to autofs, @ bastion
 #	use findboot, to update bootrecords, via : find_bootType
 
 #
@@ -61,11 +61,20 @@ source ${SCRIPT_DIR}/bash/yaml.sh
 #	rewrites boot record (grub or refind)
 #	saves old version *.save$(DATE)
 
+function zfsMaxSupport { 
+
+	version="$(mget https://raw.githubusercontent.com/openzfs/zfs/master/META | \grep 'Linux-Maximum' | sed 's/ //g' )";
+	version="${version#*:}";
+	version="$(equery -CN list -po gentoo-sources 2>/dev/null | \grep "${version}" | tail -1 | sed $'s/ /\\n/g' | \grep '^sys-kernel')";
+	echo "linux-${version#*:}-gentoo";
+}
+
 function find_boot() {
 
 	# UUID or block device
 	local param=$1
 	local rType='';
+	local lType='';
 
 	[[ -n ${param} ]] && {
 		[[ "$(echo "/dev/${$(readlink /dev/disk/by-uuid/${param})##*/}")" != "/dev/" ]] && { 
@@ -97,12 +106,48 @@ function find_boot() {
 			};
 		};
 	};
-	echo $rType
+	#echo $rType
+	lType="$(ls /dev/disk/by-uuid/${rType} -ail | awk '{print $12}')"
+	lType="/dev/${lType##*/}";
+	echo $lType
 }
 
 function find_bootType {
 
-	local param=$1
+	# multiple boot specs are only supported through yaml configs, at higher order functions, this gives the best priority response
+	#
+	#	priority = 	MBR, then EFI
+	#				REFIND, then GRUB
+	#	supported permutations = { MBR,GRUB ; EFI,GRUB ; EFI, REFIND ; '' } = LTYPE
+
+	# dev reference only [mbr]
+	local param=$1 
+	local rType='';
+
+	# if not valid block device
+	[[ -e ${param} ]] && { exit; };
+
+	# mbr's only exist on whole disks, even if the first partition protects it/or some extended attributes.
+	# check mbr for grub
+	[[ -n $(file -s ${param} | grep 'GRand Unified Bootloader') ]] && { rType='MBR,GRUB'; };
+
+	# mount boot, if not already mounted, if autofs, check /boot listing to verify existance, correct output.
+
+	rType="$(cat /proc/mounts | \grep ' /boot ' | sed $'s/ /\\n/g')"; 
+	rType="$(echo "${rType}" | \grep '^/dev/')"; 
+	[[ -n ${rType} ]] && {
+		rType="$(ls -ail /dev/disk/by-uuid/ | \grep ${rType##*/} | awk '{print $10}')";
+		rType="${rType##*/}";
+	};
+
+
+	# efi partitions exist on separate DOS/EFI partitions (32 bit)
+	# REFIND : 	/boot/EFI/boot/refind.conf
+	#			/boot/EFI/bootx64.efi
+	#			
+	# GRUB : 	/
+
+
 
 
 }

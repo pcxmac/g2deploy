@@ -54,22 +54,26 @@ echo "EXT_NETWORK = $EXT_NETWORK"
 
 #HOST_ROOT="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root")"
 
-
 sed -i "/pkg.hypokrites.me$/c$M_ADDR\tpkg.hypokrites.me" /etc/hosts
 sed -i "/build.hypokrites.me$/c$M_ADDR\tbuild.hypokrites.me" /etc/hosts
 # doesnt support other options, will need to --add the option function-- to this
-sed -i "/RSYNC_OPTS/c RSYNC_OPTS=\"--address=$M_ADDR\"" /etc/conf.d/rsyncd
+
+[[ -n ${bootUUID} ]] && {
+    sed -i "/^\/boot/c\/boot\t-fstype=vfat,rw,uid=root,gid=root\tUUID=${bootUUID}" /etc/autofs/auto.vfat
+    rc-service autofs restart
+};
+
 sed -i "/^server.bind/c server.bind = \"$M_ADDR\"" /etc/lighttpd/lighttpd.conf
+rc-service lighttpd restart
+
+sed -i "0,/ListenAddress/c ListenAddress $M_ADDR" /etc/ssh/sshd_config
+rc-service sshd restart
+
 #sed -i "0,/listen_address/c listen_address=$M_ADDR" /etc/vsftpd.conf
 #sed -i "0,/anon_root/c anon_root=$HOST_ROOT" /etc/vsftpd.conf
-sed -i "0,/ListenAddress/c ListenAddress $M_ADDR" /etc/ssh/sshd_config
-
-sed -i "/^\/boot/c\/boot\t-fstype=vfat,rw,uid=root,gid=root\tUUID=${bootUUID}" /etc/autofs/auto.vfat
-
-rc-service autofs restart
-rc-service lighttpd restart
-rc-service sshd restart
 rc-service vsftpd restart
+
+sed -i "/RSYNC_OPTS/c RSYNC_OPTS=\"--address=$M_ADDR\"" /etc/conf.d/rsyncd
 rc-service rsyncd restart
 
 _path="$(cat /etc/portage/make.conf | grep 'PKGDIR' | sed -e 's/\"//g')"

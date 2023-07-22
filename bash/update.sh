@@ -112,7 +112,10 @@ done
 # 	esac
 # done
 
-
+#	
+#	add a cleaning mechanism to update. purge shit dependencies
+#	
+#	
 
 for x in "$@"
 do
