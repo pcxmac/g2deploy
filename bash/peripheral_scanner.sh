@@ -142,6 +142,7 @@
 #   
 #   
 
+# PROVIDE WRAPPER FUNCTIONS FOR ALL GENTOO CALLS
 
 
 drives="$(ls /sys/block)"
