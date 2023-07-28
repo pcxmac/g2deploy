@@ -61,13 +61,25 @@ source ${SCRIPT_DIR}/bash/yaml.sh
 #	rewrites boot record (grub or refind)
 #	saves old version *.save$(DATE)
 
-function zfsMaxSupport { 
+function zfsMaxSupport() { 
 
 	version="$(mget https://raw.githubusercontent.com/openzfs/zfs/master/META | \grep 'Linux-Maximum' | sed 's/ //g' )";
 	version="${version#*:}";
 	version="$(equery -CN list -po gentoo-sources 2>/dev/null | \grep "${version}" | tail -1 | sed $'s/ /\\n/g' | \grep '^sys-kernel')";
 	echo "linux-${version#*:}-gentoo";
 }
+
+function find_UUID() {
+
+	# /dev/address of disk
+	rType="${1:?}"
+
+	lType="$(ls /dev/disk/by-uuid/ -ail | grep "${rType##*/}"  | awk '{print $10}')"
+	#lType="/dev/${lType##*/}";
+
+	echo $lType
+}
+
 
 function find_boot() {
 
@@ -905,7 +917,7 @@ function clear_mounts()
 {
 	local offset
 	local procs
-    local dir	
+	local dir
 	local output
 
 	offset="$(echo "$1" | sed 's:/*$::')"
@@ -913,7 +925,7 @@ function clear_mounts()
 	[[ -z "${offset}" ]] && { echo "cannot clear rootfs."; return; };
 
 	procs="$(lsof "${offset}" 2>/dev/null | sed '1d' | awk '{print $2}' | uniq)" 
-    dir="$(echo "${offset}" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
+    	sudodir="$(echo "${offset}" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
 	output="$(cat /proc/mounts | \grep "$dir" | wc -l)"
 
 	if [[ -z ${offset} ]];then exit; fi	# this will break the local machine if it attempts to unmount nothing.
@@ -944,18 +956,16 @@ function mounts()
 	local mSize="$(cat /proc/meminfo | column -t | \grep 'MemFree' | awk '{print $2}')"
 	#mSize="${mSize}K"
 
-	#echo "msize = $mSize" 2>&1
+	echo "msize = $mSize" 2>&1
 
 	# do not constantly query ftp server at high frequency, bad things man.
 	_kver=$(getKVER)
-	#echo "get kver = ${_kver}"
+	echo "get kver = ${_kver}"
 	#_kver=$(getKVER)
 
 	# local only, no host
 	# pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
 	pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
-
-	echo "pkg root = $pkgROOT"
 
 	[[ -z "$(cat /etc/mtab | grep "^proc ${offset%/}/proc")" ]] && {
 		mount -t proc proc "${offset%/}/proc"		# proc /proc
@@ -999,7 +1009,11 @@ function mounts()
 	_PKGDIR="${_PKGDIR#*=}";
 	_PKGDIR="${_PKGDIR%/binpkgs*}/binpkgs/";
 
-	[[ ! -f ${offset%/}${_PKGDIR} ]] && { mkdir -p ${offset%/}${_PKGDIR}; }; 
+
+	[[ ! -d ${offset%/}${_PKGDIR} ]] && { echo "?..."; mkdir -p ${offset%/}${_PKGDIR}; }; 
+
+	cat /etc/mtab | grep "${offset%/}${_PKGDIR%/}"
+
 	[[ -z "$(cat /etc/mtab | grep "${offset%/}${_PKGDIR%/}")" ]] && { 
 		mount --bind ${pkgROOT}/binpkgs/ ${offset%/}${_PKGDIR}; echo "mounted binpkgs"; 
 	} || { echo "binpkgs already mounted ..."; };
@@ -1058,7 +1072,7 @@ function install_modules()
 function getKVER() 
 {
 	local url_kernel="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/kernel" ftp)"
-	local kver="$(curl "$url_kernel" --silent | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep "\-gentoo" | sort -r | head -n 1 )" 
+	local kver="$(curl "$url_kernel" --silent --connect-timeout 5 | sed -e 's/<[^>]*>//g' | awk '{print $9}' | \grep "\-gentoo" | sort -r | head -n 1 )" 
 	# default to uname, if no source repo detected.
 	[[ -z "${kver}" ]] && { kver="$(uname --kernel-release)"; };
 	kver="linux-${kver}"

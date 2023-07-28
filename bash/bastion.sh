@@ -39,7 +39,7 @@ echo "EXT_NETWORK = $EXT_NETWORK"
 
 pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
 pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
-bootUUID="$(find_boot)"
+bootUUID="$(find_UUID $(find_boot))"
 # DOM0 SPACE	METALNET .. DEFINED BY QEMU
 M_INTER="lo"
 INTERFACE=$M_INTER
