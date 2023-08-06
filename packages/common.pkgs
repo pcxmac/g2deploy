@@ -1,3 +1,5 @@
+app-misc/jq
+dev-python/jq
 sys-apps/hw-probe
 sys-apps/hwinfo
 sys-apps/dmidecode

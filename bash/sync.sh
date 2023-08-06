@@ -252,14 +252,56 @@ fi
 hostip="$(/bin/route -n | /bin/grep "^0.0.0.0" | head -n 1 | /usr/bin/awk '{print $8}')"
 hostip="$(/bin/ip --brief address show dev ${hostip} | /usr/bin/awk '{print $3}')"
 
-sed -i "s|HOST:.*|HOST: ${hostip}|g" /etc/rsync/rsyncd.motd
-sed -i "s|DATE:.*|DATE: $(date)|g" /etc/rsync/rsyncd.motd
-#sed -i "s|HTTP ACCESS:.*|HTTP ACCESS:\thttp://${pkgHOST}|g" /etc/rsync/rsyncd.motd
-#sed -i "s|FTP ACCESS:.*|FTP ACCESS:\tftp://${pkgHOST}|g" /etc/rsync/rsyncd.motd
-#sed -i "s|PORTAGE:.*|PORTAGE:\trsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
-#sed -i "s|RELEASES:.*|RELEASES:\trsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
-#sed -i "s|SNAPSHOTS:.*|SNAPSHOTS:\trsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
-#sed -i "s|DISTFILES:.*|DISTFILES:\trsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
+hostDataSet="$(echo "$pkgROOT" | sed 's,/$,,')"
+hostDataSet="$(getZFSDataSet $hostDataSet)"
+hostSize="$(zfs list ${hostDataSet} | tail -n1 | awk '{print $4}')";
+
+hostJSON="$(curl -s https://ipinfo.io)"
+
+sed -i "s|DATE:.*|DATE:\t\t$(date)|g" /etc/rsync/rsyncd.motd
+sed -i "s|Storage:.*|Storage:\t${hostSize}|g" /etc/rsync/rsyncd.motd
+
+if [[ -n ${hostJSON} ]]; then
+
+    hostCity="$(echo "$hostJSON" | \grep 'city')";
+    hostCity="$(echo ${hostCity#*:} | sed 's/[^A-Za-z]//g')";
+
+    hostCountry="$(echo "$hostJSON" | \grep 'country')";
+    hostCountry="$(echo ${hostCountry#*:} | sed 's/[^A-Za-z]//g')";
+
+    hostRegion="$(echo "$hostJSON" | \grep 'region')";
+    hostRegion="$(echo ${hostRegion#*:} | sed 's/[^A-Za-z]//g')";
+
+    hostTZ="$(echo "$hostJSON" | \grep 'timezone')";
+    hostTZ="$(echo ${hostTZ#*:} | sed 's/[^A-Za-z]//g')";
+
+    hostReverse="$(echo "$hostJSON" | \grep 'hostname')";
+    hostReverse="$(echo ${hostReverse#*:} | sed 's/[^A-Za-z]//g')";
+
+    hostWIP="$(echo "$hostJSON" | \grep "\"ip\"")";
+    hostWIP="$(echo ${hostWIP#*:} | sed 's/[^0-9.:a-f]//g')";
+
+    hostPostal="$(echo "$hostJSON" | \grep 'postal')";
+    hostPostal="$(echo ${hostPostal#*:} | sed 's/[^A-Za-z]//g')";
+
+    hostOrg="$(echo "$hostJSON" | \grep 'org')";
+    hostOrg="$(echo ${hostOrg#*:} | sed 's/[^A-Za-z]//g')";
+
+    hostLoc="$(echo "$hostJSON" | \grep 'loc')";
+    hostLoc="$(echo ${hostLoc#*:} | sed 's/[^A-Za-z]//g')";
+
+    #sed -i "s|HTTP ACCESS:.*|HTTP ACCESS:\thttp://${pkgHOST}|g" /etc/rsync/rsyncd.motd
+    #sed -i "s|FTP ACCESS:.*|FTP ACCESS:\tftp://${pkgHOST}|g" /etc/rsync/rsyncd.motd
+    #sed -i "s|PORTAGE:.*|PORTAGE:\trsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
+    #sed -i "s|RELEASES:.*|RELEASES:\trsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
+    #sed -i "s|SNAPSHOTS:.*|SNAPSHOTS:\trsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
+    #sed -i "s|DISTFILES:.*|DISTFILES:\trsync://${pkgHOST}/gentoo-portage/|g" /etc/rsync/rsyncd.motd
+    sed -i "s|Location:.*|Location:\t${hostCity}, ${hostRegion}, ${hostCountry}|g" /etc/rsync/rsyncd.motd
+    sed -i "s|HOST:.*|HOST:\t\t${hostWIP}|g" /etc/rsync/rsyncd.motd
+
+fi
+
+
 
 printf "patching portage:\n"
 patchFiles_portage / "$(getG2Profile /)"
