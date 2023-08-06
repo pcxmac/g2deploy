@@ -2,6 +2,9 @@
 
 # these algorithms are not optimized for speed, nor are they attempting to remove redundancy in filtering/standardizing.
 
+# NEED A JSON --> YAML CONVERTER UTILITY
+# NEED TO UPDATE TO PROPER YAML, so that list items are acceptabely notated with '-' and regular list items have keys and values.
+
 # return a pad, given the argument's value (white space) ... probably needs to be superseeded with printf %##s
 function yamlPad()
 {

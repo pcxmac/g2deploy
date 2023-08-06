@@ -301,8 +301,6 @@ if [[ -n ${hostJSON} ]]; then
 
 fi
 
-
-
 printf "patching portage:\n"
 patchFiles_portage / "$(getG2Profile /)"
 
