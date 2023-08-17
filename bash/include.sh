@@ -169,32 +169,6 @@ function find_bootType {
 
 }
 
-
-#function arg_parse()
-#{
-	# take a string of text, and find the entry, it's key, and produce it's value, or presence (1)
-
-#	target=${1:?}
-
-#	args="$(echo ${2:?})";
-#	for arg in $args
-#	do
-#		echo "${arg} | ";
-#		[[ ${target%=*} == ${arg%=*} ]] && { 
-#			
-#			[[ ${target#*=} == ${arg#*=} ]] && { 
-#				return ${arg#*=}; 
-#			} || {
-#				return '1';	
-#			};
-#		};
-#
-#	done
-
-#	return '';
-#}
-
-
 # output of 1 = do install, 0 = do nothing, -1 is an error.
 function installed_kernel()
 {

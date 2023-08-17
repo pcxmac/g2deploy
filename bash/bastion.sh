@@ -35,8 +35,6 @@ echo "EXT_NETWORK = $EXT_NETWORK"
 #V_NETWORK="$(ipcalc $V_ADDR/$EXT_MASK | grep 'Network' | awk '{print $2}')"
 #echo "${V_INTER} / address : ${V_ADDR} :: mask : ${V_MASK} :: network : ${V_NETWORK}"
 
-
-
 pkgHOST="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/host")"
 pkgROOT="$(findKeyValue ${SCRIPT_DIR}/config/host.cfg "server:pkgROOT/root")"
 bootUUID="$(find_UUID $(find_boot))"

@@ -34,6 +34,8 @@ function yamlStd()
 	local _padLength=""
 	local _yaml=""
 
+	echo "test"
+
 	# option to use string or file
 	[[ -p /dev/stdin ]] && {  _yaml="$(cat -)"; ordo="stdin"; } || {  _yaml="${1:?}"; ordo="parametric"; };
 	[[ -f ${_yaml} ]] && { _yaml="$(cat "${_yaml}")"; };
@@ -42,10 +44,12 @@ function yamlStd()
 	_yaml="$(printf "${_yaml}" | sed 's/\t/  /g')";											# convert tabs to spaces tabs by themselves will yield a 0 length tab
 	_yaml="$(printf "${_yaml}" | sed 's/#.*$//')";											# clear out comments
 	_yaml="$(printf "${_yaml}" | sed '/^[[:space:]]*$/d')";									# delete empty lines
-	_yaml="$(printf "${_yaml}" | sed 's/[^A-Za-z0-9_${}.:/*-\s ]//g')";						# filter out invalid characters, valid characters present
+	_yaml="$(printf "${_yaml}" | sed 's/[^A-Za-z0-9_$.:/*-\s ]//g')";						# filter out invalid characters, valid characters present
 	_yaml="$(printf "${_yaml}" | sed 's/:[[:space:]]*/:/g;')";								# get rid of space between values, and :
 	_yaml="$(printf "${_yaml}" | sed -e 's/\"//g')";										# filter out quotes
 	_yaml="$(printf "${_yaml}" | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")";	# filter out coloring
+
+	echo "test"
 
 	# root node, is assumed to be the first entry, it will have the root offset, this should be zero.
 	_tmp="$(sed -n '1p' < <(printf '%s\n' $_yaml))"
@@ -60,6 +64,8 @@ function yamlStd()
 	done < <(printf '%s' "${_yaml}" | \grep -iP '^\s.*[A-Za-z0-9]')
 	IFS="${_tmp}"
 
+	echo "test"
+
 	# rebuild yaml with 2x tabs
 	IFS=''
 	while read -r line
@@ -70,7 +76,7 @@ function yamlStd()
 		_padLength="$((_padLength/_tabLength))";
 		# get rid of preceeding whitespace, \t
 		fLine="$(yamlPad $_padLength)$(printf '%s\n' ${line} | sed -e 's/^[ \t]*//')"	
-		printf '%s\n' "${fLine}"
+		printf '%s:%s\n' ${_padLength} ${fLine} 
 	done < <(printf '%s\n' "${_yaml}")
 	IFS="${_tmp}"
 }
