@@ -971,7 +971,9 @@ function mounts()
 
 	# used to build packages which will be held outside the scope of a deployment
 
-	[[ ! -f ${offset%/}/usr/src/${_kver} ]] && { mkdir -p ${offset%/}/usr/src/${_kver}; echo "making ${_kver}"; };
+	echo "$_kver <<<"
+
+	[[ ! -d ${offset%/}/usr/src/${_kver} ]] && { mkdir -p ${offset%/}/usr/src/${_kver}; echo "making ${_kver} @ ${offset%/}" ; };
 	# eselect kernel set GETKVER ... can be reset. ... maybe ... possible conflict ??? requires sync before build ........ ? yes ... weird dependency route
 	ln -sf ${_kver} ${offset%/}/usr/src/linux 
 	#echo "overwriting kernel profile link..."
