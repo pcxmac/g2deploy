@@ -491,7 +491,9 @@ function checkHosts()
 	printf "checking hosts: (%s)\n" "${_config}"
 	for i in $(printf '%s\n' ${_s})
 	do
+
 		_serve="$(findKeyValue ${_config} "server:pkgROOT/repo/${i}")"
+		printf "$_serve"
 		_port="${_serve#*::}"
 		_serve="${_serve%::*}"
 		_result="$(isHostUp ${_serve} ${_port})"
