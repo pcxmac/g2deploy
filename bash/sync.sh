@@ -62,6 +62,14 @@ rPortDIR="$(cat ${pkgCONF} | grep '^location')"
 
 # execution
 
+printf "##################################################################################\n"
+printf "## \n"
+printf "## \n"
+printf "## Please ensure to edit repo package/patch files, in order to propagate outwards.\n"
+printf "## \n"
+printf "## \n"
+printf "##################################################################################\n"
+printf "\n"
 printf "############################ [ BINARY PACKAGES ] #################################\n"
 [[ ! -d ${pkgROOT}/binpkgs ]] && { mkdir -p ${pkgROOT}/binpkgs; };
 

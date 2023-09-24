@@ -10,4 +10,4 @@
 <sys-devel/llvm-15.0.0
 <sys-devel/clang-15.0.0
 
->=sys-kernel/gentoo-sources-6.5.0
+>=sys-kernel/gentoo-sources-6.6.0
