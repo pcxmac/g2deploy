@@ -1,5 +1,6 @@
 # COMMON LICENSES (17.X)
 
+app-arch/unrar unRAR
 sys-kernel/linux-firmware linux-fw-redistributable
 sys-kernel/linux-firmware no-source-code
 sys-firmware/intel-microcode intel-ucode
