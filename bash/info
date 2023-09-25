@@ -39,3 +39,81 @@ lspci   -k = kernel module
         -nn show names and numbers
 
 
+
+
+ META, DEFINING NETWORKS, MACHINES and SERVICES
+
+
+
+ OBJECT : 
+
+    MODULE : 
+
+        ATTRIBUTE :
+
+
+
+machine : jupiter
+
+    peripherals : (generated map)
+
+        peripheral : disabled
+
+        cpu : 
+
+            cores : ...,
+            speed : ...
+
+
+
+    storage : zpool (zpool / bvol / mdadm / ...)
+
+        disks : ...
+            - ... : ...
+            - ... : ...
+            - ... : ...
+
+        ... : ...
+
+            partmap : ...
+
+                ...
+            
+        encryption : 
+        compression : 
+
+        dataset : ...
+
+            attributes : ...
+            
+                encryption key : ...
+
+            mount_point : ...
+
+        dataset : ...
+        ...
+
+
+    MPM-packages : ...      (meta server)
+    KEY-management : ...    (key server)
+        VNETS
+        KEYHOLES
+        PUBLIC_TSL/SSL
+
+    gentoo : 
+
+        profile : 
+
+        portage : 
+
+    
+
+
+
+
+
+
+
+
+
+
