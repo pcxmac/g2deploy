@@ -51,6 +51,20 @@ lspci   -k = kernel module
 
         ATTRIBUTE :
 
+network : 
+
+    point-to-point:
+
+        jupiter.hypokrites.net : 10.4.0.2 
+        mars.hypokrites.net : 10.4.0.3
+
+    hub-spoke:
+
+    mesh:
+
+    ring: 
+
+
 
 
 machine : jupiter
@@ -63,6 +77,10 @@ machine : jupiter
 
             cores : ...,
             speed : ...
+    services:
+
+        lighttpd:
+        rsyncd:
 
 
 
