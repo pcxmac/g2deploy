@@ -893,35 +893,51 @@ function clear_mounts()
 {
 	local offset
 	local procs
-	local dir
-	local output
+	#local dir
+	local mount_lines
 
 	offset="$(echo "$1" | sed 's:/*$::')"
+
+	#echo "offset = $offset"
+	#sleep 10
 
 	[[ -z "${offset}" ]] && { echo "cannot clear rootfs."; return; };
 
 	procs="$(lsof "${offset}" 2>/dev/null | sed '1d' | awk '{print $2}' | uniq)" 
-    	sudodir="$(echo "${offset}" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
-	output="$(cat /proc/mounts | \grep "$dir" | wc -l)"
+    sudodir="$(echo "${offset}" | sed -e 's/[^A-Za-z0-9\\/._-]/_/g')"
+	output="$(cat /proc/mounts | \grep "$offset" | wc -l)"
+
+	#echo "procs = $procs"
+	#echo "sudodir = $sudodir"
+	#echo "mount_lines = $mount_lines"
+	#echo "offset = $offset"
+	#sleep 2
 
 	if [[ -z ${offset} ]];then exit; fi	# this will break the local machine if it attempts to unmount nothing.
 
+	# should require a --kill flag, to force kill processes within this mount.
 	for process in ${procs}; do kill -9 "${process}"; done
 
-	if [[ -n "$(echo "${dir}" | \grep '/dev/')" ]]
-	then
-		dir="${dir}"
-	else
-		dir="${dir}/"
-	fi
+	# this makes no sense, yet, I think its dangerous not to account for  /dev
+	#if [[ -n "$(echo "${dir}" | \grep '/dev/')" ]]
+	#then
+	#	dir="${dir}"
+	#else
+	#	dir="${dir}/"
+	#fi
 
-	while [[ "$output" != 0 ]]
+	#echo "$dir";
+	#sleep 10
+
+	while [[ "$mount_lines" != 0 ]]
 	do
 		while read -r mountpoint
 		do
+			echo $mountpoint
 			umount $mountpoint > /dev/null 2>&1
-		done < <(cat /proc/mounts | \grep "$dir" | awk '{print $2}')
-		output="$(cat /proc/mounts | \grep "$dir" | wc -l)"
+			sleep 1
+		done < <(cat /proc/mounts | \grep "$offset" | awk '{print $2}')
+		mount_lines="$(cat /proc/mounts | \grep "$offset" | wc -l)"
 	done
 
 }

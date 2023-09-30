@@ -112,7 +112,7 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 	chroot "${directory}" /bin/bash -c "deployLocales ${_profile}"
 
-	sleep 30
+	#sleep 30
 
 
  	chroot "${directory}" /bin/bash -c "deploySystem"
