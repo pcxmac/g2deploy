@@ -64,7 +64,13 @@ network :
 
     ring: 
 
+meta-package : libvirt
 
+    packages : 
+
+        configs : 
+
+             
 
 
 machine : jupiter
