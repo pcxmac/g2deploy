@@ -933,9 +933,9 @@ function clear_mounts()
 	do
 		while read -r mountpoint
 		do
-			echo $mountpoint
+			#echo $mountpoint
 			umount $mountpoint > /dev/null 2>&1
-			sleep 1
+			#sleep 1
 		done < <(cat /proc/mounts | \grep "$offset" | awk '{print $2}')
 		mount_lines="$(cat /proc/mounts | \grep "$offset" | wc -l)"
 	done

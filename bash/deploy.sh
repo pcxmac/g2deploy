@@ -30,9 +30,24 @@ source ${SCRIPT_DIR}/bash/include.sh
         case "${x}" in
             work=*)
 
-				# derive work location type: { tmpfs ; zfs ; btrfs ; xfs|ext4 }
+				# derive work location type: { zfs ; btrfs ; xfs|ext4|tmpfs }
 
 				_location="${x#*work=}"
+
+				# ZFS = work=pool/dataset		:: zfs list pool/dataset ... if -s, then type=ZFS
+				# BTRFS = work=bpool/subvol
+				# MISC = /path/to/install/in/
+
+				echo "zfs list ${_location}"
+
+				type="$(zfs list ${_location} | \grep -i "${location}")"
+				[[ -n ${type} ]] && { type="ZFS"; }; 
+				#type="$((btrfs ...))"
+				#[[ -s ${type} ]] && { type="BTRFS"; };
+				# if type not defined, assume
+				#echo "location = $_location";
+				[[ -z ${type} && -d ${_location} ]] && { type="MISC"; };
+				[[ -z ${type} ]] && { type="INVALID"; };
 
                 #? zfs= btrfs= generic= tmpfs=
 				directory=$(getZFSMountPoint "${x#*=}")
@@ -69,6 +84,8 @@ source ${SCRIPT_DIR}/bash/include.sh
 	# need a URL check before proceeding, ie websever check, rsync server check, ftp, etc...
 
 	clear_mounts "${directory}"
+	# in place of generic mounting service (context aware)
+	[[ ${type} == "ZFS" ]] && zfs mount ${_location}; 
 
 	printf 'buildup for @ %s', $_selection
 
@@ -92,6 +109,8 @@ source ${SCRIPT_DIR}/bash/include.sh
 	mounts "${directory}"
 
 
+	# 	-- NOT IMPLIMENTED YET ...
+
 	#	theory of operation , system bootsup, firewall takes over, builds network stack, and triggers a sync on the dom-0
 	#	sync on dom-0, will update the host.cfg, all derivative activities should be accurate, firewall will trigger a sync
 	#	on any network changes, configs should be immediate, regular file syncs should continue to be periodic.
@@ -99,12 +118,12 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 	# networking -preworkup -- a prelude for a networking patch script, most likely only on install, but something like this
 	# is required to build up the deployment ... thinking.
-	pkgHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/host")"
-	bldHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:buildserver/host")"
-	pkgIP="$(getent ahostsv4 ${pkgHOST} | head -n 1 | awk '{print $1}')"
-	bldIP="$(getent ahostsv4 ${bldHOST} | head -n 1 | awk '{print $1}')"
-	sed -i "/${pkgHOST}$/c${pkgIP}\t${pkgHOST}" ${directory}/etc/hosts
-	sed -i "/${bldHOST}$/c${bldIP}\t${bldHOST}" ${directory}/etc/hosts
+	#pkgHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/host")"
+	#bldHOST="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:buildserver/host")"
+	#pkgIP="$(getent ahostsv4 ${pkgHOST} | head -n 1 | awk '{print $1}')"
+	#bldIP="$(getent ahostsv4 ${bldHOST} | head -n 1 | awk '{print $1}')"
+	#sed -i "/${pkgHOST}$/c${pkgIP}\t${pkgHOST}" ${directory}/etc/hosts
+	#sed -i "/${bldHOST}$/c${bldIP}\t${bldHOST}" ${directory}/etc/hosts
 	################ work around ############################################################################################# 
 
 	#echo $_profile
