@@ -1008,9 +1008,22 @@ function mounts()
 
 	cat /etc/mtab | grep "${offset%/}${_PKGDIR%/}"
 
+	# NOT ALWAYS MOUNTING RIGHT !!!!
+
+
+
+
+
 	[[ -z "$(cat /etc/mtab | grep "${offset%/}${_PKGDIR%/}")" ]] && { 
 		mount --bind ${pkgROOT}/binpkgs/ ${offset%/}${_PKGDIR}; echo "mounted binpkgs"; 
 	} || { echo "binpkgs already mounted ..."; };
+
+
+
+
+
+
+
 
 	# mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source "${offset}/usr/src/$(getKVER)"
 	# mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/binpkgs "${offset}/var/lib/portage/binpkgs"

@@ -2,7 +2,7 @@
 
 kde-apps/kwalletmanager
 kde-plasma/plasma-desktop
-x11-misc/sddm
+#x11-misc/sddm
 kde-plasma/plasma-meta
 kde-apps/konsole
 app-editors/gedit
@@ -11,3 +11,4 @@ kde-plasma/plasma-nm
 kde-plasma/plasma-pa
 media-sound/pavucontrol-qt
 x11-terms/kitty
+x11-misc/lightdm

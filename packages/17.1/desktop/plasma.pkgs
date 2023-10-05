@@ -8,7 +8,8 @@ app-editors/gedit
 app-editors/gedit-plugins
 kde-plasma/plasma-nm
 sys-auth/elogind
-x11-misc/sddm
+#x11-misc/sddm
 kde-plasma/plasma-pa
 media-sound/pavucontrol-qt
 x11-terms/kitty
+x11-misc/lightdm

@@ -3,7 +3,8 @@
 ln -sf /dev/null /etc/systemd/system/systemd-resolved.service
 ln -sf /dev/null /etc/systemd/system/rpcbind.service
 
-systemctl enable sddm.service
+systemctl enable lightdm.service
+#systemctl enable sddm.service
 dir="/var/lib/AccountsService/users"
 
 mkdir -p $dir

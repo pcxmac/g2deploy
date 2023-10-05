@@ -23,3 +23,4 @@ media-libs/libcanberra pulseaudio
 media-plugins/alsa-plugins pulseaudio
 
 media-libs/libvpx postproc
+kde-plasma/plasma-meta -sddm
