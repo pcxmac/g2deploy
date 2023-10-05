@@ -1,6 +1,6 @@
 # PLASMA SERVICES ROLLUP
 
-sed -i "/DISPLAYMANAGER/c DISPLAYMANAGER='lightdm'" /etc/conf.d/display-manager
+sed -i "/DISPLAYMANAGER/c DISPLAYMANAGER='sddm'" /etc/conf.d/display-manager
 emerge --ask --noreplace gui-libs/display-manager-init --ask=n
 rc-update add elogind boot
 rc-update add dbus
