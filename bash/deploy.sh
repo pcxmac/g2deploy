@@ -47,6 +47,7 @@ source ${SCRIPT_DIR}/bash/include.sh
 				# if type not defined, assume
 				#echo "location = $_location";
 				[[ -z ${type} && -d ${_location} ]] && { type="MISC"; };
+				# if not a directory, or btrfs/zfs, then it has to be an invalid reference...
 				[[ -z ${type} ]] && { type="INVALID"; };
 
                 #? zfs= btrfs= generic= tmpfs=
