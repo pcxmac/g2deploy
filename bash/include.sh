@@ -72,10 +72,14 @@ function zfsMaxSupport() {
 function find_UUID() {
 
 	# /dev/address of disk
-	rType="${1:?}"
+	local rType="${1}"
+	local lType=''
 
-	lType="$(ls /dev/disk/by-uuid/ -ail | grep "${rType##*/}"  | awk '{print $10}')"
-	#lType="/dev/${lType##*/}";
+	[[ -n ${rType} ]] && {
+		lType="$(ls /dev/disk/by-uuid/ -ail | grep "${rType##*/}"  | awk '{print $10}')";
+	} || {
+		lType="";
+	};
 
 	echo $lType
 }
@@ -89,6 +93,9 @@ function find_boot() {
 	local lType='';
 
 	[[ -n ${param} ]] && {
+		
+		#echo "a"
+		
 		[[ "$(echo "/dev/${$(readlink /dev/disk/by-uuid/${param})##*/}")" != "/dev/" ]] && { 
 			rType=${param}; 
 			#echo "value passed - uuid";
@@ -99,9 +106,15 @@ function find_boot() {
 			#echo "value passed - disk"
 		};
 	} || {
+
+		#echo "b"
+
 		# if no valid uuid or device passed
 		# check /boot in /proc/mounts
 		[[ -z ${rType} ]] && {
+
+			#echo "1"
+
 			rType="$(cat /proc/mounts | \grep ' /boot ' | sed $'s/ /\\n/g')"; 
 			rType="$(echo "${rType}" | \grep '^/dev/')"; 
 			[[ -n ${rType} ]] && {
@@ -111,6 +124,9 @@ function find_boot() {
 		};
 		# check kernel /proc/cmdline
 		[[ -z ${rType} ]] && { 
+
+			#echo "2"
+
 			rType="$(cat /proc/cmdline | \grep 'boot=' | sed $'s/ /\\n/g')"; 
 			[[ -n ${rType} ]] && {
 				rType="$(echo "${rType}" | \grep '^boot=')";
@@ -119,8 +135,11 @@ function find_boot() {
 		};
 	};
 	#echo $rType
-	lType="$(ls /dev/disk/by-uuid/${rType} -ail | awk '{print $12}')"
-	lType="/dev/${lType##*/}";
+	
+	[[ -f /dev/disk/by-uuid/${rType} ]] && {
+		lType="$(ls /dev/disk/by-uuid/${rType} -ail | awk '{print $12}')"
+		lType="/dev/${lType##*/}";
+	}	
 	echo $lType
 }
 

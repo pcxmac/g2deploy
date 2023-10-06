@@ -1,7 +1,10 @@
 # PLASMA USES
 
 sys-libs/zlib minizip
-media-video/ffmpeg opus vpx
+
+media-video/ffmpeg opus vpx vaapi 
+media-video/mpv -X -opengl vaapi sdl jack openal -xv
+
 media-libs/mesa xa
 media-libs/libsndfile minimal
 dev-libs/libbpf	static-libs
