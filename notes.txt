@@ -45,6 +45,10 @@ the meta '::' operator.
 
 need better user tracking and shell history carryover.
 
+-----------------------------------------------------------
+
+install appears to work okay, however, i need to verify that I can install to singular partitions, and modify existing boot drives.
+Also, it appears refind.d is missing on new boot drives ; and there was some missing transfers on to the boot partition during install. 
 
 ------------------------------------------------------------
 
