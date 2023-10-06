@@ -13,3 +13,5 @@ kde-plasma/plasma-pa
 media-sound/pavucontrol-qt
 x11-terms/kitty
 #x11-misc/lightdm
+kde-apps/dolphin
+kde-apps/konqueror

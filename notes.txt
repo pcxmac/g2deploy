@@ -41,9 +41,9 @@ if no meta declaration : ie. build=plasma ... then deployments are obtained from
 
 the meta '::' operator.
 
+-----------------------------------------------------------
 
-
-
+need better user tracking and shell history carryover.
 
 
 
