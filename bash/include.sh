@@ -135,11 +135,12 @@ function find_boot() {
 		};
 	};
 	#echo $rType
-	
-	[[ -f /dev/disk/by-uuid/${rType} ]] && {
-		lType="$(ls /dev/disk/by-uuid/${rType} -ail | awk '{print $12}')"
+	#ls -ail /dev/disk/by-uuid/${rType}
+
+	[[ -L /dev/disk/by-uuid/${rType} ]] && {
+		lType="$(ls /dev/disk/by-uuid/${rType} -ail | awk '{print $12}')";
 		lType="/dev/${lType##*/}";
-	}	
+	}
 	echo $lType
 }
 
