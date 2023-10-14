@@ -768,7 +768,8 @@ function tStamp()
 # ./update.sh / update -> updates system
 # ./update.sh / profile -> updates profile on server
 #	:: /etc/portage/... package server, must have an rsync method for saving profiles... Authenticated, based on machine PKI
-
+# 	:: ./install.sh --> (can include URL for profile, local or remote to include hostname, existing public key)
+#	:: need a method for delivering private key to new hosts, existing profiles. 'AUTHENTICATED' profiles
 
 function patchSystem()	
 {
