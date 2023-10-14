@@ -739,7 +739,9 @@ function deployServices()
 
 function deployLocales()
 {
-
+	# need a wrapper function for 'determining' locality, xml interface statements binded to URLs like https://ipinfo.io/
+	# also, manual mechanism, via installer gui/script
+ 
     local key="${1:?}"
 	locale-gen -A
 	eselect locale set en_US.utf8
