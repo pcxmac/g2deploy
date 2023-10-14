@@ -763,6 +763,13 @@ function tStamp()
 	echo "0x$(echo "obase=16; $(date +%s)" | bc)"
 }
 
+# PATCHFILES MUST INCLUDE PROVISIONING FOR 'PROFILES' / PER MACHINE/USER PROFILING
+# PATCHFILES MUST NOT DELETE EXISTING CONFIGURATIONS
+# ./update.sh / update -> updates system
+# ./update.sh / profile -> updates profile on server
+#	:: /etc/portage/... package server, must have an rsync method for saving profiles... Authenticated, based on machine PKI
+
+
 function patchSystem()	
 {
     local profile="${1:?}"
@@ -790,6 +797,10 @@ function patchSystem()
 
 function patchFiles_portage() 
 {
+
+
+
+
 
     local offset="${1:?}"
 	# because the repo hasn't been installed yet, cannot use getg2profile
