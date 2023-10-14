@@ -648,6 +648,8 @@ function deployBuildup()
 	fileasc="${fileasc##*/}"
 	filexz="${filexz##*/}"
 
+	# PARENT INSTALLER NEEDS TO HAVE 'app-portage/getuto' INSTALLED FOR THE SIG TO PICK UP CORRECTLY
+
 	gpg --verify "${offset}/${fileasc}"
 	rm ${offset}/${fileasc}
 
@@ -671,7 +673,15 @@ function deployBuildup()
 
 function deploySystem()
 {
+
+
+	gpg --list-secret-keys --keyid-format=long
+	sleep 20
+
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+
+	echo "installing gpg keys"
+	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
 	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
 	av="$(pquery sys-apps/portage --max 2>/dev/null)"
@@ -701,6 +711,9 @@ function deploySystem()
 	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} $(cat /package.list)
 	#rm /package.list
 
+	# run getuto to buildup gpg
+	/usr/bin/getuto
+
 	echo "DEPLOY::EMERGE ZED FILE SYSTEM"
 	emergeOpts="--verbose-conflicts"
 	FEATURES="-getbinpkg -buildpkg" emerge ${emergeOpts} =zfs-9999 --nodeps
@@ -709,7 +722,7 @@ function deploySystem()
 	echo "DEPLOY::POST INSTALL UPDATE !!!"
 	FEATURES="-collision-detect -protect-owned"emerge -b -uDN --with-bdeps=y @world --ask=n ${emergeOpts}
 
-	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
+	#wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
 	eselect news read new
 	eclean distfiles
@@ -786,7 +799,7 @@ function patchFiles_portage()
 	common_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/common" | sed 's/ //g' | sed "s/\"/'/g")"
 	spec_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/${_profile}" | sed 's/ //g' | sed "s/\"/'/g")"
 
-	mget "${psrc}/portage" "${offset}/etc/"
+	mget "${psrc}/portage" "${offset}/etc/" --delete
 
 	# if directories exist for new sources, zap them
 	if [[ -d ${offset}/etc/portage/package.license ]];then rm "${offset}/etc/portage/package.license" -R; fi
@@ -1000,6 +1013,8 @@ function mounts()
 		mount -t tmpfs -o size=$mSize tmpfs "${offset%/}/tmp"	# tmpfs /tmp
 		mount -t tmpfs tmpfs "${offset%/}/var/tmp"
 		mount -t tmpfs tmpfs "${offset%/}/run"
+		# /run/lock required for items like GPG, also required during package build|f/s generation
+		mkdir -p "${offset%/}/run/lock/"
 		echo "mounted mtab"
 	} || { echo "/tmp already exists ..."; };
 
@@ -1019,30 +1034,37 @@ function mounts()
 		echo "mounted source ..."
 	} || { echo "source already mounted ..."; };
 
-	_PKGDIR="$(cat ${offset%/}/etc/portage/make.conf | grep '^PKGDIR' | sed -e 's/\"//g')"
-	_PKGDIR="${_PKGDIR#*=}";
-	_PKGDIR="${_PKGDIR%/binpkgs*}/binpkgs/";
+	_BASEDIR="$(cat ${offset%/}/etc/portage/make.conf | \grep '^PKGDIR' | sed -e 's/\"//g')"
+	_BASEDIR="${_BASEDIR#*=}";
+	_BASEDIR="${_BASEDIR%/binpkgs*}";
+	_PKGDIR="${_BASEDIR%/}/binpkgs/";
+	_HOMEDIR="${_BASEDIR%/}/home/";
+	_DISTDIR="${_BASEDIR%/}/distfiles";
 
+	#echo "$pkgROOT :: $offset :: $_BASEDIR"
 
 	[[ ! -d ${offset%/}${_PKGDIR} ]] && { echo "?..."; mkdir -p ${offset%/}${_PKGDIR}; }; 
 
-	cat /etc/mtab | grep "${offset%/}${_PKGDIR%/}"
+	#cat /etc/mtab | grep "${offset%/}${_PKGDIR%/}"
 
 	# NOT ALWAYS MOUNTING RIGHT !!!!
 
-
-
-
+	#echo "${offset%/}${_PKGDIR%/}"
 
 	[[ -z "$(cat /etc/mtab | grep "${offset%/}${_PKGDIR%/}")" ]] && { 
 		mount --bind ${pkgROOT}/binpkgs/ ${offset%/}${_PKGDIR}; echo "mounted binpkgs"; 
 	} || { echo "binpkgs already mounted ..."; };
 
+	#echo "${offset%/}${_HOMEDIR%/}"
 
+	[[ -z "$(cat /etc/mtab | grep "${offset%/}${_HOMEDIR%/}")" ]] && { 
+		mount --bind ${pkgROOT}/home/ ${offset%/}${_HOMEDIR}; echo "mounted home"; 
+	} || { echo "home already mounted ..."; };
 
-
-
-
+#	DISTFILES - OVER WEB/HTTP
+	[[ -z "$(cat /etc/mtab | grep "${offset%/}${_DISTDIR%/}")" ]] && { 
+		mount --bind ${pkgROOT}/distfiles/ ${offset%/}${_DISTDIR}; echo "mounted distfiles"; 
+	} || { echo "distfiles already mounted ..."; };
 
 
 	# mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source "${offset}/usr/src/$(getKVER)"

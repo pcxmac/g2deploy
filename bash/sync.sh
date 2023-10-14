@@ -110,7 +110,8 @@ then
     printf "################################ [ SNAPSHOTS ] ###################################\n"
     printf "SYNCING w/ ***%s***\n" "${URL}"
     [[ ! -d ${pkgROOT/snapshots} ]] && { mkdir -p ${pkgROOT/snapshots}; };
-    rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial --append-verify --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
+    rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial \
+        --append-verify --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
     chown "${owner}:${group}"   "${pkgROOT}/snapshots"  -R	1>/dev/null
     chmod a-X       "${pkgROOT}/snapshots"              -R  1>/dev/null
@@ -124,11 +125,15 @@ then
     [[ ! -d ${pkgROOT/releases} ]] && { mkdir -p ${pkgROOT/releases}; };
     find "${pkgROOT}"/releases/ -type l -delete
     [[ ${pkgARCH} == "*" ]] && {
-        rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial --append-verify  --no-owner --no-group "${URL}" "${pkgROOT}"/releases/ | tee /var/log/esync.log;
+        rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial \
+            --append-verify --exclude="*binpackages*"                                                           \
+            --no-owner --no-group "${URL}" "${pkgROOT}"/releases/ | tee /var/log/esync.log;
     } || {
         echo "$URL :: ${pkgROOT}/"
         sleep 10
-        rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial --append-verify --include="*/" --include="*${pkgARCH}*" --exclude="*" --no-owner --no-group "${URL}" "${pkgROOT}"/releases/ | tee /var/log/esync.log;
+        rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial \
+            --append-verify --include="*/" --include="*${pkgARCH}*" --exclude="*"  --exclude="*binpackages*"    \
+            --no-owner --no-group "${URL}" "${pkgROOT}"/releases/ | tee /var/log/esync.log;
     };
 
     chown "${owner}:${group}"   "${pkgROOT}/releases"   -R	1>/dev/null
@@ -142,7 +147,8 @@ then
     printf "############################### [ DISTFILES ] ###################################\n"
     printf "SYNCING w/ ***%s***\n" "${URL}"
     [[ ! -d ${pkgROOT/distfiles} ]] && { mkdir -p ${pkgROOT/distfiles}; };
-    rsync -avI --info=progress2 --timeout=300 --ignore-existing --partial --append-verify --ignore-times --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
+    rsync -avI --info=progress2 --timeout=300 --ignore-existing --append-verify --ignore-times --partial \
+        --no-perms --no-owner --no-group "${URL}" "${pkgROOT}"/ | tee /var/log/esync.log
 
     chown "${owner}:${group}"   "${pkgROOT}/distfiles"  -R	1>/dev/null
     chmod a-X       "${pkgROOT}/distfiles"              -R  1>/dev/null
