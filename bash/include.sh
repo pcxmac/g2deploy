@@ -799,7 +799,8 @@ function patchFiles_portage()
 	common_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/common" | sed 's/ //g' | sed "s/\"/'/g")"
 	spec_URI="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh ${SCRIPT_DIR}/config/mirrors/package http)/${_profile}" | sed 's/ //g' | sed "s/\"/'/g")"
 
-	mget "${psrc}/portage" "${offset}/etc/" --delete
+	# -- delete would not preserve the profile soft link ? --keep-dirlinks ?
+	mget "${psrc}/portage" "${offset}/etc/" #--keep-dirlinks --delete
 
 	# if directories exist for new sources, zap them
 	if [[ -d ${offset}/etc/portage/package.license ]];then rm "${offset}/etc/portage/package.license" -R; fi
