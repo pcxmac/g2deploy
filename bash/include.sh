@@ -770,6 +770,8 @@ function tStamp()
 #	:: /etc/portage/... package server, must have an rsync method for saving profiles... Authenticated, based on machine PKI
 # 	:: ./install.sh --> (can include URL for profile, local or remote to include hostname, existing public key)
 #	:: need a method for delivering private key to new hosts, existing profiles. 'AUTHENTICATED' profiles
+# need a key|oldap server, and a way to 'seed' authentication mechanisms with './install.sh'
+
 
 function patchSystem()	
 {
