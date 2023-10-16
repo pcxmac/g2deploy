@@ -620,6 +620,8 @@ function deployBuildup()
 
 	count="$(find "${offset}/" | wc -l)"
 
+	#echo "count = $count"
+
 	if [[ ${count} -gt 1 ]]
 	then
 		rm -rv ${offset:?}/* | pv -l -s "${count}" > /dev/null
@@ -627,12 +629,15 @@ function deployBuildup()
 		echo -e "done "
 	fi
 
+	#echo "test"
+
 	files="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/releases" http "${selection}")"
 	filexz="$(echo "${files}" | grep '.xz$')"
 	fileasc="$(echo "${files}" | grep '.asc$')"
 	serverType="${filexz%//*}"
 
-	
+	#echo "$files"
+	#echo "$serverType"
 
 	case ${serverType%//*} in
 		"file:/")

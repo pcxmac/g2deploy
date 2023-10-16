@@ -58,8 +58,10 @@ pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 								urlBase="${server#*://}${locationStr}"
 								selectStr="${locationStr#*current-*}"
 								selectStr="${selectStr%*/}"
-								urlCurrent_xz="$(ls ${urlBase} | grep "${selectStr}" | grep ".xz$")"
-								urlCurrent_asc="$(ls ${urlBase} | grep "${selectStr}" | grep ".asc$")"
+								#echo "url base = ${urlBase}"
+								# ... sort and head get rid of older stale links inside current directory
+								urlCurrent_xz="$(ls ${urlBase} | grep "${selectStr}" | sort -r | grep ".xz$" | head -n 1)"
+								urlCurrent_asc="$(ls ${urlBase} | grep "${selectStr}" | sort -r | grep ".asc$" | head -n 1)"
 								urlBase="${server}${locationStr}"
 								if [[ -n $urlCurrent_xz ]];	then
 									printf "${urlBase}${urlCurrent_xz}\n"
@@ -99,10 +101,10 @@ pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 						dir="${dir%releases/*}"
 						selectStr="${release_base_string#*current-}"
 						selectStr="${selectStr%*/}"
-						# check for host
+						# check for host ... sort and head get rid of older stale links inside current directory
 						[[ -z "$(isHostUp ${hostname} 873)" ]] && { exit; }
-						urlCurrent_xz="$(rsync -n ${hostname}::${dir}${release_base_string} | awk '{print $5}' | sed -e 's/<[^>]*>//g' | grep "${selectStr}" | grep ".xz$")"
-						urlCurrent_asc="$(rsync -n ${hostname}::${dir}${release_base_string} | awk '{print $5}' | sed -e 's/<[^>]*>//g' | grep "${selectStr}" | grep ".asc$")"
+						urlCurrent_xz="$(rsync -n ${hostname}::${dir}${release_base_string} | awk '{print $5}' | sed -e 's/<[^>]*>//g' | grep "${selectStr}" | sort -r | grep ".xz$" | head -n 1 )"
+						urlCurrent_asc="$(rsync -n ${hostname}::${dir}${release_base_string} | awk '{print $5}' | sed -e 's/<[^>]*>//g' | grep "${selectStr}" | sort -r | grep ".asc$" | head -n 1 )"
 						printf "${server%releases/*}${release_base_string}${urlCurrent_xz}\n"
 						printf "${server%releases/*}${release_base_string}${urlCurrent_asc}\n"
 						exit
@@ -126,12 +128,12 @@ pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 
 					# eselect profile is getting punked, wtf bro ! --- attempted to delete extraneous folders in portage-patchfiles, profile and saved config
 					#echo "$hostname $selectStr $urlBase $locationStr $urlCurrent"
-
+					# ... sort and head get rid of older stale links inside current directory
 					[[ -z "$(isHostUp ${hostname} '80')" && -z "$(isHostUp ${hostname} '443')" ]] && { exit; };
-					if [[ ${type} == "http" ]];then urlCurrent="$(curl -s ${urlBase} --silent | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"; fi
-					if [[ ${type} == "ftp" ]];then urlCurrent="$(curl -s ${urlBase} --silent --list-only | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-')"; fi
+					if [[ ${type} == "http" ]];then urlCurrent="$(curl -s ${urlBase} --silent | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-' | sort -r)"; fi
+					if [[ ${type} == "ftp" ]];then urlCurrent="$(curl -s ${urlBase} --silent --list-only | grep "${selectStr}" | sed -e 's/<[^>]*>//g' | grep '^stage3-' | sort -r)"; fi
 
-
+					#echo "$urlCurrent"
 					urlCurrent="$(echo ${urlCurrent} | awk '{print $1}' | head -n 1 )"
 					urlCurrent="${urlCurrent%.t*}"
 
