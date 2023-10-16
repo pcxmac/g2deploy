@@ -681,7 +681,7 @@ function deploySystem()
 
 
 	gpg --list-secret-keys --keyid-format=long
-	sleep 20
+	sleep 3
 
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
@@ -716,8 +716,9 @@ function deploySystem()
 	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} $(cat /package.list)
 	#rm /package.list
 
+	# Only used to obstantiate a /var/lib/portage/.gnupg directory ... need more understanding of how keyserver is rolled in to udpating user space. and gentoo keys are refreshed
 	# run getuto to buildup gpg
-	/usr/bin/getuto
+	#/usr/bin/getuto
 
 	echo "DEPLOY::EMERGE ZED FILE SYSTEM"
 	emergeOpts="--verbose-conflicts"
