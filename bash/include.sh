@@ -1091,10 +1091,11 @@ function mounts()
 	# stage 1
 	mget ${pkgROOT}/home/ ${offset%/}${_HOMEDIR}
 
-#	DISTFILES - OVER WEB/HTTP
-	[[ -z "$(cat /etc/mtab | grep "${offset%/}${_DISTDIR%/}")" ]] && { 
-		mount --bind ${pkgROOT}/distfiles/ ${offset%/}${_DISTDIR}; echo "mounted distfiles"; 
-	} || { echo "distfiles already mounted ..."; };
+#	DISTFILES - OVER WEB/HTTP ... MUST BE, AND assigned in package/common.conf
+
+	#[[ -z "$(cat /etc/mtab | grep "${offset%/}${_DISTDIR%/}")" ]] && { 
+	#	mount --bind ${pkgROOT}/distfiles/ ${offset%/}${_DISTDIR}; echo "mounted distfiles"; 
+	#} || { echo "distfiles already mounted ..."; };
 
 
 	# mount -t fuse.sshfs -o uid=0,gid=0,allow_other root@${pkgHOST}:${pkgROOT}/source "${offset}/usr/src/$(getKVER)"
