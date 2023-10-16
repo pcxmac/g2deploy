@@ -692,6 +692,11 @@ function deploySystem()
 	av="$(pquery sys-apps/portage --max 2>/dev/null)"
 	echo "DEPLOY::CHECKING PORTAGE ${av##*-}/${pv##*-}"
 
+	_DISTDIR="$(emerge --info | \grep "^DISTDIR" | sed -e 's/\"//g')"
+	_DISTDIR="${_DISTDIR#*=}";
+
+	chown portage:portage $_DISTDIR -R
+
 	# portage
 	if [[ "${av##*-}" != "${pv##*-}" ]]
 	then
@@ -729,6 +734,9 @@ function deploySystem()
 	FEATURES="-collision-detect -protect-owned"emerge -b -uDN --with-bdeps=y @world --ask=n ${emergeOpts}
 
 	#wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
+
+	# need to get variable from make.conf || emerge --info
+	rm ${_DISTDIR}/* -R
 
 	eselect news read new
 	eclean distfiles
