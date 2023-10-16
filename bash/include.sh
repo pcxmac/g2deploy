@@ -716,7 +716,7 @@ function deploySystem()
 	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} $(cat /package.list)
 	#rm /package.list
 
-	# Only used to obstantiate a /var/lib/portage/.gnupg directory ... need more understanding of how keyserver is rolled in to udpating user space. and gentoo keys are refreshed
+	# Only used to instantiate a /var/lib/portage/.gnupg directory ... need more understanding of how keyserver is rolled in to udpating user space. and gentoo keys are refreshed
 	# run getuto to buildup gpg
 	#/usr/bin/getuto
 
