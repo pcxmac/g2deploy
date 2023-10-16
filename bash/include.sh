@@ -1079,9 +1079,17 @@ function mounts()
 
 	#echo "${offset%/}${_HOMEDIR%/}"
 
-	[[ -z "$(cat /etc/mtab | grep "${offset%/}${_HOMEDIR%/}")" ]] && { 
-		mount --bind ${pkgROOT}/home/ ${offset%/}${_HOMEDIR}; echo "mounted home"; 
-	} || { echo "home already mounted ..."; };
+#####	BECAUSE EACH DEPLOYMENT REQUIRES LOCKING ON .pbx there needs to be made a copy, in to every deployment.
+#		1st stage, rote copy to, with default key.
+#		1.5 stage, mechanisms for authenticating, manually assigning gnupg keys.
+#		2nd stage, mechanism for auth-key server instantiation/authentication
+
+#	[[ -z "$(cat /etc/mtab | grep "${offset%/}${_HOMEDIR%/}")" ]] && { 
+#		mount --bind ${pkgROOT}/home/ ${offset%/}${_HOMEDIR}; echo "mounted home"; 
+#	} || { echo "home already mounted ..."; };
+
+	# stage 1
+	mget ${pkgROOT}/home/ ${offset%/}${_HOMEDIR}
 
 #	DISTFILES - OVER WEB/HTTP
 	[[ -z "$(cat /etc/mtab | grep "${offset%/}${_DISTDIR%/}")" ]] && { 
