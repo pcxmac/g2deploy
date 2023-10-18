@@ -688,6 +688,12 @@ function deploySystem()
 	echo "installing gpg keys"
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
+	emerge ${_emergeOpts} sec-keys/openpgp-keys-gentoo-auth sec-keys/openpgp-keys-gentoo-developers sec-keys/openpgp-keys-gentoo-release
+	gpg --import /usr/share/openpgp-keys/gentoo-auth.asc
+	gpg --import /usr/share/openpgp-keys/gentoo-developers.asc
+	gpg --import /usr/share/openpgp-keys/gentoo-release.asc
+	# end of gpg 
+
 	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
 	av="$(pquery sys-apps/portage --max 2>/dev/null)"
 	echo "DEPLOY::CHECKING PORTAGE ${av##*-}/${pv##*-}"
@@ -706,7 +712,6 @@ function deploySystem()
 
 	# SYNC
 	emerge --sync --ask=n
-
 
 	echo "DEPLOY::ISSUING UPDATES"
 	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n
@@ -735,7 +740,7 @@ function deploySystem()
 
 	#wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
-	# need to get variable from make.conf || emerge --info
+	# need to get variable from make.conf || emerge --info ... because eClean ? sucks ?
 	rm ${_DISTDIR}/* -R
 
 	eselect news read new
@@ -1098,6 +1103,7 @@ function mounts()
 #	} || { echo "home already mounted ..."; };
 
 	# stage 1
+	echo "checking portage home ${_HOMEDIR}" 
 	mget ${pkgROOT}/home/ ${offset%/}${_HOMEDIR}
 
 #	DISTFILES - OVER WEB/HTTP ... MUST BE, AND assigned in package/common.conf
