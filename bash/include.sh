@@ -290,7 +290,8 @@ function update_kernel()
 
 function update_runtime()
 {
-	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+	local emergeOpts="--backtrack=99 --verbose --tree --verbose-conflicts"
+#	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
 	echo "UPDATE::RUNTIME_UPDATE !"
 
@@ -357,7 +358,8 @@ function build_kernel()
 	_bootPart=${1:?}
 	_fsType="$(\df -Th ${_bootPart} | awk '{print $2}' | tail -n 1)"
 	_rootFS=""
-	local emergeOpts="--ask=n --buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+	local emergeOpts="--ask=n --backtrack=99 --verbose --tree --verbose-conflicts"
+#	local emergeOpts="--ask=n --buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
 	_kernels_current="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root")"
 	_kernel='/usr/src/linux/'
@@ -620,7 +622,7 @@ function deployBuildup()
 
 	count="$(find "${offset}/" | wc -l)"
 
-	echo "---error log---" 2>/emerge.errors
+	echo "---error log---" > ${offset}/emerge.errors
 
 	#echo "count = $count"
 
@@ -657,10 +659,10 @@ function deployBuildup()
 
 	# PARENT INSTALLER NEEDS TO HAVE 'app-portage/getuto' INSTALLED FOR THE SIG TO PICK UP CORRECTLY
 
-	gpg --verify "${offset}/${fileasc}"  2>>/emerge.errors
+	gpg --verify "${offset}/${fileasc}"  2>>${offset}/emerge.errors
 	rm ${offset}/${fileasc}
 
-	decompress "${offset}/${filexz}" "${offset}"  2>>/emerge.errors
+	decompress "${offset}/${filexz}" "${offset}"  2>>${offset}/emerge.errors
 	rm ${offset}/${filexz}
 
 	# just use patchfiles ...
@@ -683,22 +685,23 @@ function deploySystem()
 
 
 	gpg --list-secret-keys --keyid-format=long
-	sleep 3
+	#sleep 3
 
-	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+#	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+	local emergeOpts="--backtrack=99 --verbose --tree --verbose-conflicts"
 
-	echo "installing gpg keys"  2>>/emerge.errors
+	echo "installing gpg keys"  >>/emerge.errors
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
 	emerge ${_emergeOpts} sec-keys/openpgp-keys-gentoo-auth sec-keys/openpgp-keys-gentoo-developers sec-keys/openpgp-keys-gentoo-release  2>>/emerge.errors
-	gpg --import /usr/share/openpgp-keys/gentoo-auth.asc
-	gpg --import /usr/share/openpgp-keys/gentoo-developers.asc
-	gpg --import /usr/share/openpgp-keys/gentoo-release.asc
+	gpg --import /usr/share/openpgp-keys/gentoo-auth.asc 2>>/emerge.errors
+	gpg --import /usr/share/openpgp-keys/gentoo-developers.asc 2>>/emerge.errors
+	gpg --import /usr/share/openpgp-keys/gentoo-release.asc 2>>/emerge.errors
 	# end of gpg 
 
 	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
 	av="$(pquery sys-apps/portage --max 2>/dev/null)"
-	echo "DEPLOY::CHECKING PORTAGE ${av##*-}/${pv##*-}"  2>>/emerge.errors
+	echo "DEPLOY::CHECKING PORTAGE ${av##*-}/${pv##*-}" >>/emerge.errors
 
 	_DISTDIR="$(emerge --info | \grep "^DISTDIR" | sed -e 's/\"//g')"
 	_DISTDIR="${_DISTDIR#*=}";
@@ -715,16 +718,16 @@ function deploySystem()
 	# SYNC
 	emerge --sync --ask=n  2>>/emerge.errors
 
-	echo "DEPLOY::ISSUING UPDATES"  2>>/emerge.errors
+	echo "DEPLOY::ISSUING UPDATES"  >>/emerge.errors
 	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n
 
-	echo "APPLYING NECCESSARY PRE-BUILD PATCHES"  2>>/emerge.errors
+	echo "APPLYING NECCESSARY PRE-BUILD PATCHES"  >>/emerge.errors
 	
 	sh < /patches.sh
 
 	#rm /patches.sh
 
-	echo "DEPLOY::EMERGE PROFILE PACKAGES" 2>>/emerge.errors
+	echo "DEPLOY::EMERGE PROFILE PACKAGES" >>/emerge.errors
 	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} $(cat /package.list)  2>>/emerge.errors
 	#rm /package.list
 
@@ -736,7 +739,9 @@ function deploySystem()
 	emergeOpts="--verbose-conflicts"
 	FEATURES="-getbinpkg -buildpkg" emerge ${emergeOpts} =zfs-9999 --nodeps  2>>/emerge.errors
 
-	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+	local emergeOpts="--backtrack=99 --verbose --tree --verbose-conflicts"
+#	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+
 	echo "DEPLOY::POST INSTALL UPDATE !!!"
 	FEATURES="-collision-detect -protect-owned" emerge -b -uDN --with-bdeps=y @world --ask=n ${emergeOpts}  2>>/emerge.errors
 
@@ -753,7 +758,7 @@ function deploySystem()
 
 function deployServices() 
 {
-	echo "DEPLOY::EXECUTING SERVICE ROUTINE"  2>>/emerge.errors
+	echo "DEPLOY::EXECUTING SERVICE ROUTINE"  >>/emerge.errors
 	sh < /services.sh  2>>/emerge.errors
 	rm /services.sh
 }
@@ -764,7 +769,8 @@ function deployLocales()
 	# also, manual mechanism, via installer gui/script
  
     local key="${1:?}"
-	locale-gen -A
+	echo "generating locales..."
+	locale-gen -A >>/emerge.errors
 	eselect locale set en_US.utf8
 
 	printf "${colR}\n" "verify /etc/hosts file, which is patched, matches the correct server, otherwise nothing will be found on deployment..."  2>>/emerge.errors
