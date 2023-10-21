@@ -12,8 +12,15 @@ do
 	build="$(findKeyValue ../config/build.cfg deploy:$x/build)"
 	dset="$(findKeyValue ../config/build.cfg deploy:$x/dset)"
 
+	# for testing 
+	binpkgs="$(findKeyValue ../config/host.cfg server:pkgROOT/root)/binpkgs/"
+
 	if [[ -n ${work} ]]
 	then
+
+		# for testing
+		sudo rm ${binpkgs}* -R
+
 		clear_mounts $work
 
 		echo "destroying old dataset @ $dset, if exists"
