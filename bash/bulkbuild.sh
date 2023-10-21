@@ -4,6 +4,8 @@ source ./include.sh
 
 ./sync.sh
 
+echo "working ..."
+
 for ((x=1;x<8;x++))
 do
 	work="$(findKeyValue ../config/build.cfg deploy:$x/work)"

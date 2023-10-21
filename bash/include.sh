@@ -620,6 +620,8 @@ function deployBuildup()
 
 	count="$(find "${offset}/" | wc -l)"
 
+	echo "---error log---" 2>/emerge.errors
+
 	#echo "count = $count"
 
 	if [[ ${count} -gt 1 ]]
@@ -655,10 +657,10 @@ function deployBuildup()
 
 	# PARENT INSTALLER NEEDS TO HAVE 'app-portage/getuto' INSTALLED FOR THE SIG TO PICK UP CORRECTLY
 
-	gpg --verify "${offset}/${fileasc}"
+	gpg --verify "${offset}/${fileasc}"  2>>/emerge.errors
 	rm ${offset}/${fileasc}
 
-	decompress "${offset}/${filexz}" "${offset}"
+	decompress "${offset}/${filexz}" "${offset}"  2>>/emerge.errors
 	rm ${offset}/${filexz}
 
 	# just use patchfiles ...
@@ -685,10 +687,10 @@ function deploySystem()
 
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
-	echo "installing gpg keys"
+	echo "installing gpg keys"  2>>/emerge.errors
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
-	emerge ${_emergeOpts} sec-keys/openpgp-keys-gentoo-auth sec-keys/openpgp-keys-gentoo-developers sec-keys/openpgp-keys-gentoo-release
+	emerge ${_emergeOpts} sec-keys/openpgp-keys-gentoo-auth sec-keys/openpgp-keys-gentoo-developers sec-keys/openpgp-keys-gentoo-release  2>>/emerge.errors
 	gpg --import /usr/share/openpgp-keys/gentoo-auth.asc
 	gpg --import /usr/share/openpgp-keys/gentoo-developers.asc
 	gpg --import /usr/share/openpgp-keys/gentoo-release.asc
@@ -696,7 +698,7 @@ function deploySystem()
 
 	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
 	av="$(pquery sys-apps/portage --max 2>/dev/null)"
-	echo "DEPLOY::CHECKING PORTAGE ${av##*-}/${pv##*-}"
+	echo "DEPLOY::CHECKING PORTAGE ${av##*-}/${pv##*-}"  2>>/emerge.errors
 
 	_DISTDIR="$(emerge --info | \grep "^DISTDIR" | sed -e 's/\"//g')"
 	_DISTDIR="${_DISTDIR#*=}";
@@ -706,37 +708,37 @@ function deploySystem()
 	# portage
 	if [[ "${av##*-}" != "${pv##*-}" ]]
 	then
-		emerge --info ${emergeOpts} > /deploy.emerge.info
-		emerge ${emergeOpts} portage --oneshot --ask=n
+		emerge --info ${emergeOpts} > /deploy.emerge.info  2>>/emerge.errors
+		emerge ${emergeOpts} portage --oneshot --ask=n  2>>/emerge.errors
 	fi
 
 	# SYNC
-	emerge --sync --ask=n
+	emerge --sync --ask=n  2>>/emerge.errors
 
-	echo "DEPLOY::ISSUING UPDATES"
+	echo "DEPLOY::ISSUING UPDATES"  2>>/emerge.errors
 	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n
 
-	echo "APPLYING NECCESSARY PRE-BUILD PATCHES"
+	echo "APPLYING NECCESSARY PRE-BUILD PATCHES"  2>>/emerge.errors
 	
 	sh < /patches.sh
 
 	#rm /patches.sh
 
-	echo "DEPLOY::EMERGE PROFILE PACKAGES"
-	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} $(cat /package.list)
+	echo "DEPLOY::EMERGE PROFILE PACKAGES" 2>>/emerge.errors
+	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} $(cat /package.list)  2>>/emerge.errors
 	#rm /package.list
 
 	# Only used to instantiate a /var/lib/portage/.gnupg directory ... need more understanding of how keyserver is rolled in to udpating user space. and gentoo keys are refreshed
 	# run getuto to buildup gpg
 	#/usr/bin/getuto
 
-	echo "DEPLOY::EMERGE ZED FILE SYSTEM"
+	echo "DEPLOY::EMERGE ZED FILE SYSTEM"  2>>/emerge.errors
 	emergeOpts="--verbose-conflicts"
-	FEATURES="-getbinpkg -buildpkg" emerge ${emergeOpts} =zfs-9999 --nodeps
+	FEATURES="-getbinpkg -buildpkg" emerge ${emergeOpts} =zfs-9999 --nodeps  2>>/emerge.errors
 
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 	echo "DEPLOY::POST INSTALL UPDATE !!!"
-	FEATURES="-collision-detect -protect-owned"emerge -b -uDN --with-bdeps=y @world --ask=n ${emergeOpts}
+	FEATURES="-collision-detect -protect-owned" emerge -b -uDN --with-bdeps=y @world --ask=n ${emergeOpts}  2>>/emerge.errors
 
 	#wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
@@ -751,8 +753,8 @@ function deploySystem()
 
 function deployServices() 
 {
-	echo "DEPLOY::EXECUTING SERVICE ROUTINE"
-	sh < /services.sh
+	echo "DEPLOY::EXECUTING SERVICE ROUTINE"  2>>/emerge.errors
+	sh < /services.sh  2>>/emerge.errors
 	rm /services.sh
 }
 
@@ -765,17 +767,18 @@ function deployLocales()
 	locale-gen -A
 	eselect locale set en_US.utf8
 
-	printf "${colR}\n" "verify /etc/hosts file, which is patched, matches the correct server, otherwise nothing will be found on deployment..."
+	printf "${colR}\n" "verify /etc/hosts file, which is patched, matches the correct server, otherwise nothing will be found on deployment..."  2>>/emerge.errors
 
-	emerge-webrsync
+	echo "emerge-webrsync ..." 2>>/emerge.errors
+	emerge-webrsync 2>>/emerge.errors 
 
 	eselect profile set default/linux/amd64/${key%/openrc}
-	eselect profile show
+	eselect profile show  2>>/emerge.errors
 
-    echo "reading the news (null)..."
-	eselect news read all > /dev/null
+    echo "reading the news (null)..."  2>>/emerge.errors
+	eselect news read all 1>/dev/null  2>>/emerge.errors
 	echo "America/Los_Angeles" > /etc/timezone
-	emerge --config sys-libs/timezone-data
+	emerge --config sys-libs/timezone-data 2>>/emerge.errors
 	
 }
 
