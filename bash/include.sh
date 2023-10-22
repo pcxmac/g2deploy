@@ -1007,7 +1007,8 @@ function clear_mounts()
 	#echo "$dir";
 	#sleep 10
 
-	while [[ "$mount_lines" != 0 ]]
+	# 1 = pointer directory, leave mounted, if...
+	while [[ "$mount_lines" != '1' ]]
 	do
 		while read -r mountpoint
 		do
