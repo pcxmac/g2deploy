@@ -701,7 +701,7 @@ function deploySystem()
 
 	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
 	av="$(pquery sys-apps/portage --max 2>/dev/null)"
-	echo "DEPLOY::CHECKING PORTAGE ${av##*-}/${pv##*-}" >>/emerge.errors
+	echo "DEPLOY::CHECKING PORTAGE ${av##*-}/${pv##*-}" >> /emerge.errors
 
 	_DISTDIR="$(emerge --info | \grep "^DISTDIR" | sed -e 's/\"//g')"
 	_DISTDIR="${_DISTDIR#*=}";
@@ -718,7 +718,7 @@ function deploySystem()
 	# SYNC
 	emerge --sync --ask=n  2>>/emerge.errors
 
-	echo "DEPLOY::ISSUING UPDATES"  >>/emerge.errors
+	echo "DEPLOY::ISSUING UPDATES"  >> /emerge.errors
 	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n
 
 	echo "APPLYING NECCESSARY PRE-BUILD PATCHES"  >>/emerge.errors
@@ -727,7 +727,7 @@ function deploySystem()
 
 	#rm /patches.sh
 
-	echo "DEPLOY::EMERGE PROFILE PACKAGES" >>/emerge.errors
+	echo "DEPLOY::EMERGE PROFILE PACKAGES" >> /emerge.errors
 	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} $(cat /package.list)  2>>/emerge.errors
 	#rm /package.list
 
@@ -735,14 +735,14 @@ function deploySystem()
 	# run getuto to buildup gpg
 	#/usr/bin/getuto
 
-	echo "DEPLOY::EMERGE ZED FILE SYSTEM"  2>>/emerge.errors
+	echo "DEPLOY::EMERGE ZED FILE SYSTEM"  >> /emerge.errors
 	emergeOpts="--verbose-conflicts"
 	FEATURES="-getbinpkg -buildpkg" emerge ${emergeOpts} =zfs-9999 --nodeps  2>>/emerge.errors
 
 	local emergeOpts="--backtrack=99 --verbose --tree --verbose-conflicts"
 #	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
-	echo "DEPLOY::POST INSTALL UPDATE !!!"
+	echo "DEPLOY::POST INSTALL UPDATE !!!"  >> /emerge.errors
 	FEATURES="-collision-detect -protect-owned" emerge -b -uDN --with-bdeps=y @world --ask=n ${emergeOpts}  2>>/emerge.errors
 
 	#wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import

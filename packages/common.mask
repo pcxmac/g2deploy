@@ -3,12 +3,13 @@
 # waiting on patch for sys-fs/fuse, -n flag (pull request submitted)
 #>sys-fs/fuse-3.12.0
 
-<sys-libs/glibc-2.36
-<sys-devel/gcc-12.3.0
+<sys-libs/glibc-2.38
+<sys-devel/gcc-13.2.0
 # python 3.11
 >=media-libs/mesa-9999
+# gnome requirement, otherwise <17
 <sys-devel/llvm-15.0.0
-<sys-devel/clang-15.0.0
+<sys-devel/clang-17.0.0
 
 >=sys-kernel/gentoo-sources-6.6.0
->=sys-apps/portage-3.0.50
+<sys-apps/portage-3.0.50

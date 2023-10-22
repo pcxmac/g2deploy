@@ -3,14 +3,14 @@
 >=sys-fs/zfs-kmod-9999 **
 >=sys-fs/zfs-9999 **
 
-sys-kernel/gentoo-sources	    ~amd64
-app-admin/haskell-updater	    ~amd64
+sys-kernel/gentoo-sources		~amd64
+app-admin/haskell-updater		~amd64
 
 sys-devel/llvm*			        ~amd64
 sys-devel/clang*		        ~amd64
-sys-libs/compiler-rt*	        ~amd64
-sys-libs/libomp                 ~amd64
-dev-util/spirv-llvm-translator  ~amd64
+sys-libs/compiler-rt*		        ~amd64
+sys-libs/libomp				~amd64
+dev-util/spirv-llvm-translator		~amd64
 sys-devel/gcc			        ~amd64
 sys-libs/glibc			        ~amd64
 dev-lang/ghc			        ~amd64
@@ -21,6 +21,6 @@ sys-apps/locale-gen		        ~amd64
 
 media-libs/mesa	**
 
-dev-haskell/*		            ~amd64
+dev-haskell/*				~amd64
 
-sys-fabric/mstflint             ~amd64
+sys-fabric/mstflint			~amd64
