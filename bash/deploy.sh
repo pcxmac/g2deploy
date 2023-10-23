@@ -85,6 +85,8 @@ source ${SCRIPT_DIR}/bash/include.sh
 	# need a URL check before proceeding, ie websever check, rsync server check, ftp, etc...
 
 	clear_mounts "${directory}"
+	echo "clear mounts"
+
 	# in place of generic mounting service (context aware)
 	[[ ${type} == "ZFS" ]] && zfs mount ${_location}; 
 

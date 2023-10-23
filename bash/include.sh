@@ -337,7 +337,7 @@ function update_runtime()
 	emerge --info ${emergeOpts} > /update.emerge.info
 
 	sudo emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n ${exclude_atoms}
-	eselect news read new
+	eselect news read new 1>/dev/null  2>>/emerge.errors
 	#eclean distfiles
 
 }
@@ -750,7 +750,7 @@ function deploySystem()
 	# need to get variable from make.conf || emerge --info ... because eClean ? sucks ?
 	rm ${_DISTDIR}/* -R
 
-	eselect news read new
+	eselect news read new 1>/dev/null  2>>/emerge.errors
 	eclean distfiles
 	eix-update
 	updatedb
@@ -781,7 +781,7 @@ function deployLocales()
 	eselect profile set default/linux/amd64/${key%/openrc}
 	eselect profile show  2>>/emerge.errors
 
-    echo "reading the news (null)..."  2>>/emerge.errors
+    echo "reading the news (null)..."  1>/dev/null  2>>/emerge.errors
 	eselect news read all 1>/dev/null  2>>/emerge.errors
 	echo "America/Los_Angeles" > /etc/timezone
 	emerge --config sys-libs/timezone-data 2>>/emerge.errors
@@ -1008,7 +1008,7 @@ function clear_mounts()
 	#sleep 10
 
 	# 1 = pointer directory, leave mounted, if...
-	while [[ "$mount_lines" != '1' ]]
+	while [[ "$mount_lines" != 0 ]]
 	do
 		while read -r mountpoint
 		do
