@@ -1,0 +1,26 @@
+
+applications : (standalone applications)
+
+
+
+
+
+
+
+
+
+...
+
+desktop : (wayland only) :: (window manager: { ...} ; display manager gdm, lightdm, sddm, ...) ; (services script, meta.patches, ... basically deploy : profile ==> deploy : meta|desktop
+
+current convention : 
+
+./deploy.sh	work={file space} build=profile deploy	==> ./deploy.sh work={file space} build=meta:hyprland deploy
+
+so instead of digging through profiles, and picking a stage3 tarball and ... (deploy_BUILDUP) deploy_META is employed, based on the [meta:] prefix
+
+deploy meta, digs through the meta/desktop or ... meta/shell ... or .... {TBD}
+
+
+
+shell : ...
