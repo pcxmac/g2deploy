@@ -19,7 +19,7 @@ do
 	then
 
 		# for testing
-		sudo rm ${binpkgs}* -R
+		# sudo rm ${binpkgs}* -R
 
 		clear_mounts $work
 

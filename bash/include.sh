@@ -290,8 +290,8 @@ function update_kernel()
 
 function update_runtime()
 {
-	local emergeOpts="--backtrack=99 --verbose --tree --verbose-conflicts"
-#	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+#	local emergeOpts="--backtrack=99 --verbose --tree --verbose-conflicts"
+	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
 	echo "UPDATE::RUNTIME_UPDATE !"
 
@@ -358,8 +358,8 @@ function build_kernel()
 	_bootPart=${1:?}
 	_fsType="$(\df -Th ${_bootPart} | awk '{print $2}' | tail -n 1)"
 	_rootFS=""
-	local emergeOpts="--ask=n --backtrack=99 --verbose --tree --verbose-conflicts"
-#	local emergeOpts="--ask=n --buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+#	local emergeOpts="--ask=n --backtrack=99 --verbose --tree --verbose-conflicts"
+	local emergeOpts="--ask=n --buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
 	_kernels_current="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/root")"
 	_kernel='/usr/src/linux/'
@@ -687,8 +687,8 @@ function deploySystem()
 	gpg --list-secret-keys --keyid-format=long
 	#sleep 3
 
-#	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
-	local emergeOpts="--backtrack=99 --verbose --tree --verbose-conflicts"
+	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+#	local emergeOpts="--backtrack=99 --verbose --tree --verbose-conflicts"
 
 	echo "installing gpg keys"  >>/emerge.errors
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
@@ -716,7 +716,7 @@ function deploySystem()
 	fi
 
 	# SYNC
-	emerge --sync --ask=n  2>>/emerge.errors
+	emerge --sync --ask=n  --quiet 2>>/emerge.errors
 
 	echo "DEPLOY::ISSUING UPDATES"  >> /emerge.errors
 	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n
@@ -739,8 +739,8 @@ function deploySystem()
 	emergeOpts="--verbose-conflicts"
 	FEATURES="-getbinpkg -buildpkg" emerge ${emergeOpts} =zfs-9999 --nodeps  2>>/emerge.errors
 
-	local emergeOpts="--backtrack=99 --verbose --tree --verbose-conflicts"
-#	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+#	local emergeOpts="--backtrack=99 --verbose --tree --verbose-conflicts"
+	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
 	echo "DEPLOY::POST INSTALL UPDATE !!!"  >> /emerge.errors
 	FEATURES="-collision-detect -protect-owned" emerge -b -uDN --with-bdeps=y @world --ask=n ${emergeOpts}  2>>/emerge.errors
