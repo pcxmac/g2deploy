@@ -659,10 +659,10 @@ function deployBuildup()
 
 	# PARENT INSTALLER NEEDS TO HAVE 'app-portage/getuto' INSTALLED FOR THE SIG TO PICK UP CORRECTLY
 
-	gpg --verify "${offset}/${fileasc}"  2>>${offset}/emerge.errors
+	gpg --verify "${offset}/${fileasc}"  
 	rm ${offset}/${fileasc}
 
-	decompress "${offset}/${filexz}" "${offset}"  2>>${offset}/emerge.errors
+	decompress "${offset}/${filexz}" "${offset}"  
 	rm ${offset}/${filexz}
 
 	# just use patchfiles ...
@@ -693,7 +693,7 @@ function deploySystem()
 	echo "installing gpg keys"  >>/emerge.errors
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
-	emerge ${_emergeOpts} sec-keys/openpgp-keys-gentoo-auth sec-keys/openpgp-keys-gentoo-developers sec-keys/openpgp-keys-gentoo-release  2>>/emerge.errors
+	emerge ${emergeOpts} sec-keys/openpgp-keys-gentoo-auth sec-keys/openpgp-keys-gentoo-developers sec-keys/openpgp-keys-gentoo-release  2>>/emerge.errors
 	gpg --import /usr/share/openpgp-keys/gentoo-auth.asc 2>>/emerge.errors
 	gpg --import /usr/share/openpgp-keys/gentoo-developers.asc 2>>/emerge.errors
 	gpg --import /usr/share/openpgp-keys/gentoo-release.asc 2>>/emerge.errors
