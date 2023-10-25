@@ -93,7 +93,7 @@ then
     sed -i "s|^PORTDIR.*|PORTDIR=\"${pkgREPO}\"|g" ${makeCONF}
     sed -i "s|^location.*|location = ${pkgREPO}|g" ${pkgCONF}
 
-    emerge --sync | tee /var/log/esync.log
+    emerge --sync --quiet | tee /var/log/esync.log
 
     sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
     sed -i "s|^PORTDIR.*|${portDIR}|g" ${makeCONF}
