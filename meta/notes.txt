@@ -1,4 +1,17 @@
 
+||
+
+creating custom profiles : https://wiki.gentoo.org/wiki/Profile_(Portage)#Creating_custom_profiles
+
+creating custom overlay : (packages in personal developer status, before public upstream request) - https://wiki.gentoo.org/wiki/Project:Overlays/Overlays_guide
+
+inclusion of the GURU repository : https://wiki.gentoo.org/wiki/Project:GURU
+
+
+||
+
+
+
 applications : (standalone applications)
 
 
