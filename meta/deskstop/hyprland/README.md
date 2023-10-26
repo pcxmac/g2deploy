@@ -50,8 +50,16 @@ gui-wm/hyprland
 app-misc/brightnessctl
 media-sound/playerctl
 x11-terms/kitty
-gui-apps/waybar
+gui-apps/waybar (bar)
 gui-apps/hyprpaper
+
+pipewire
+xdg desktop portal
+auth agent
+qt5+
+exec-once
+tofi (launcher)
+eww (widgets)
 
 
 

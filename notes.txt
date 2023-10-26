@@ -23,6 +23,40 @@ HOW TO ALOT HDs ... (thinking)
   : BULKBUILD (GOOD)
   : SYNC      (GOOD)
 
+--------------------------------------------------------------
+
+need to implement meta inserts for : 
+
+	custom overlays
+	./repos
+	./repos/custom_overlay
+
+
+	custom package_profiles
+	./packages
+		packages/[hardened/openrc/desktop/..]/... [ custom.profile ]
+		
+	./packages/amd64/17.X/...
+	./
+
+==>	./releases/TIMESTAMP
+	./releases/link-to-latest-stage3
+	./releases/TIMESTAMP/custom_stage3
+
+	
+  ./deploy.sh 
+      work={file space} 
+      build:[default/amd64/17.X/desktop/]plasma/systemd/hyprland
+      deploy
+
+  this script will look for .../hyprland, but will default to plasma/systemd, if nothing found. This will occur at every check for the profile path.
+  -> as you can have no stage3's for this path, but have a package-profile for it. 
+
+
+
+
+
+
 ----------------------------------------------------
 
 * on installs, use hw-probe as an option to upload specs to linux-hardware.org, a link to the profile can be used alongside any other localhost-webserve stuff, like the meta package: prometheus

@@ -1,4 +1,9 @@
 
+> all meta packages are only meta rollouts, all packages are either mainline/guru or in the owner's custom overlay(s), other-unofficial overlays can be included in the [mainline|guru collection]
+> meta rollouts are only details which direct resources, building software is the purview of ebuild/overlay+ gentoo. 
+
+local overlay ebuilds will need to have local CI / git repo access, as well as  ... any overlay in the public space, is not considered local/owner 'private'.
+
 ||
 
 creating custom profiles : https://wiki.gentoo.org/wiki/Profile_(Portage)#Creating_custom_profiles
