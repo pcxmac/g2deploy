@@ -76,9 +76,18 @@ function yamlStd()
 # picks out list items, or values from key-value pairs
 function yamlValue()
 {
+	local _path
 	local _stdYAML
 	local _param=":"
 	_stdYAML="${1:?}"
+	_path="${2}"
+
+	# exception, for listed key searching, if, search path ends in '-', its looking for key, not value, thus prune value
+	[[ -n ${_path} ]] && { 
+		[[ -n "$(printf '%s' "${_path}" | \grep '\-$')"  && -n "$(printf '%s' "${_path%-*}" )" ]] && { _stdYAML="${_stdYAML%%:*}"; };
+	};
+
+	# if value is pruned, along with colon, it will just print the key, which is desired, in the above case.
 	printf '%s\n' "${_stdYAML#*:}" | sed 's/ //g; s/^-//'; #s/[^:]*:/';
 }
 
@@ -193,7 +202,15 @@ function findKeyValue()
 
 		# DETERMINANAT
 		[[ $((_tabLength)) == $((cp)) ]] && {
-		 	match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((_tabLength*2))}$(printf '%s\n' "${cv}").*$")";
+		 	
+			# match, literally
+			match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((_tabLength*2))}$(printf '%s\n' "${cv}").*$")";
+
+			# match, implicitly, irrespective of leading '-'
+			[[ -n "$(echo ${line} | \grep -i "^\s*-$cv")" ]] && {
+				match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((_tabLength*2))}$(printf '%s\n' "-${cv}").*$")";
+			};
+			
 			_next="$(yamlOrder ${_path} $((cp+1)))";
 	 	} || { 
 			match="";
@@ -209,7 +226,7 @@ function findKeyValue()
 
 		 # EXECUTOR
 		[[ -n "${match}" && -z ${_next} ]] && { 
-			printf '%s\n' "$(yamlValue $line)";
+			printf '%s\n' "$(yamlValue $line $_path)";
 		};
 
 	done < <(printf '%s\n' "${_yaml}")

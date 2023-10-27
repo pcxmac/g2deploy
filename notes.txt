@@ -52,6 +52,15 @@ need to implement meta inserts for :
   this script will look for .../hyprland, but will default to plasma/systemd, if nothing found. This will occur at every check for the profile path.
   -> as you can have no stage3's for this path, but have a package-profile for it. 
 
+---------------------------------------------------
+
+integrate multiple repos ...
+
+independent of host system 
+scoped only for the host.cfg
+
+: 
+
 
 
 

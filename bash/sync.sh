@@ -90,19 +90,25 @@ then
     [[ ! -d ${pkgREPO} ]] && { mkdir -p ${pkgREPO}; };
 
     sed -i "s|^sync-uri.*|sync-uri = ${URL}|g" ${pkgCONF}
-    sed -i "s|^PORTDIR.*|PORTDIR=\"${pkgREPO}\"|g" ${makeCONF}
+    sed -i "s|^PORTDIR.*|PORTDIR=\"${pkgREPO}/\"|g" ${makeCONF}
     sed -i "s|^location.*|location = ${pkgREPO}|g" ${pkgCONF}
 
-    emerge --sync --quiet | tee /var/log/esync.log
+    #emerge --sync --quiet | tee /var/log/esync.log
+    emerge --sync | tee /var/log/esync.log
 
     sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
     sed -i "s|^PORTDIR.*|${portDIR}|g" ${makeCONF}
     sed -i "s|^location.*|${rPortDIR}|g" ${pkgCONF}
 
-    chown "${owner}:${group}"   "${pkgROOT}/repos"      -R	1>/dev/null
+    # need to add guru, and other repos ...
+
+    
+
+
+
+    chown "${owner}:${group}"   "${pkgROOT}/repos"      -R  1>/dev/null
     chmod a-X       "${pkgROOT}/repos"                  -R  1>/dev/null
     chmod ugo+rX    "${pkgROOT}/repos"                  -R  1>/dev/null
-
 
     # NO FILTERING FOR ARCH, THESE ARE TEXT-META FILES.
     # initial condition calls for non-recursive sync

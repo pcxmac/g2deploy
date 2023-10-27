@@ -287,6 +287,23 @@ function update_kernel()
 	fi
 }
 
+function sync_type()
+{
+	syncURI=${1:?}
+	
+	#	git  = *.git$
+	#	rsync= ^rsync:
+
+	case ${syncURI} in
+		*.git)
+			echo "git"
+		;;
+		rsync:*)
+			echo "rsync"
+
+		;;
+	esac
+}
 
 function update_runtime()
 {
