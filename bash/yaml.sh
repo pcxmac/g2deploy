@@ -490,3 +490,6 @@ function modifyKeyValue()
 
 	done < <(printf '%s\n' "${_yaml}")
 }
+
+
+# TEST PROCEDURES ... if './yaml.sh --test'
