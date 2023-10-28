@@ -207,32 +207,15 @@ function findKeyValue()
 		# DETERMINANAT
 		[[ $((_tabLength)) == $((cp)) ]] && {
 		 	
-			# match, literally :: 'key' || 'key/' || '-key' || '-key/'
-
 			[[ -n "$(echo ${line} | \grep -i "^\s*-.*")" ]] && {
+				# match for :: '-'
 				match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((_tabLength*2))}$(printf '%s\n' "-${cv}").*$")";
 			} || {
-				match="$(printf '%s\n' "${line}"  | \grep -wP "^\s{$((_tabLength*2))}$(printf '%s\n' "${cv}").*$")";
+				# match, literally :: 'key' || 'key/' || '-key' || '-key/'
+				match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((_tabLength*2))}$(printf '%s\n' "${cv}").*$")";
 			};
 			_granular="$(echo ${match} | sed 's/^ *//g' | sed 's/^-//g' )";
 			[[ ! ${_granular%%:*} == ${cv%%:*} && ${cv%%:*} != '-' ]] && { match=""; };
-			# if ! echo granular | grep 'cv'
-			# match, implicitly, irrespective of leading '-'
-			#[[ -n "$(echo ${line} | \grep -i "^\s*-.*")" ]] && {
-				#match="$(printf '%s\n' "${line}" | \grep -wP "^\s{$((_tabLength*2))}$(printf '%s\n' "-${cv}").*$")";
-				#_granular="$(echo ${match} | sed 's/^ *//g')";
-				#echo "tail";
-				#if ! echo granular | grep '^-.*' ,,, match=0
-				#[[ -z "$(echo ${_granular} | \grep '^-.*' )" ]] && { echo "spook"; match=""; };
-
-			#};
-			#_granular="${match}"
-			#_granular="$(echo ${match} | sed 's/^ *//g')";
-			#[[ ! ${_granular%%:*} == ${cv%%:*} ]] && { match=""; };
-
-
-			# a match occurs when the line contains cv irrespective of leading whitespace
-			#echo "[ LINE= ${line} ] : [ CV= ${cv} ] : [ MATCH= ${match} ] : [ GRAN= ${_granular} ] : [ ${_granular%%:*} && ${cv%%:*} ]";
 
 			_next="$(yamlOrder ${_path} $((cp+1)))";
 
