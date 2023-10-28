@@ -1,0 +1,30 @@
+# HYPRLAND USES
+
+sys-libs/zlib minizip
+
+media-video/ffmpeg opus vpx vaapi 
+media-video/mpv -X -opengl vaapi sdl jack openal -xv
+
+media-libs/mesa xa
+
+media-libs/libsndfile minimal
+dev-libs/libbpf	static-libs
+
+kde-frameworks/kconfig qml
+dev-qt/qtwebengine widgets
+dev-qt/qtwebchannel qml
+net-libs/gnutls pkcs11 tools
+dev-libs/raft lz4
+dev-util/xdelta lzma
+net-misc/spice-gtk usbredir
+sys-fs/squashfs-tools lzma
+sys-libs/libcap static-libs
+net-libs/nodejs inspector
+
+media-libs/libsdl2 gles2
+gnome-base/gnome-control-center networkmanager
+media-libs/libcanberra pulseaudio
+media-plugins/alsa-plugins pulseaudio
+
+media-libs/libvpx postproc
+#kde-plasma/plasma-meta -sddm
