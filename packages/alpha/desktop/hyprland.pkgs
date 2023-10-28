@@ -1,1 +1,9 @@
-#HARDENED PACKAGES
+#HYPRLAND PACKAGES
+
+dev-libs/hyprland-protocols
+gui-apps/hyprland-plugins
+gui-apps/nwg-dock-hyprland
+gui-libs/xdg-desktop-portal-hyprland
+gui-wm/hyprland
+gui-wm/hyprland-contrib
+
