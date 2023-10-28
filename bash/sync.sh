@@ -94,17 +94,38 @@ then
     sed -i "s|^location.*|location = ${pkgREPO}|g" ${pkgCONF}
 
     #emerge --sync --quiet | tee /var/log/esync.log
-    emerge --sync | tee /var/log/esync.log
+   # emerge --sync | tee /var/log/esync.log
 
     sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
     sed -i "s|^PORTDIR.*|${portDIR}|g" ${makeCONF}
     sed -i "s|^location.*|${rPortDIR}|g" ${pkgCONF}
 
-    # need to add guru, and other repos ...
+    # overlays are maintained in the 'repos' folder, alongside the main ebuild tree...
+    # all overlays are maintained by git, thus, a simple git-update will sufficec.
+    # all overlays will be tracked by the host.cfg, as a list:item 
+    # so findKeyValue .... will yield a list of the repos, 
+    # first check, is if the repo exists. (directory)
 
-    
+    _overlay="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/overlays")"
+    _overlays="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/overlays/-")"
 
+    echo "overlay = $_overlay"
+    echo "overlays : $_overlays"
 
+    for x in $(echo "${_overlays}")
+    do
+        printf "%s\n" "${_overlay}/${x}"
+        # test if repo is valid, if not, wipe potential directory, and install repo OR
+        # update repo, if valid
+        # test for directory exists && then valid repo 
+
+        || {
+            git -C "${_overlay}${x}" fetch --all
+            git -C "${_overlay}${x}" pull
+        };
+    done
+
+    sleep 100
 
     chown "${owner}:${group}"   "${pkgROOT}/repos"      -R  1>/dev/null
     chmod a-X       "${pkgROOT}/repos"                  -R  1>/dev/null
