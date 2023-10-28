@@ -25,68 +25,28 @@ HOW TO ALOT HDs ... (thinking)
 
 --------------------------------------------------------------
 
-need to implement meta inserts for : 
-
-	custom overlays
-	./repos
-	./repos/custom_overlay
-
-
-	custom package_profiles
-	./packages
-		packages/[hardened/openrc/desktop/..]/... [ custom.profile ]
-		
-	./packages/amd64/17.X/...
-	./
-
-==>	./releases/TIMESTAMP
-	./releases/link-to-latest-stage3
-	./releases/TIMESTAMP/custom_stage3
-
+need to implement meta inserts for : ## BUILD PROFILE WILL NEED TO ADDRESS 17.X or build variant {alpha,beta,gamma}
 	
   ./deploy.sh 
-      work={file space} 
-      build:[default/amd64/17.X/desktop/]plasma/systemd/hyprland
-      deploy
+      work={file space}
 
-  this script will look for .../hyprland, but will default to plasma/systemd, if nothing found. This will occur at every check for the profile path.
-  -> as you can have no stage3's for this path, but have a package-profile for it. 
+      build:alpha/desktop/hyprland/systemd
+      
+      deploy
 
 ---------------------------------------------------
 
-integrate multiple repos ...
-
-independent of host system 
-scoped only for the host.cfg
-
-: 
-
-
-
-
-
+all overlays must be mantained through a meta file, and in the repository file.
 
 ----------------------------------------------------
 
 * on installs, use hw-probe as an option to upload specs to linux-hardware.org, a link to the profile can be used alongside any other localhost-webserve stuff, like the meta package: prometheus
+* address keyboard type (us-...)
 
 --------------------------------------------------------
 
 
 NEW NOTES ...
-
-deploy { profile ie. plasma/systemd } :: { meta-profile ie. hyprland-lightdm }
-ex. ./deploy.sh  ... build=plasma/systemd::hyprland-lightdm ... deploy
-
-this will deploy from the meta folder, meta/packages/...
-
-if no meta declaration : ie. build=plasma ... then deployments are obtained from packages/
-
-the meta '::' operator.
-
------------------------------------------------------------
-
-need better user tracking and shell history carryover.
 
 -----------------------------------------------------------
 
@@ -94,7 +54,6 @@ install appears to work okay, however, i need to verify that I can install to si
 Also, it appears refind.d is missing on new boot drives ; and there was some missing transfers on to the boot partition during install. 
 
 ------------------------------------------------------------
-
 
 meta package manager (individual system applications) ... logs potential updates, can prompt user
 meta system manager (applications which exist extemporaneously, on the network, and see to instantiate and regulate themselves over a subset of machines)
