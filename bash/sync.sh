@@ -269,7 +269,6 @@ mget "--delete --exclude='.*'"  "${SCRIPT_DIR}/patchfiles/"  "${_patchfiles}"
 #chmod ugo+rX    "${pkgROOT}/patchfiles"             -R  1>/dev/null
 
 printf "############################### [ REPOSITORY ] ##################################\n"
-
 #repoServer="https://gitweb.gentoo.org/repo/gentoo.git/"
 
 if [[ $_flags != '--skip' ]]
@@ -277,25 +276,20 @@ then
     [[ ! -d ${pkgROOT}/repository ]] && { mkdir -p ${pkgROOT}/repository; };
     
     _repository="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/repository")"
-    _repositories="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/repsoitory/-")"
+    _repositories="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/repository/-")"
 
     for x in $(echo "${_repositories}")
     do
         _repo="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/repository/${x}")"
         printf "%s\n" "${_repository}${x} @ ${_repo}"
-
-        [[ ! "$(cd ${_repository}${x};git remote get-url origin)" == ${_repo} ]] && {
+        [[ ! "$(cd ${_repository}${x} 2>/dev/null;git remote get-url origin)" == ${_repo} ]] && {
             [[ -d ${_repository}${x} ]] && { rm ${_repository}${x} -R; };
             git -C "${_repository}" clone ${_repo};
         } || {
             git -C "${_repository}${x}" fetch --all;
             git -C "${_repository}${x}" pull;
         };
-
     done
-
-
-
 fi
 
 #qmanifest -g
