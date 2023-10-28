@@ -94,7 +94,7 @@ then
     sed -i "s|^location.*|location = ${pkgREPO}|g" ${pkgCONF}
 
     #emerge --sync --quiet | tee /var/log/esync.log
-   # emerge --sync | tee /var/log/esync.log
+    emerge --sync | tee /var/log/esync.log
 
     sed -i "s|^sync-uri.*|${syncURI}|g" ${pkgCONF}
     sed -i "s|^PORTDIR.*|${portDIR}|g" ${makeCONF}
@@ -114,18 +114,20 @@ then
 
     for x in $(echo "${_overlays}")
     do
-        printf "%s\n" "${_overlay}/${x}"
-        # test if repo is valid, if not, wipe potential directory, and install repo OR
-        # update repo, if valid
-        # test for directory exists && then valid repo 
+        _repo="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/overlays/${x}")"
+        printf "%s\n" "${_overlay}${x} @ ${_repo}"
 
-        || {
-            git -C "${_overlay}${x}" fetch --all
-            git -C "${_overlay}${x}" pull
+        [[ ! "$(cd ${_overlay}${x};git remote get-url origin)" == ${_repo} ]] && {
+            [[ -d ${_overlay}${x} ]] && { rm ${_overlay}${x} -R; };
+            git -C "${_overlay}" clone ${_repo};
+        } || {
+            git -C "${_overlay}${x}" fetch --all;
+            git -C "${_overlay}${x}" pull;
         };
+
     done
 
-    sleep 100
+   #sleep 100
 
     chown "${owner}:${group}"   "${pkgROOT}/repos"      -R  1>/dev/null
     chmod a-X       "${pkgROOT}/repos"                  -R  1>/dev/null
@@ -273,17 +275,26 @@ printf "############################### [ REPOSITORY ] #########################
 if [[ $_flags != '--skip' ]]
 then
     [[ ! -d ${pkgROOT}/repository ]] && { mkdir -p ${pkgROOT}/repository; };
-    for x in $(ls "${pkgROOT}/repository")
+    
+    _repository="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/repository")"
+    _repositories="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/repsoitory/-")"
+
+    for x in $(echo "${_repositories}")
     do
-        printf "%s\n" "${x}"
-        git -C "${pkgROOT}/repository/${x}" fetch --all
-        git -C "${pkgROOT}/repository/${x}" pull
+        _repo="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/repository/${x}")"
+        printf "%s\n" "${_repository}${x} @ ${_repo}"
+
+        [[ ! "$(cd ${_repository}${x};git remote get-url origin)" == ${_repo} ]] && {
+            [[ -d ${_repository}${x} ]] && { rm ${_repository}${x} -R; };
+            git -C "${_repository}" clone ${_repo};
+        } || {
+            git -C "${_repository}${x}" fetch --all;
+            git -C "${_repository}${x}" pull;
+        };
+
     done
 
-    # ownership can cause dubious issues with git, + leave permissions alone, assignable by git repo
-    #chown "${owner}:${group}"   "${pkgROOT}/repository" -R	1>/dev/null
-    #chmod a-X       "${pkgROOT}/repository"             -R  1>/dev/null
-    #chmod ugo+rX    "${pkgROOT}/repository"             -R  1>/dev/null
+
 
 fi
 
