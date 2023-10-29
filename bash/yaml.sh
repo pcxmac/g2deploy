@@ -263,6 +263,7 @@ function findKeyValue()
 #	ex. echo "" | insertKeyValue '.' 'key:value'
 #	rule: in case of non-matching search path, use '.' , as this searches for 'all'
 
+# this bitch is slow, thinking bigO^2
 function insertKeyValue()
 {
 	local cp=0

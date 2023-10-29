@@ -7,16 +7,17 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 # convert the eselect profile listing to yaml output (stdout)
 
-yamlOut=""
+yamlOut="repositories:eselect"
 title=""
 url=""
-output="$(sudo eselect repository list | awk '{print $2,$3}')"
+output="$(eselect repository list | awk '{print $2":"$3}' | tr -d '()' | sed '1d' | grep -v '*')"
 
-insertKeyValue ${yamlOut} 
-
+#insertKeyValue ${yamlOut} 
 
 for i in ${output}
 do
-
-
+    yamlOut="$(echo "$yamlOut" | insertKeyValue 'repositories/' "${i}")";
+    #echo "$yamlOut"
 done
+
+echo "${yamlOut}" > ./repos.eselect
