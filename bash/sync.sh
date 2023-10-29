@@ -301,13 +301,19 @@ then
     for x in $(echo "${_repositories}")
     do
         _repo="$(findKeyValue "${SCRIPT_DIR}/config/repos.eselect" "repositories/${x}")"
-        printf "%s\n" "${_repository}${x} @ ${_repo}"
-        [[ ! "$(cd ${_repository}${x} 2>/dev/null;git remote get-url origin)" == ${_repo} ]] && {
-            [[ -d ${_repository}${x} ]] && { rm ${_repository}${x} -R; };
-            git -C "${_repository}" clone ${_repo};
+        bad_repo="$(git ls-remote ${x} | \grep 'fatal')";
+        
+        [[ -z ${bad_repo} ]] && {
+            printf "%s\n" "${_repository}${x} @ ${_repo}"
+            [[ ! "$(cd ${_repository}${x} 2>/dev/null;git remote get-url origin)" == ${_repo} ]] && {
+                [[ -d ${_repository}${x} ]] && { rm ${_repository}${x} -R; };
+                git -C "${_repository}" clone ${_repo};
+            } || {
+                git -C "${_repository}${x}" fetch --all;
+                git -C "${_repository}${x}" pull;
+            };
         } || {
-            git -C "${_repository}${x}" fetch --all;
-            git -C "${_repository}${x}" pull;
+            echo "bad repo @ ${x}";
         };
     done
 fi
