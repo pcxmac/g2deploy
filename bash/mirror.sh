@@ -6,6 +6,8 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 source ${SCRIPT_DIR}/bash/include.sh
 pkgARCH="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/arch")"
 
+# DISTRO = version 17.0/1 ... alpha ... etc...
+pkgDISTRO=""
 #echo "$pkgARCH"
 
 

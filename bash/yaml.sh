@@ -7,6 +7,7 @@
 function yamlPad()
 {
 	local _length=${1:?}
+	[[ ${_length} == 0 ]] && { return; };
 	printf '%s\n' "$(printf "%*s%s" ${_length})"
 }
 
@@ -28,13 +29,17 @@ function yamlPadL()
 function yamlStd()
 {
 	local _tab=2
-	local _tabLength=""
+	local _tabLength=0
 	local _padLength=""
 	local _yaml=""
+
+	#echo "test"
 
 	# option to use string or file
 	[[ -p /dev/stdin ]] && {  _yaml="$(cat -)"; ordo="stdin"; } || {  _yaml="${1:?}"; ordo="parametric"; };
 	[[ -f ${_yaml} ]] && { _yaml="$(cat "${_yaml}")"; };
+
+	#echo "post in"
 
 	# filtration
 	_yaml="$(printf "${_yaml}" | sed 's/\t/  /g')";											# convert tabs to spaces tabs by themselves will yield a 0 length tab
@@ -48,6 +53,10 @@ function yamlStd()
 	# root node, is assumed to be the first entry, it will have the root offset, this should be zero.
 	_tmp="$(sed -n '1p' < <(printf '%s\n' $_yaml))"
 	offset="$(printf '%s\n' ${_tmp} | awk -F '[^ ].*' '{print length($1)}')"
+
+	#echo "_tmp = $_tmp"
+	#echo "offset = $offset"
+	#echo "yaml = $_yaml"
 
 	# determine the spec tab length, it will be changed to/remain two.
 	IFS=''
@@ -65,7 +74,8 @@ function yamlStd()
 		# GENERATE
 		_padLength="$(printf "${line}" | awk -F '[^ ].*' '{print length($1)}')"
 		_padLength="$((_tab*_padLength))";
-		_padLength="$((_padLength/_tabLength))";
+		#echo "tab length = $_tabLength"
+		[[ ${_tabLength} == 0 ]] && { _padLength=0; } || { _padLength="$((_padLength/_tabLength))"; };
 		# get rid of preceeding whitespace, \t
 		fLine="$(yamlPad $_padLength)$(printf '%s\n' ${line} | sed -e 's/^[ \t]*//')"	
 		printf '%s\n' "${fLine}"
