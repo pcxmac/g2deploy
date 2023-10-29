@@ -14,9 +14,13 @@ function yamlPad()
 # get pad length for yaml formatted string...
 function yamlPadL()
 {
-	local _key_value=${1:?}
-	_key_value="$(( $(printf '%s\n' ${_key_value} | awk -F '[^ ].*' '{print length($1)}') ))"
-	printf '%s\n' "${_key_value}"
+	local _key_value=${1};
+	[[ ${_key_value} == '' ]] && {
+		printf '0\n';
+	} || {
+		_key_value="$(( $(printf '%s\n' ${_key_value} | awk -F '[^ ].*' '{print length($1)}') ))";
+		printf '%s\n' "${_key_value}";
+	};
 }
 
 #	yaml standardization [charcater format/spec] formula
@@ -36,8 +40,11 @@ function yamlStd()
 	#echo "test"
 
 	# option to use string or file
-	[[ -p /dev/stdin ]] && {  _yaml="$(cat -)"; ordo="stdin"; } || {  _yaml="${1:?}"; ordo="parametric"; };
+	[[ -p /dev/stdin ]] && {  _yaml="$(cat -)"; ordo="stdin"; } || {  _yaml="${1}"; ordo="parametric"; };
 	[[ -f ${_yaml} ]] && { _yaml="$(cat "${_yaml}")"; };
+
+	# empty yaml case
+	[[ -z ${_yaml} ]] && { return; };
 
 	#echo "post in"
 
@@ -252,7 +259,9 @@ function findKeyValue()
 #	insertKeyValue {PATH|String of source YAML} {search path} {new key:value}  
 #	ex. insertKeyValue ../config/host.cfg 'server:buildserver/root' 'new:value'
 #	ex. insertKeyValue "$_YAML" 'server:buildserver/root' 'new:value'
-#	ex. echo "$_YAML" | yamlStd | insertKeyValue 
+#	ex. echo "$_YAML" | yamlStd | insertKeyValue
+#	ex. echo "" | insertKeyValue '.' 'key:value'
+#	rule: in case of non-matching search path, use '.' , as this searches for 'all'
 
 function insertKeyValue()
 {
@@ -264,7 +273,8 @@ function insertKeyValue()
 	local _newKV;			# new key value to insert
 
 	# option to use string or file
- 	[[ -p /dev/stdin ]] && { _yaml="$(cat - | yamlStd)"; ordo="stdin"; } || { _yaml="${1:?}"; ordo="parametric"; };
+ 	[[ -p /dev/stdin ]] && { _yaml="$(cat - | yamlStd)"; ordo="stdin"; } || { _yaml="${1}"; ordo="parametric"; };
+
  	[[ -f ${_yaml} ]] && { _yaml="$(cat ${_yaml})"; };
 
 	# the path is arg 1, the source is stdin already standardized ...
@@ -289,6 +299,8 @@ function insertKeyValue()
 	local _comit='false'
 
 	IFS=''
+	# if empty file
+	[[ ${_yaml} == '' ]] && { printf '%s\n' "${_newKV}"; return; };
 	# pWave constructor
 	while read -r line
 	do
