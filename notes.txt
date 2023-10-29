@@ -48,6 +48,15 @@ all overlays must be mantained through a meta file, and in the repository file.
 
 NEW NOTES ...
 
+*** NEED A WAY TO REFERENCE QUERIES ACROSS FILES, AND THRU SYNTAX ON 'VALUE' STATEMENTS -- LINKING 'TABLES' in effect. 
+
+example: 
+
+repos.eselect
+repositories:{host.cfg/server:pkgROOT/root}
+
+
+
 -----------------------------------------------------------
 
 install appears to work okay, however, i need to verify that I can install to singular partitions, and modify existing boot drives.

@@ -292,6 +292,26 @@ then
     done
 fi
 
+if [[ $_flags != '--skip' ]]
+then
+    
+    _repository="$(findKeyValue "${SCRIPT_DIR}/config/repos.eselect" "repositories/")"
+    _repositories="$(findKeyValue "${SCRIPT_DIR}/config/repos.eselect" "repositories/-")"
+
+    for x in $(echo "${_repositories}")
+    do
+        _repo="$(findKeyValue "${SCRIPT_DIR}/config/repos.eselect" "repositories/${x}")"
+        printf "%s\n" "${_repository}${x} @ ${_repo}"
+        [[ ! "$(cd ${_repository}${x} 2>/dev/null;git remote get-url origin)" == ${_repo} ]] && {
+            [[ -d ${_repository}${x} ]] && { rm ${_repository}${x} -R; };
+            git -C "${_repository}" clone ${_repo};
+        } || {
+            git -C "${_repository}${x}" fetch --all;
+            git -C "${_repository}${x}" pull;
+        };
+    done
+fi
+
 #qmanifest -g
 #gencache --jobs $(nproc) --update --repo ${repo##*/} --write-timestamp --update-pkg-desc-index --update-use-local-desc
 
