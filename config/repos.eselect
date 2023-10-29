@@ -62,7 +62,7 @@ repositories:/srv/portage/repository/
   -cg:https://github.com/brothermechanic/cg
   -chymeric:https://github.com/TheChymera/overlay
   -cj-overlay:https://github.com/junghans/cj-overlay
-  -cosmicmod-overlay:https://github.com/cosmicoz/cosmicmod-overlay
+  #-cosmicmod-overlay:https://github.com/cosmicoz/cosmicmod-overlay   -- requires password
   -cova:https://github.com/cova-fe/cova-overlay
   -crossdev:https://github.com/alphallc/crossdev/
   -dargor:https://github.com/dargor/dargor_gentoo_overlay

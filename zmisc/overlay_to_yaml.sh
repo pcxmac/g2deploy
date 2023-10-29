@@ -6,6 +6,8 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 source ${SCRIPT_DIR}/bash/include.sh
 
 # convert the eselect profile listing to yaml output (stdout)
+# needs testing for password-required - repos
+# needs to comment out no-repo repos'
 
 yamlOut="repositories:/srv/portage/repository/"
 title=""

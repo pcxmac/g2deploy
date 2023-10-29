@@ -284,7 +284,7 @@ then
         printf "%s\n" "${_repository}${x} @ ${_repo}"
         [[ ! "$(cd ${_repository}${x} 2>/dev/null;git remote get-url origin)" == ${_repo} ]] && {
             [[ -d ${_repository}${x} ]] && { rm ${_repository}${x} -R; };
-            git -C "${_repository}" clone ${_repo};
+            git -C "${_repository}" clone ${_repo} ${x};
         } || {
             git -C "${_repository}${x}" fetch --all;
             git -C "${_repository}${x}" pull;
@@ -294,27 +294,24 @@ fi
 
 if [[ $_flags != '--skip' ]]
 then
-    
     _repository="$(findKeyValue "${SCRIPT_DIR}/config/repos.eselect" "repositories/")"
     _repositories="$(findKeyValue "${SCRIPT_DIR}/config/repos.eselect" "repositories/-")"
 
     for x in $(echo "${_repositories}")
     do
         _repo="$(findKeyValue "${SCRIPT_DIR}/config/repos.eselect" "repositories/${x}")"
-        bad_repo="$(git ls-remote ${x} | \grep 'fatal')";
-        
+        bad_repo="$(git ls-remote ${_repository}${x} 2>&1 | \grep 'fatal')";
+        #echo ":: ${_repository}${x} @ ${_repo}"
+
         [[ -z ${bad_repo} ]] && {
-            printf "%s\n" "${_repository}${x} @ ${_repo}"
-            [[ ! "$(cd ${_repository}${x} 2>/dev/null;git remote get-url origin)" == ${_repo} ]] && {
-                [[ -d ${_repository}${x} ]] && { rm ${_repository}${x} -R; };
-                git -C "${_repository}" clone ${_repo};
-            } || {
-                git -C "${_repository}${x}" fetch --all;
-                git -C "${_repository}${x}" pull;
-            };
+            git -C "${_repository}${x}" fetch --all;
+            git -C "${_repository}${x}" pull;
         } || {
-            echo "bad repo @ ${x}";
+            #echo "bad repo @ ${x} | ${bad_repo}";
+            [[ -d ${_repository}${x} ]] && { rm ${_repository}${x} -R; };
+            git -C "${_repository}" clone ${_repo} ${x};
         };
+
     done
 fi
 
