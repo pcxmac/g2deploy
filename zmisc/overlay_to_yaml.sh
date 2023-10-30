@@ -7,8 +7,7 @@ source ${SCRIPT_DIR}/bash/include.sh
 
 # convert the eselect profile listing to yaml output (stdout)
 # needs testing for password-required - repos
-# needs to comment out no-repo repos'
-
+#   --> need to prune .git suffix and test for valid URL / wget - 404
 yamlOut="repositories:/srv/portage/repository/"
 title=""
 url=""
@@ -20,7 +19,13 @@ for i in ${output}
 do
     #yamlOut="$(echo "$yamlOut" | insertKeyValue 'repositories/' "${i}")";
     #echo "$yamlOut"
-    yamlOut="$(printf '%s\n%s' "${yamlOut}" "  -${i}")";
+    
+    # make a list item
+    i="-$i";
+    # comment out value-less keys
+    [[ ${i#*:} == '' ]] && { i="#$i"; };
+    
+    yamlOut="$(printf '%s\n%s' "${yamlOut}" "  ${i}")";
 done
 
 echo "${yamlOut}" > ./repos.eselect

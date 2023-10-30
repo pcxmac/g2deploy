@@ -705,6 +705,7 @@ function deploySystem()
 	#sleep 3
 
 	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
+
 #	local emergeOpts="--backtrack=99 --verbose --tree --verbose-conflicts"
 
 	echo "installing gpg keys"  >>/emerge.errors
@@ -753,11 +754,8 @@ function deploySystem()
 	#/usr/bin/getuto
 
 	echo "DEPLOY::EMERGE ZED FILE SYSTEM"  >> /emerge.errors
-	emergeOpts="--verbose-conflicts"
+	#emergeOpts="--verbose-conflicts"
 	FEATURES="-getbinpkg -buildpkg" emerge ${emergeOpts} =zfs-9999 --nodeps  2>>/emerge.errors
-
-#	local emergeOpts="--backtrack=99 --verbose --tree --verbose-conflicts"
-	local emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
 	echo "DEPLOY::POST INSTALL UPDATE !!!"  >> /emerge.errors
 	FEATURES="-collision-detect -protect-owned" emerge -b -uDN --with-bdeps=y @world --ask=n ${emergeOpts}  2>>/emerge.errors
