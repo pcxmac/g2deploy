@@ -146,10 +146,6 @@ then
     chmod a-X       "${pkgROOT}/snapshots"              -R  1>/dev/null
     chmod ugo+rX    "${pkgROOT}/snapshots"              -R  1>/dev/null
 
-fi
-
-#if [[ $_flags != '--skip' ]]
-#then
     # ARCH = AMD64, X86, ...., * (ALL)
     # initial condition calls for non-recursive sync
     URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/releases" rsync only-sync)"
@@ -159,13 +155,13 @@ fi
     find "${pkgROOT}"/releases/ -type l -delete
     [[ ${pkgARCH} == "*" ]] && {
         rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial \
-            --append-verify --exclude="*/binpackages/"                                                           \
+            --append-verify --exclude="*binpackages*"                                                           \
             --no-owner --no-group "${URL}" "${pkgROOT}"/releases/ | tee /var/log/esync.log;
     } || {
         echo "$URL :: ${pkgROOT}/"
         sleep 10
         rsync -avI --links --info=progress2 --timeout=300 --no-perms --ignore-times --ignore-existing --partial \
-            --append-verify --include="*/" --include="*${pkgARCH}*" --exclude="*"  --exclude="*/binpackages/"    \
+            --append-verify --include="*/" --include="*${pkgARCH}*" --exclude="*"  --exclude="*binpackages*"    \
             --no-owner --no-group "${URL}" "${pkgROOT}"/releases/ | tee /var/log/esync.log;
     };
 
@@ -175,11 +171,6 @@ fi
 
     # NO FILTERING FOR ARCH, THESE ARE TYPICALLY SOURCE FILES/TEXT TO BE COMPILED, OR DATAFILES WHICH ARE CROSS PLATFORM...
     # initial condition calls for non-recursive sync
-#fi
-
-if [[ $_flags != '--skip' ]]
-then
-
 
     URL="$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/distfiles" rsync)"
     printf "############################### [ DISTFILES ] ###################################\n"
