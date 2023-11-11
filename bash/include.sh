@@ -77,20 +77,65 @@ function logTicket(){
 
 }
 
+# gitMaintain ./clone-As ${repo}	... ${repo} can be a URL to more ... if no ${repo} then look for
 function gitMaintain() {
 
 	_location=""
 	_repo=""
 
-	# 
-	# 
-	# 
-	# if location isn't valid, delete, and ...
+	# pkgREPO="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/repository")"
+    # _repository="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/repository")"
+    # _repositories="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/repository/-")"
+
+	# # 
+	# # if location isn't valid, delete, and ...
+
+    # [[ ! -d ${pkgREPO} ]] && { mkdir -p ${pkgREPO}; };
+
+	# HOST SPECIFIC REPOS
+    # for x in $(echo "${_repositories}")
+    # do
+    #     _repo="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/repository/${x}")"
+    #     printf "%s\n" "${_repository}${x} @ ${_repo}"
+    #     [[ ! "$(cd ${_repository}${x} 2>/dev/null;git remote get-url origin)" == ${_repo} ]] && {
+    #         [[ -d ${_repository}${x} ]] && { rm ${_repository}${x} -R; };
+    #         git -C "${_repository}" clone ${_repo} ${x};
+    #     } || {
+    #         git -C "${_repository}${x}" fetch --all;
+    #         git -C "${_repository}${x}" pull;
+    #     };
+    # done
+
+	# BUILD SERVER REPOS
+    # for x in $(echo "${_repositories}")
+    # do
+    #     _repo="$(findKeyValue "${SCRIPT_DIR}/config/repos.eselect" "repositories/${x}")"
+    #     bad_repo="$(git ls-remote ${_repository}${x} 2>&1 | \grep 'fatal')";
+    #     #echo ":: ${_repository}${x} @ ${_repo}"
+
+    #     [[ -z ${bad_repo} ]] && {
+    #         git -C "${_repository}${x}" fetch --all;
+    #         git -C "${_repository}${x}" pull;
+    #     } || {
+    #         #echo "bad repo @ ${x} | ${bad_repo}";
+    #         [[ -d ${_repository}${x} ]] && { rm ${_repository}${x} -R; };
+    #         git -C "${_repository}" clone ${_repo} ${x};
+    #     };
+
+    # done
+
+
 	# if location doesn't exist, insantiate new repo
 	# 
 	# if location is valid : 
-	# 	reset head to master
+	# 	reset head to master (get )
+	#		git rev-parse --verify master == ... --verify HEAD
 	# 	
+
+	# error conditions : 
+	#	bad repo url ... w/. filters for cgit, ...
+	#	requires login/password
+	#	bad arg conditions, one of the strings is invalid
 
 }
 

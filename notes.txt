@@ -27,6 +27,10 @@ HOW TO ALOT HDs ... (thinking)
 
 move package.* to folders, all custom settings will remain, but default will be patched by sync
 
+maintainGIT (include.sh) ... use this for maintaining git repos, and spitting out errors
+
+
+
 --------------------------------------------------------------
 
 need to implement meta inserts for : ## BUILD PROFILE WILL NEED TO ADDRESS 17.X or build variant {alpha,beta,gamma}
@@ -40,7 +44,7 @@ need to implement meta inserts for : ## BUILD PROFILE WILL NEED TO ADDRESS 17.X 
 
 ---------------------------------------------------
 
-all overlays must be mantained through a meta file, and in the repository file.
+all overlays must be maintained through a meta file, and in the repository file.
 
 ----------------------------------------------------
 
@@ -678,19 +682,18 @@ modem/router (out of bounds infrastructure)
   :: perhaps a SSO - CIK, w/ an initramfs which overlays the roaming machine over a default, then snaps from r-o to rw g3 dataset (single boot)
  - dom0 needs to run on UTC
 pkg-mx :
-  use cases: REBUILD_MISSING_PKGS ; DELETE_REDUNDANT_PACKAGES ; MULTI_VARIATE_USE_BUILD ; LOGGING_FACILITY
-  need utility for examining imposed uses flags, and list of packages against binpkg repo Packages file.
-  this utility can be used to filter out already built packages satisfying use/version for missing bin package use case.
-  need a filter for sweeping through Packages in order to find redundant entries and their associated bin pkg, delete if not 'pretend'.
-  utility for rebuilding any package, with all combinations of use flags
-  logging facility for catching broken package builds during audit.
-
-Supplimental infrastructure
-  LXD @ Boot + BASIC DOM-N bridging + auto configuring firewall
-oddities
-  x
-  sysop/root profiles do not have a good gnome or plasma preferences, for the terminal, or desktop, etc...
-
+  use cases: REBUILD_MISSING_PKGS   # for x in $(echo "${_repositories}")
+    # do
+    #     _repo="$(findKeyValue "${SCRIPT_DIR}/config/host.cfg" "server:pkgROOT/repository/${x}")"
+    #     printf "%s\n" "${_repository}${x} @ ${_repo}"
+    #     [[ ! "$(cd ${_repository}${x} 2>/dev/null;git remote get-url origin)" == ${_repo} ]] && {
+    #         [[ -d ${_repository}${x} ]] && { rm ${_repository}${x} -R; };
+    #         git -C "${_repository}" clone ${_repo} ${x};
+    #     } || {
+    #         git -C "${_repository}${x}" fetch --all;
+    #         git -C "${_repository}${x}" pull;
+    #     };
+    # done
 portage/
 
   *infrastructure\

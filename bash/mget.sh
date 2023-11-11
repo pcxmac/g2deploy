@@ -77,7 +77,7 @@ function getRSYNC()
 	local pause=60
 	local uri=""
 	#  there should always be a destination for rsync, this method does not support streaming
-	local destination="${2:?}"			
+	local destination="${2}"			
 
 	host="${host#*://}"
 	host="${host%%/*}"
