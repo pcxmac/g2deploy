@@ -61,6 +61,39 @@ source ${SCRIPT_DIR}/bash/yaml.sh
 #	rewrites boot record (grub or refind)
 #	saves old version *.save$(DATE)
 
+function logTicket(){
+
+	local _file=${1:?}
+	local _yaml=${2:?}	# yaml coded string for trouble ticket, to be logged.
+	# ticket - yaml format
+	#
+	#	application
+	#	date/time
+	#	description ( app specific error code | error title )
+	#	notes (long string)
+	#
+	#	
+	#	
+
+}
+
+function gitMaintain() {
+
+	_location=""
+	_repo=""
+
+	# 
+	# 
+	# 
+	# if location isn't valid, delete, and ...
+	# if location doesn't exist, insantiate new repo
+	# 
+	# if location is valid : 
+	# 	reset head to master
+	# 	
+
+}
+
 function zfsMaxSupport() { 
 
 	version="$(mget https://raw.githubusercontent.com/openzfs/zfs/master/META | \grep 'Linux-Maximum' | sed 's/ //g' )";

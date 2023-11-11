@@ -10,6 +10,9 @@
 # gnome requirement, otherwise <17
 <sys-devel/llvm-15.0.0
 <sys-devel/clang-16.0.0
+# bug in 1.21.4
+#>dev-lang/go-1.21.3
+# go-bootstrap not being built in with go ???
 
 >=sys-kernel/gentoo-sources-6.6.0
 <sys-apps/portage-3.0.50

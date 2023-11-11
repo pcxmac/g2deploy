@@ -25,6 +25,10 @@ HOW TO ALOT HDs ... (thinking)
 
 --------------------------------------------------------------
 
+move package.* to folders, all custom settings will remain, but default will be patched by sync
+
+--------------------------------------------------------------
+
 need to implement meta inserts for : ## BUILD PROFILE WILL NEED TO ADDRESS 17.X or build variant {alpha,beta,gamma}
 	
   ./deploy.sh 
