@@ -1,5 +1,6 @@
 # PLASMA/SYSTEMD PACKAGES
 
+kde-apps/ark
 kde-apps/kwalletmanager
 kde-plasma/plasma-desktop
 x11-misc/sddm
