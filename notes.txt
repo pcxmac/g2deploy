@@ -23,7 +23,8 @@ HOW TO ALOT HDs ... (thinking)
   : BULKBUILD (GOOD)
   : SYNC      (GOOD)
 
-------------------------------------------------------------
+------------------------------------------------------------ ** COMBINE REPO-OVERLAY AND REPO-{RSYNC|GENTOO} in to a seamless service, 
+update service providers, metrics, and overlay access, create a roll of trouble tickets for all invalid URLs. 
 
 fatal: unable to access 'https://git.sr.ht/bratishkaerik/bratishkaerik-overlay/': The requested URL returned error: 403
 
@@ -36,6 +37,8 @@ fatal: repository 'https://github.com/gentoo-haskell/' not found
 fatal: unable to access 'https://git.zero-downtime.net/quark/': The requested URL returned error: 503
 
 fatal: repository 'https://cgit.gentoo.org/proj/ruby/' not found
+
+fatal: unable to access 'http://overlay.xelnor.net/': SSL: no alternative certificate subject name matches target host name 'overlay.xelnor.net'
 
 --> need a way to scan URL's for correct repo;
 --> need a way to handle 403/503 errors
