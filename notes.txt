@@ -23,6 +23,28 @@ HOW TO ALOT HDs ... (thinking)
   : BULKBUILD (GOOD)
   : SYNC      (GOOD)
 
+------------------------------------------------------------
+
+fatal: unable to access 'https://git.sr.ht/bratishkaerik/bratishkaerik-overlay/': The requested URL returned error: 403
+
+fatal: repository 'http://www.calculate-linux.org/' not found
+
+fatal: repository 'fidonet' does not exist
+
+fatal: repository 'https://github.com/gentoo-haskell/' not found
+
+fatal: unable to access 'https://git.zero-downtime.net/quark/': The requested URL returned error: 503
+
+fatal: repository 'https://cgit.gentoo.org/proj/ruby/' not found
+
+--> need a way to scan URL's for correct repo;
+--> need a way to handle 403/503 errors
+--> need a way to validate URL's
+--> need a gitlab/github handler
+--> need a way to copy in to tmp, then only modify changed files (wget->rsync)
+
+==> repos are either direct download from http/s or git references w/ git access
+
 --------------------------------------------------------------
 
 move package.* to folders, all custom settings will remain, but default will be patched by sync
