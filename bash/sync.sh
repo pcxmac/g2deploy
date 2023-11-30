@@ -188,6 +188,22 @@ fi
 # host.cfg uses 'pkgROOT' as a localizable variable, must be defined, before 'eval' the key values, dependent on 'pkgROOT'
 # build the latest kernel
 printf "########################## [ KERNEL | SOURCE ] ###################################\n"
+
+# 
+# 
+#  
+# 
+# 
+# 
+#  
+# 
+# 
+# 
+
+
+
+
+
 # instantiate directories, if none exist
 [[ ! -d ${pkgROOT/source} ]] && { mkdir -p ${pkgROOT}/source/depricated; mkdir -p ${pkgROOT}/source/current; };
 [[ ! -d ${pkgROOT/kernels} ]] && { mkdir -p ${pkgROOT}/kernels; };

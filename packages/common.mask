@@ -14,5 +14,5 @@
 #>dev-lang/go-1.21.3
 # go-bootstrap not being built in with go ???
 
->=sys-kernel/gentoo-sources-6.6.0
+>=sys-kernel/gentoo-sources-6.7.0
 <sys-apps/portage-3.0.50

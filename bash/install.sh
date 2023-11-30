@@ -10,6 +10,7 @@ source ${SCRIPT_DIR}/bash/include.sh
 # verify route to pkgROOT & zfs exports
 
 
+
 function generateYAML() {
 
 	source="${1:?}"
@@ -320,13 +321,11 @@ function setup_boot() {
 	ls ${boot_src}/boot
 
 	sleep 10
-
 	install_modules "${dstDir}"					# ZFS ONLY !!!! # POSITS IN TO SCRIPTDIR ... MGET BREAKS IF THIS IS BEFORE THE PARENT, APPARENTLY MGET NEEDS AN EMPTY FOLDER...
 
 	ls $dstDir
 
 	umount "${dstDir}/boot"
-
 	sleep 10
 }
 
@@ -344,8 +343,6 @@ function modify_boot() {
 	local dpath="$(findKeyValue "${vYAML}" install/disks/path)"
 	local dstDir="${dpath}/${ddataset}"
 	local _kver="$(getKVER)"
-
-	
 
 	mounts ${dstDir}
 	mount "${boot_partition}" "${dstDir}/boot"

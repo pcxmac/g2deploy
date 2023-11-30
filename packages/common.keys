@@ -20,6 +20,7 @@ dev-util/bindgen		        ~amd64
 sys-apps/locale-gen		        ~amd64
 
 media-libs/mesa	**
+dev-util/intel_clc			~amd64
 
 dev-haskell/*				~amd64
 

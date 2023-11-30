@@ -117,6 +117,7 @@ done
 #	
 #	
 
+
 for x in "$@"
 do
 	case "${x}" in
@@ -127,6 +128,7 @@ do
 
 			echo "updating the kernel on ${efi_part}"
 			
+			# NEED TO CLEAN THIS ONE UP
 			update_kernel ${efi_part} ${directory}
 			
 			#echo "end of line..."

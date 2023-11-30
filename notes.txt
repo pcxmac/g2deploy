@@ -23,6 +23,18 @@ HOW TO ALOT HDs ... (thinking)
   : BULKBUILD (GOOD)
   : SYNC      (GOOD)
 
+-----------------------------
+
+  need to add nvidia kernel module & ....
+
+  have bash function which addresses all applicable kernel modules (from yaml file)
+
+  and determines latest possible kernel version.
+
+  this module structure will be added to the files in newly updated portage package. structure
+
+
+
 ------------------------------------------------------------ ** COMBINE REPO-OVERLAY AND REPO-{RSYNC|GENTOO} in to a seamless service, 
 update service providers, metrics, and overlay access, create a roll of trouble tickets for all invalid URLs. 
 
