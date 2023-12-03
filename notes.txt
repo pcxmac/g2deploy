@@ -23,7 +23,78 @@ HOW TO ALOT HDs ... (thinking)
   : BULKBUILD (GOOD)
   : SYNC      (GOOD)
 
------------------------------
+
+------ 
+
+>
+
+improve the boot yaml script to incorporate more variables, find more ways to ascertain states 
+create a :
+
+  fs_yaml w/ btrfs, ram+tmpfs, and zfs support    --> asset class calibration/ or allocated vs non-allocated opportunistic 
+
+  pci_dev yaml (system_map?) to include cpu enumeration and attributes across all devices
+  kernel yaml
+
+
+>
+
+ie. no more string single use files for modifying configs
+yaml-conf for meta packages or system deployments = 
+
+conf_root:
+    portage:
+      package:use
+        default:
+          app-editors:nano 
+            set:
+              -debug:
+              -justify:
+            unset:
+              -magic:
+              -minimal:
+
+      package:keywords
+
+
+      package:license
+
+    modules:
+      -module:
+        -option
+
+==? every list item is worked against the config file, issued by the list item under package:XXX
+
+standardized files for portage:
+
+package:
+  license:
+    common:
+    build:
+    meta_pkg_...
+  unmask:
+    ...
+  mask:
+    ...
+  accept_keywords:
+    ...
+  use: 
+    ...
+    meta_pkg_libvirt
+    meta_pkg_gimp
+    ...
+  repos.conf: ## SET BY DEPLOYMENT
+    ...
+  binrepos.conf:  ## PLACE HOLDER, IE CAN BE INFECTED BY OTHER REPOS ?
+    ...
+
+
+--------------------
+
+add looking-glass to kvm 
+
+
+---------
 
   need to add nvidia kernel module & ....
 
