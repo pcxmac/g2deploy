@@ -33,10 +33,13 @@ create a :
 
   fs_yaml w/ btrfs, ram+tmpfs, and zfs support    --> asset class calibration/ or allocated vs non-allocated opportunistic 
 
+  logical space yaml (all existant file systems, performance-classes)
   pci_dev yaml (system_map?) to include cpu enumeration and attributes across all devices
   kernel yaml
+  usb++ yaml (extensible|peripheral device busses)
+  network_yaml (query local networks/devices/states/firewalls/attached helpers|BPF)
 
-
+  create a schema for provisioning a hardware host, based on a loose targeting scheme  
 >
 
 ie. no more string single use files for modifying configs
