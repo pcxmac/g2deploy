@@ -24,6 +24,13 @@ HOW TO ALOT HDs ... (thinking)
   : SYNC      (GOOD)
 
 
+------
+
+yaml for benchmarking devices on busses
+yaml for networking, adapter + outreach
+
+qemu/virtual machine yaml function - list all virtual machines + attributes used in conjunction with meta install and for managing libvirt instances, also good for tying network mounts and for linking to network resources  
+
 ------ 
 
 >
