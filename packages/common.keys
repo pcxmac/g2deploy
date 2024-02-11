@@ -23,5 +23,4 @@ media-libs/mesa	**
 dev-util/intel_clc			~amd64
 
 dev-haskell/*				~amd64
-
 sys-fabric/mstflint			~amd64

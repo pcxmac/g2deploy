@@ -503,7 +503,9 @@ function update_runtime()
 
 	emerge --info ${emergeOpts} > /update.emerge.info
 
-	sudo emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n ${exclude_atoms}
+	sudo emerge -DuvNa --verbose-conflicts system --ask=n;
+
+	sudo emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n ${exclude_atoms};
 	eselect news read new 1>/dev/null  2>>/emerge.errors
 	#eclean distfiles
 

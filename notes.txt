@@ -5,8 +5,6 @@ HOW TO ALOT HDs ... (thinking)
 
   -> just use yaml for now, create a profiler, that can for now be edited manually, soon enough graphically, or automation.
   
-
-  : 
   : UPDATE    () - REWRITE BOOT_UPDATE 
   : MIRRORS   () - INCORPORATE 'HOSTS', & METRICS YAML ... BUILD DAEMON PROCESS, SERVICE FILES.
 
@@ -22,6 +20,11 @@ HOW TO ALOT HDs ... (thinking)
   : DEPLOY    (GOOD)
   : BULKBUILD (GOOD)
   : SYNC      (GOOD)
+
+
+------
+
+need a script for ipmi-dell functions 
 
 
 ------
