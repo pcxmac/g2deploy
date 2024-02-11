@@ -25,8 +25,8 @@ HOW TO ALOT HDs ... (thinking)
 ------
 
 need a script for ipmi-dell functions 
-
-
+wrapper for compress/decompression using multithreading
+prelim investigation in to multithreading emerge in order to process packages much quicker on many-core systems. 
 ------
 
 yaml for benchmarking devices on busses

@@ -24,3 +24,5 @@ dev-util/intel_clc			~amd64
 
 dev-haskell/*				~amd64
 sys-fabric/mstflint			~amd64
+x11-libs/libdrm             ~amd64
+sys-apps/ipmicfg            ~amd64
