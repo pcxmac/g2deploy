@@ -1,5 +1,6 @@
 # Common Masks (17.X)
 
+# true = masked
 # waiting on patch for sys-fs/fuse, -n flag (pull request submitted)
 #>sys-fs/fuse-3.12.0
 
@@ -8,11 +9,11 @@
 # python 3.11
 >=media-libs/mesa-9999
 # gnome requirement, otherwise <17
-<sys-devel/llvm-15.0.0
-<sys-devel/clang-16.0.0
+<sys-devel/llvm-17.0.0
+<sys-devel/clang-17.0.0
 # bug in 1.21.4
-#>dev-lang/go-1.21.3
+<dev-lang/go-1.21.5
 # go-bootstrap not being built in with go ???
 
->=sys-kernel/gentoo-sources-6.7.0
-<sys-apps/portage-3.0.50
+>=sys-kernel/gentoo-sources-6.8.0
+<sys-apps/portage-3.0.60

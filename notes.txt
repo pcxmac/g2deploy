@@ -23,7 +23,8 @@ HOW TO ALOT HDs ... (thinking)
 
 
 ------
-
+above all else - create an initialization vector for the portage repo space
+science and guru missing from build repos config ... need a way to inject repos
 need a script for ipmi-dell functions 
 wrapper for compress/decompression using multithreading
 prelim investigation in to multithreading emerge in order to process packages much quicker on many-core systems. 
