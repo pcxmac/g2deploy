@@ -635,21 +635,22 @@ function build_kernel()
 		# requires /etc/portage/bashrc to sign module
 		FEATURES="-getbinpkg -buildpkg" \emerge =zfs-kmod-9999 --oneshot
 
-		# sign 'extra' modules
-		_hashAlgo="$(cat ${_kernel}/.config | grep 'CONFIG_MODULE_SIG_HASH' | sed -e 's/\"//g' )"
-		_hashAlgo="${_hashAlgo#*=}"
-		_modules="$(ls -d /lib/modules/${nv}-${_suffix}/extra/*)"
-		for _module in ${_modules}
-		do
-			printf 'SIGN\t%s\n' "${_module}"
-			(cd ${_kernel}; ./scripts/sign-file ${_hashAlgo} ./certs/signing_key.pem ./certs/signing_key.x509 $_module);
-		done
-		sleep 3
+		############################ superceded by modules-sign use flag directive in make.conf:USE=
+			# sign 'extra' modules
+			#_hashAlgo="$(cat ${_kernel}/.config | grep 'CONFIG_MODULE_SIG_HASH' | sed -e 's/\"//g' )"
+			#_hashAlgo="${_hashAlgo#*=}"
+			#_modules="$(ls -d /lib/modules/${nv}-${_suffix}/extra/*)"
+			#for _module in ${_modules}
+			#do
+			#	printf 'SIGN\t%s\n' "${_module}"
+			#	(cd ${_kernel}; ./scripts/sign-file ${_hashAlgo} ./certs/signing_key.pem ./certs/signing_key.x509 $_module);
+			#done
+			#sleep 3
 
-		# compress and store modules in a portable format
-		(cd ${_offset}/${nv}-${_suffix}/; tar cfvz ./modules.tar.gz /lib/modules/${nv}-${_suffix};);
-		printf ">>> modules installed\n"
-		sleep 3
+			# compress and store modules in a portable format
+			#(cd ${_offset}/${nv}-${_suffix}/; tar cfvz ./modules.tar.gz /lib/modules/${nv}-${_suffix};);
+			#printf ">>> modules installed\n"
+			#sleep 3
 
 		# save kernel package to kernels/current
 		#mv ${_offset}/config-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/
