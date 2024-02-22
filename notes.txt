@@ -22,8 +22,33 @@ HOW TO ALOT HDs ... (thinking)
   : SYNC      (GOOD)
 
 
+
+------------
+
+meta - packages
+meta - modules 
+  zfs
+  nvidia
+  vbox
+    constraints (kernel version)
+    associated packages
+    associated keys/masks/license
+
+    .. or : 
+
+    scan world file, scan for default configs (license/keys/...)
+    find all applicable configs for all packages in world file ... [ take existing configs && compare to applicable configs of @world ]
+    find diff of the two, and create a 'custom.license custom.use custom...
+
+    ... perhaps
+
 ------
 above all else - create an initialization vector for the portage repo space
+
+./sync.sh --initialize=/repo/space/ ... dumps a default host.cfg
+
+
+
 science and guru missing from build repos config ... need a way to inject repos
 need a script for ipmi-dell functions 
 wrapper for compress/decompression using multithreading

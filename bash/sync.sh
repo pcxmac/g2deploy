@@ -37,6 +37,26 @@ SCRIPT_DIR="${SCRIPT_DIR%/*/${0##*/}*}"
 
 source ${SCRIPT_DIR}/bash/include.sh
 
+# if initialization proceed with sync_initialize then exit script
+
+if [[ ${1%%=/*} == "--initialize" ]]
+then
+    location="${1##*=}"
+    echo "initializing ${location}"
+    #if [[ ! -d ${location} ]]
+    #then
+
+    # generate host config ...
+
+
+    #else
+    #    echo "location : ${location} exists, exiting."
+    #    exit
+    exit
+fi
+
+#
+
 checkHosts
 
 # variables
