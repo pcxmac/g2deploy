@@ -1367,6 +1367,8 @@ function decompress()
 	esac
 }
 
+
+# NEED TO UPDATE THIS FUNCTION, TO AUTO PROFILE (read eselect), BUILD A YAML FILE, acknowledge changes in remarks in first line, && have a dynamic case select sequence for applying profile strings
 function getG2Profile() 
 {
 
@@ -1396,12 +1398,14 @@ function getG2Profile()
 	result="${result#*.[0-9]/}"
 	result="$(echo "${result}" | sed -e 's/^[ \t]*//' | sed -e 's/\ *$//g')"
 
+	# all systemd/ --> systemd/merged-usr (3/15/2024) ... sigh.
+	# 
 	case "${result}" in
         hardened)		    					_profile="17.1/hardened "
         ;;
         default/linux/amd64/17.1 | openrc)		_profile="17.1/openrc"
         ;;
-        systemd)								_profile="17.1/systemd "
+        systemd)								_profile="17.1/systemd/merged-usr "
         ;;
         *plasma)     							_profile="17.1/desktop/plasma "
         ;;
@@ -1409,9 +1413,9 @@ function getG2Profile()
         ;;
         selinux)          						_profile="17.1/selinux "
         ;;
-        *plasma/systemd)   						_profile="17.1/desktop/plasma/systemd "
+        *plasma/systemd)   						_profile="17.1/desktop/plasma/systemd/merged-usr "
         ;;
-        *gnome/systemd)							_profile="17.1/desktop/gnome/systemd "
+        *gnome/systemd)							_profile="17.1/desktop/gnome/systemd/merged-usr "
         ;;
         hardened/selinux) 						_profile="17.1/hardened/selinux "
         ;;

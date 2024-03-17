@@ -9,3 +9,4 @@ dev-lang/rust-bin rustfmt
 # in place of profiles + meta config inclusion in to update/patches
 dev-libs/libpcre2 pcre32
 
+sys-libs/glibc -multiarch

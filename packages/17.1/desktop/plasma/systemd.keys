@@ -23,7 +23,8 @@ app-editors/vscode                              ~amd64
 >=sys-devel/llvmgold-16                         ~amd64
 
 
-
+x11-drivers/nvidia-drivers **
+sys-firmware/nvidia-firmware **
 
 
 

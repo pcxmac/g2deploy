@@ -21,6 +21,20 @@ HOW TO ALOT HDs ... (thinking)
   : BULKBUILD (GOOD)
   : SYNC      (GOOD)
 
+-----------
+
+custom attributes :: { check for attributes vs calculated, store in custom.xxx }
+profile attributes :: { check the attributes, depending on profile profile.xxx (profile.use) }
+common attributes :: { check against common package apps common.xxx
+meta attributes :: { check against installed meta apps meta.xxx
+
+------------
+
+dont forget to add all relavent etc files to patchfiles.... need better way to instantiate repo for patchfiles and backup method for patchfiles which are both local and remote managed.
+
+
+
+
 
 
 ------------
