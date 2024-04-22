@@ -3,4 +3,7 @@
 #_emergeOpts="--backtrack=99 --verbose --tree --verbose-conflicts"
 #_emergeOpts="--buildpkg=y --getbinpkg=y --binpkg-respect-use=y --binpkg-changed-deps=y --backtrack=99 --verbose --tree --verbose-conflicts"
 
+emerge dev-vcs/git
+#FEATURES="-collision-protect keepwork" emerge app-altneratives/awk
+emerge =sys-libs/libxcrypt-4.4.36-r3
 echo "end of common patches..."

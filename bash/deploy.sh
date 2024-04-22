@@ -11,7 +11,6 @@ source ${SCRIPT_DIR}/bash/include.sh
 	export -f deployLocales
 	export -f deployServices
 	export -f deploySystem
-	export -f deployServices
 	export -f isHostUp
 
 
@@ -140,6 +139,7 @@ source ${SCRIPT_DIR}/bash/include.sh
  	chroot "${directory}" /bin/bash -c "deploySystem"
 
 	chroot "${directory}" /bin/bash -c "deployUsers ${_profile}"
+		
 	chroot "${directory}" /bin/bash -c "deployServices"
 
 	#services_URL="$(echo "$(${SCRIPT_DIR}/bash/mirror.sh "${SCRIPT_DIR}/config/mirrors/package" http)/${_profile}.services" | sed 's/ //g' | sed "s/\"/'/g")"

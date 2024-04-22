@@ -6,3 +6,5 @@ sys-kernel/linux-firmware no-source-code
 sys-firmware/intel-microcode intel-ucode
 sys-apps/man-pages-posix freedist
 sys-apps/ipmicfg supermicro
+sys-firmware/nvidia-firmware NVIDIA-r2
+x11-drivers/nvidia-drivers NVIDIA-r2

@@ -36,6 +36,62 @@ pkgDISTRO=""
 		*/systemd)		release_base_string="/${pkgARCH}/autobuilds/current-stage3-${pkgARCH}-desktop-${profile#*/}/"
 		;;
 		*)				release_base_string=""
+
+
+		# merged usr is default
+
+		#	openrc				(split usr/merged usr)
+		#		hardened
+		#			musl
+		#			nomultilib
+		#			selinux
+		#				nomultilib
+		#		desktop
+		#		x32
+		#		llvm
+		#			musl
+		#		nomultilib
+		#	
+		#	systemd				(split usr/merged usr)
+		#		llvm			(split usr/merged usr)
+		#		desktop			(split usr/merged usr)
+		#		hardened
+		#		nomultilib		(split usr/merged usr)
+		#		x32				(split usr/merged usr)
+		#
+		#
+		#
+		#
+		#	musl-llvm
+		#	musl
+		#	musl-hardened
+
+		#	openrc
+		#	desktop-openrc
+		#	hardened-openrc
+		#	openrc-splitusr
+		#	nomultilib-openrc
+		#	hardened-selinux-openrc
+		#	hardened-nomultilib-openrc
+		#	hardened-nomultilib-selinux-openrc
+		#	x32-openrc
+		#	llvm-openrc
+
+		#	systemd
+		#	systemd-mergedusr
+		#	llvm-systemd
+		#	llvm-systemd-mergedusr
+		#	desktop-systemd
+		#	desktop-systemd-mergedusr
+		#	hardened-systemd
+		#	nomultilib-systemd
+		#	nomultilib-systemd-mergedusr
+		#	x32-systemd
+		#	x32-systemd-mergedusr
+
+		#	(no stage3)-livegui-amd64
+		#	(no stage3)-admincd-amd64
+		#	(no stage3)-install-amd64-minimal
 		;;
 	esac
 

@@ -19,10 +19,18 @@ dev-haskell/*			        ~amd64
 dev-util/bindgen		        ~amd64
 sys-apps/locale-gen		        ~amd64
 
-media-libs/mesa	**
+media-libs/mesa-9999 **
 dev-util/intel_clc			~amd64
 
 dev-haskell/*				~amd64
 sys-fabric/mstflint			~amd64
 x11-libs/libdrm             ~amd64
 sys-apps/ipmicfg            ~amd64
+
+dev-libs/wayland-protocols ~amd64
+sys-libs/libxcrypt ~amd64
+sys-firmware/nvidia-firmware ~amd64
+
+x11-terms/kitty	~amd64
+
+

@@ -635,22 +635,21 @@ function build_kernel()
 		# requires /etc/portage/bashrc to sign module
 		FEATURES="-getbinpkg -buildpkg" \emerge =zfs-kmod-9999 --oneshot
 
-		############################ superceded by modules-sign use flag directive in make.conf:USE=
-			# sign 'extra' modules
-			#_hashAlgo="$(cat ${_kernel}/.config | grep 'CONFIG_MODULE_SIG_HASH' | sed -e 's/\"//g' )"
-			#_hashAlgo="${_hashAlgo#*=}"
-			#_modules="$(ls -d /lib/modules/${nv}-${_suffix}/extra/*)"
-			#for _module in ${_modules}
-			#do
-			#	printf 'SIGN\t%s\n' "${_module}"
-			#	(cd ${_kernel}; ./scripts/sign-file ${_hashAlgo} ./certs/signing_key.pem ./certs/signing_key.x509 $_module);
-			#done
-			#sleep 3
+		# sign 'extra' modules
+		_hashAlgo="$(cat ${_kernel}/.config | grep 'CONFIG_MODULE_SIG_HASH' | sed -e 's/\"//g' )"
+		_hashAlgo="${_hashAlgo#*=}"
+		_modules="$(ls -d /lib/modules/${nv}-${_suffix}/extra/*)"
+		for _module in ${_modules}
+		do
+			printf 'SIGN\t%s\n' "${_module}"
+			(cd ${_kernel}; ./scripts/sign-file ${_hashAlgo} ./certs/signing_key.pem ./certs/signing_key.x509 $_module);
+		done
+		sleep 3
 
-			# compress and store modules in a portable format
-			#(cd ${_offset}/${nv}-${_suffix}/; tar cfvz ./modules.tar.gz /lib/modules/${nv}-${_suffix};);
-			#printf ">>> modules installed\n"
-			#sleep 3
+		# compress and store modules in a portable format
+		(cd ${_offset}/${nv}-${_suffix}/; tar cfvz ./modules.tar.gz /lib/modules/${nv}-${_suffix};);
+		printf ">>> modules installed\n"
+		sleep 3
 
 		# save kernel package to kernels/current
 		#mv ${_offset}/config-${nv}-${_suffix} ${_offset}/${nv}-${_suffix}/
@@ -864,10 +863,10 @@ function deploySystem()
 	echo "installing gpg keys"  >>/emerge.errors
 	wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
-	emerge ${emergeOpts} sec-keys/openpgp-keys-gentoo-auth sec-keys/openpgp-keys-gentoo-developers sec-keys/openpgp-keys-gentoo-release  2>>/emerge.errors
-	gpg --import /usr/share/openpgp-keys/gentoo-auth.asc 2>>/emerge.errors
-	gpg --import /usr/share/openpgp-keys/gentoo-developers.asc 2>>/emerge.errors
-	gpg --import /usr/share/openpgp-keys/gentoo-release.asc 2>>/emerge.errors
+	emerge ${emergeOpts} sec-keys/openpgp-keys-gentoo-auth sec-keys/openpgp-keys-gentoo-developers sec-keys/openpgp-keys-gentoo-release  #2>>/emerge.errors
+	gpg --import /usr/share/openpgp-keys/gentoo-auth.asc #2>>/emerge.errors
+	gpg --import /usr/share/openpgp-keys/gentoo-developers.asc #2>>/emerge.errors
+	gpg --import /usr/share/openpgp-keys/gentoo-release.asc #2>>/emerge.errors
 	# end of gpg 
 
 	pv="$(qlist -Iv | \grep 'sys-apps/portage' | \grep -v '9999' | head -n 1)"
@@ -882,43 +881,44 @@ function deploySystem()
 	# portage
 	if [[ "${av##*-}" != "${pv##*-}" ]]
 	then
-		emerge --info ${emergeOpts} > /deploy.emerge.info  2>>/emerge.errors
-		emerge ${emergeOpts} portage --oneshot --ask=n  2>>/emerge.errors
+		emerge --info ${emergeOpts} > /deploy.emerge.info  #2>>/emerge.errors
+		emerge ${emergeOpts} portage --oneshot --ask=n  #2>>/emerge.errors
+		emerge ${emergeOpts} dev-vcs/git
 	fi
 
 	# SYNC
-	emerge --sync --ask=n  --quiet 2>>/emerge.errors
+	emerge --sync --ask=n  --quiet #2>>/emerge.errors
 
-	echo "DEPLOY::ISSUING UPDATES"  >> /emerge.errors
+	echo "DEPLOY::ISSUING UPDATES"  #>> /emerge.errors
 	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} -b -uDN --with-bdeps=y @world --ask=n
 
-	echo "APPLYING NECCESSARY PRE-BUILD PATCHES"  >>/emerge.errors
+	echo "APPLYING NECCESSARY PRE-BUILD PATCHES"  #>>/emerge.errors
 	
 	sh < /patches.sh
 
 	#rm /patches.sh
 
-	echo "DEPLOY::EMERGE PROFILE PACKAGES" >> /emerge.errors
-	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} $(cat /package.list)  2>>/emerge.errors
+	echo "DEPLOY::EMERGE PROFILE PACKAGES" #>> /emerge.errors
+	FEATURES="-collision-detect -protect-owned" emerge ${emergeOpts} $(cat /package.list)  #2>>/emerge.errors
 	#rm /package.list
 
 	# Only used to instantiate a /var/lib/portage/.gnupg directory ... need more understanding of how keyserver is rolled in to udpating user space. and gentoo keys are refreshed
 	# run getuto to buildup gpg
 	#/usr/bin/getuto
 
-	echo "DEPLOY::EMERGE ZED FILE SYSTEM"  >> /emerge.errors
+	echo "DEPLOY::EMERGE ZED FILE SYSTEM"  #>> /emerge.errors
 	#emergeOpts="--verbose-conflicts"
-	FEATURES="-getbinpkg -buildpkg" emerge ${emergeOpts} =zfs-9999 --nodeps  2>>/emerge.errors
+	FEATURES="-getbinpkg -buildpkg" emerge ${emergeOpts} =zfs-9999 --nodeps  #2>>/emerge.errors
 
-	echo "DEPLOY::POST INSTALL UPDATE !!!"  >> /emerge.errors
-	FEATURES="-collision-detect -protect-owned" emerge -b -uDN --with-bdeps=y @world --ask=n ${emergeOpts}  2>>/emerge.errors
+	echo "DEPLOY::POST INSTALL UPDATE !!!"  #>> /emerge.errors
+	FEATURES="-collision-detect -protect-owned" emerge -b -uDN --with-bdeps=y @world --ask=n ${emergeOpts}  #2>>/emerge.errors
 
 	#wget -O - https://qa-reports.gentoo.org/output/service-keys.gpg | gpg --import
 
 	# need to get variable from make.conf || emerge --info ... because eClean ? sucks ?
 	rm ${_DISTDIR}/* -R
 
-	eselect news read new 1>/dev/null  2>>/emerge.errors
+	eselect news read new 1>/dev/null  #2>>/emerge.errors
 	eclean distfiles
 	eix-update
 	updatedb
@@ -926,8 +926,8 @@ function deploySystem()
 
 function deployServices() 
 {
-	echo "DEPLOY::EXECUTING SERVICE ROUTINE"  >>/emerge.errors
-	sh < /services.sh  2>>/emerge.errors
+	echo "DEPLOY::EXECUTING SERVICE ROUTINE"  #>>/emerge.errors
+	sh < /services.sh  #2>>/emerge.errors
 	rm /services.sh
 }
 
@@ -1367,8 +1367,6 @@ function decompress()
 	esac
 }
 
-
-# NEED TO UPDATE THIS FUNCTION, TO AUTO PROFILE (read eselect), BUILD A YAML FILE, acknowledge changes in remarks in first line, && have a dynamic case select sequence for applying profile strings
 function getG2Profile() 
 {
 
@@ -1398,14 +1396,12 @@ function getG2Profile()
 	result="${result#*.[0-9]/}"
 	result="$(echo "${result}" | sed -e 's/^[ \t]*//' | sed -e 's/\ *$//g')"
 
-	# all systemd/ --> systemd/merged-usr (3/15/2024) ... sigh.
-	# 
 	case "${result}" in
         hardened)		    					_profile="17.1/hardened "
         ;;
         default/linux/amd64/17.1 | openrc)		_profile="17.1/openrc"
         ;;
-        systemd)								_profile="17.1/systemd/merged-usr "
+        systemd)								_profile="17.1/systemd "
         ;;
         *plasma)     							_profile="17.1/desktop/plasma "
         ;;
@@ -1413,9 +1409,9 @@ function getG2Profile()
         ;;
         selinux)          						_profile="17.1/selinux "
         ;;
-        *plasma/systemd)   						_profile="17.1/desktop/plasma/systemd/merged-usr "
+        *plasma/systemd)   						_profile="17.1/desktop/plasma/systemd "
         ;;
-        *gnome/systemd)							_profile="17.1/desktop/gnome/systemd/merged-usr "
+        *gnome/systemd)							_profile="17.1/desktop/gnome/systemd "
         ;;
         hardened/selinux) 						_profile="17.1/hardened/selinux "
         ;;

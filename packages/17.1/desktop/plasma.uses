@@ -3,7 +3,7 @@
 sys-libs/zlib minizip
 
 media-video/ffmpeg opus vpx vaapi 
-media-video/mpv -X -opengl vaapi sdl jack openal -xv
+media-video/mpv X -opengl vaapi sdl jack openal -xv
 
 media-libs/mesa xa
 
